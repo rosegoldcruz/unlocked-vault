@@ -457,6 +457,17 @@ export default function IronVaultAcademyUnlocked(){
   const [answers, setAnswers] = useState({});
   const [curQ, setCurQ] = useState(0);
   const [revealed, setRevealed] = useState(false);
+  const [showReadyHelp, setShowReadyHelp] = useState(false);
+
+  useEffect(() => {
+    if (ready) {
+      setShowReadyHelp(false);
+      return;
+    }
+
+    const timeout = setTimeout(() => setShowReadyHelp(true), 5000);
+    return () => clearTimeout(timeout);
+  }, [ready]);
 
   // ── Computed ──
   const totalXP = progress.reduce((s,p,i)=>s+(p.passed?MODULES[i].xpReward:0),0);
@@ -526,7 +537,33 @@ export default function IronVaultAcademyUnlocked(){
   const letters=["A","B","C","D"];
 
   // ── Auth gate ──
-  if(!ready) return null;
+  if(!ready){
+    return(
+      <div className="iv">
+        <style>{CSS}</style>
+        <div style={{minHeight:"100vh",display:"grid",placeItems:"center",padding:"40px 20px",position:"relative",zIndex:1}}>
+          <div style={{maxWidth:560,width:"100%",background:"#0F0F0F",border:"1px solid rgba(123,47,190,0.3)",borderRadius:6,padding:"40px 32px",textAlign:"center"}}>
+            <div className="iv-dot" style={{margin:"0 auto 16px"}}/>
+            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:34,letterSpacing:2,color:"#fff",marginBottom:10}}>
+              INITIALIZING MEMBER ACCESS
+            </div>
+            <p style={{fontSize:14,color:"#777",lineHeight:1.7}}>
+              Connecting to secure sign-in provider...
+            </p>
+            {showReadyHelp && (
+              <div style={{marginTop:18,padding:"14px 16px",background:"#111",border:"1px solid #1A1A1A",borderRadius:4,textAlign:"left",fontSize:12,color:"#999",lineHeight:1.6}}>
+                <div style={{color:"#AAFF00",fontFamily:"'Space Mono',monospace",fontSize:10,letterSpacing:1,marginBottom:6}}>TROUBLESHOOT</div>
+                <div>Privy initialization is taking longer than expected.</div>
+                <div>1. Confirm this exact domain is allowed in your Privy app settings.</div>
+                <div>2. Disable ad/privacy blockers for this site.</div>
+                <div>3. Hard refresh and retry.</div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
   if(!authenticated){
     return(
       <div className="iv">
