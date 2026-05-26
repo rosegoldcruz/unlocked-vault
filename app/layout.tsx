@@ -1,8 +1,8 @@
-import type { Metadata } from "next"
+ï»¿import type { Metadata } from "next"
 import Providers from "./providers"
 
 export const metadata: Metadata = {
-  title: "Iron Vault — Member Academy",
+  title: "Iron Vault - Member Academy",
   description: "Founding member access to the full Iron Vault financial education curriculum.",
 }
 
