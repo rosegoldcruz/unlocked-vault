@@ -1,6 +1,6 @@
 # Iron Vault Member Academy
 
-Founding member / existing investor access portal.  
+Member / existing investor access portal.  
 **All 6 modules unlocked** — no payment wall.
 
 Live at → `member.ironvaulttoken.com`
@@ -37,6 +37,6 @@ npm run dev
 |---|---|---|
 | Payment check | ✅ Yes — `/api/check-payment` | ❌ None |
 | Modules available | Only purchased ones | All 6 immediately |
-| Banner | None | "FOUNDING MEMBER — ALL 6 MODULES UNLOCKED" |
+| Banner | None | "MEMBER — ALL 6 MODULES UNLOCKED" |
 | Sequential quiz lock | ✅ Yes | ✅ Yes |
-| Audience | New investors | Founding members |
+| Audience | New investors | Members |

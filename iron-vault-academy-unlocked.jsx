@@ -3,7 +3,7 @@
 /**
  * iron-vault-academy-unlocked.jsx
  *
- * UNLOCKED VARIANT — for existing investors / founding members.
+ * UNLOCKED VARIANT — for existing investors / members.
  * - No payment check. No redirect to /learn/pay.
  * - All 6 modules accessible immediately after Privy login.
  * - Module sequencing still enforced (must pass quiz to unlock next module).
@@ -188,7 +188,7 @@ const MODULES = [
     lessons: [
       { title: "Stablecoins & Real-World Asset Backing", content: [{ type: "heading", text: "Stability in a volatile world" }, { type: "body", text: "Stablecoins are digital assets designed to maintain a stable value — usually pegged to the U.S. dollar. They allow you to move money globally in seconds, earn yield on-chain, and settle transactions without cryptocurrency volatility." }, { type: "list", items: ["Cash-backed (USDC, USDT) — dollar reserves held by a custodian", "Government security-backed — short-term treasuries as collateral", "Crypto-overcollateralized (DAI) — crypto reserves exceeding the issued value", "Algorithmic (historically high-risk — see Terra/Luna 2022)"] }, { type: "callout", text: "Real-World Asset (RWA) tokens go further — connecting on-chain digital tokens directly to real estate, bonds, invoices, or other physical assets. This is the bridge between traditional finance and decentralized infrastructure. It's where Iron Vault operates." }, { type: "vault", title: "VAULT SECRET: Yield on Stablecoins", text: "While your bank pays 0.01% on savings, DeFi protocols currently offer 4-8% APY on stablecoin deposits. Platforms like Aave and Compound allow you to lend stablecoins to borrowers who over-collateralize with crypto. The yield differential is real and significant." }, { type: "action", text: "Research one stablecoin. Write how it maintains its peg, what backs it, and what risks exist if that backing fails." }] },
       { title: "Revenue-Sharing Models & How to Evaluate Them", content: [{ type: "heading", text: "When tokens share real economics — and when they're lying" }, { type: "body", text: "Some token ecosystems distribute a portion of real platform revenue to holders — through fee sharing, staking rewards, treasury distributions, or asset-generated income. These models can be powerful when real economics exist." }, { type: "callout", text: "The critical question: Where does the money actually come from? If the answer is 'new investor deposits' — that's not revenue sharing. That's a Ponzi structure. Real revenue comes from external economic activity." }, { type: "vault", title: "VAULT SECRET: The LLC + On-Chain Income Structure", text: "Sophisticated Web3 operators structure their token income through LLCs, receive distributions as business income, and deploy that capital into additional assets. Business income has deductions available that personal income does not." }, { type: "action", text: "Write the difference between 'real revenue' and 'speculative hype' in your own words. Then apply that test to three projects you've heard of." }] },
-      { title: "Token Utility vs Speculation — Know What You're Buying", content: [{ type: "heading", text: "Utility makes assets. Speculation makes bubbles." }, { type: "body", text: "Utility means a token enables something real — access, payments, governance, fee reduction, network usage. Speculation means buying because you expect someone else to pay more later." }, { type: "callout", text: "A useful diagnostic: if the founding team disappeared tomorrow, would the token still have value? Strong utility tokens power systems that exist independent of any team." }, { type: "vault", title: "VAULT SECRET: The Accredited Investor Wall", text: "The most lucrative investment opportunities are legally restricted to 'accredited investors.' Tokenization is starting to break this wall. Real estate syndications on-chain with $500 minimums. Private credit accessible to retail. The democratization is real." }, { type: "action", text: "Choose one token. List every use case you can verify. If speculation is the only story, write that honestly." }] },
+      { title: "Token Utility vs Speculation — Know What You're Buying", content: [{ type: "heading", text: "Utility makes assets. Speculation makes bubbles." }, { type: "body", text: "Utility means a token enables something real — access, payments, governance, fee reduction, network usage. Speculation means buying because you expect someone else to pay more later." }, { type: "callout", text: "A useful diagnostic: if the team disappeared tomorrow, would the token still have value? Strong utility tokens power systems that exist independent of any team." }, { type: "vault", title: "VAULT SECRET: The Accredited Investor Wall", text: "The most lucrative investment opportunities are legally restricted to 'accredited investors.' Tokenization is starting to break this wall. Real estate syndications on-chain with $500 minimums. Private credit accessible to retail. The democratization is real." }, { type: "action", text: "Choose one token. List every use case you can verify. If speculation is the only story, write that honestly." }] },
       { title: "The Infinite Banking Concept — How the Wealthy Use Life Insurance", content: [{ type: "quote", text: "The greatest financial secret of the wealthy is not stocks or real estate. It's cash value life insurance.", author: "Nelson Nash, Becoming Your Own Banker" }, { type: "heading", text: "This is the play most financial advisors won't explain" }, { type: "body", text: "A properly structured Indexed Universal Life (IUL) or Whole Life insurance policy builds cash value over time. That cash value is an asset you can borrow against at low interest rates. The loan is not taxable income." }, { type: "callout", text: "The structure: You fund the policy aggressively. Cash value grows tax-deferred. You borrow against cash value to invest in real estate or business. Cash flow from those assets repays the loan. Your policy keeps compounding. Repeat." }, { type: "vault", title: "VAULT SECRET: The Trust + Life Insurance Strategy", text: "Place a $1M+ life insurance policy inside an Irrevocable Life Insurance Trust (ILIT). The trust owns the policy. The death benefit passes to heirs completely outside your estate, avoiding estate taxes. The trust can borrow against the cash value during your lifetime." }, { type: "action", text: "Research: What is an Irrevocable Life Insurance Trust (ILIT)? Write how it differs from owning a life insurance policy personally." }] },
       { title: "Tax Strategy — Legal Structures the Wealthy Actually Use", content: [{ type: "quote", text: "The avoidance of taxes is the only intellectual pursuit that carries any reward.", author: "John Maynard Keynes" }, { type: "heading", text: "Tax avoidance is legal. Tax evasion is not. Know the difference." }, { type: "body", text: "The U.S. tax code taxes different types of income at radically different rates. W-2 wages can be taxed up to 37% federal. Long-term capital gains are taxed at 0%, 15%, or 20%. The system is not neutral." }, { type: "callout", text: "The U.S. tax code taxes different types of income at radically different rates. W-2 wages can be taxed up to 37% federal. Long-term capital gains are taxed at 0%, 15%, or 20%. The system was designed with winners in mind." }, { type: "vault", title: "VAULT SECRET: The 'On-Paper-Broke' LLC Strategy", text: "A legitimately operating LLC can receive business income while the owner takes a modest personal salary. The LLC pays for business expenses — reducing taxable income. When personal income is low enough, the individual may qualify for certain tax credits and income-tested programs — all while the LLC holds and builds assets." }, { type: "action", text: "Research: What is the difference between a Schedule C sole proprietorship, an LLC, and an S-Corp? Write the tax treatment differences for each." }] },
       { title: "Building a Sustainable Strategy — Process Over Prediction", content: [{ type: "quote", text: "Compound interest is the eighth wonder of the world. He who understands it, earns it. He who doesn't, pays it.", author: "Albert Einstein (attributed)" }, { type: "heading", text: "A sustainable strategy looks boring from the outside" }, { type: "list", items: ["Learn deeply before committing capital", "Build the entity structure before building the portfolio", "Use only risk capital — money you could lose without crisis", "Dollar-cost average into volatile assets over time", "Diversify across asset classes, not just within crypto", "Hold for long enough to let compounding work", "Review quarterly — not daily"] }, { type: "callout", text: "The enemy of wealth is not the tax man or the market. It's impatience. The people who lost the most in every crash were those who needed the money tomorrow." }, { type: "vault", title: "VAULT SECRET: The Portfolio of the Informed", text: "A sophisticated participant in 2025 might hold: cash flow real estate (core wealth engine), index funds (passive market exposure), a small Bitcoin position (hard money hedge), a small allocation to tokenized RWA (asymmetric upside), and permanent life insurance cash value (tax-free growth, leverage vehicle)." }, { type: "action", text: "Write three personal rules your future self would thank you for. Make them behavioral — not about returns, about process." }] }
@@ -226,7 +226,7 @@ const MODULES = [
       { q: "The first structural financial move most people skip is:", options: ["Buying Bitcoin immediately", "Forming an LLC and opening a business checking account", "Moving to Puerto Rico", "Buying a rental property"], correct: 1 },
       { q: "Financial literacy is best viewed as:", options: ["A one-time certificate to earn", "An ongoing, lifelong strategic advantage", "Something only relevant if you're wealthy", "Unrelated to everyday decisions"], correct: 1 },
       { q: "Smart contract distributions are advantageous because:", options: ["They require bank approval to process", "They execute automatically, proportionally, and publicly on-chain", "They are only accessible to accredited investors", "They eliminate all tax obligations"], correct: 1 },
-      { q: "There are guarantees of returns, success, or appreciation in Iron Vault:", options: ["Yes, as stated in the smart contract", "Only for founding members", "No — participation involves real risk", "Yes, backed by government insurance"], correct: 2 },
+      { q: "There are guarantees of returns, success, or appreciation in Iron Vault:", options: ["Yes, as stated in the smart contract", "Only for members", "No — participation involves real risk", "Yes, backed by government insurance"], correct: 2 },
       { q: "The appropriate mindset after completing this course is:", options: ["Rush into all available investment opportunities immediately", "Share nothing — information is power to keep private", "Apply knowledge deliberately, structurally, and with full awareness of risk", "Wait until the market is perfect before acting"], correct: 2 }
     ]
   }
@@ -252,9 +252,9 @@ const CSS = `
   .iv-xp-val{font-family:'Space Mono',monospace;font-size:12px;color:#AAFF00;font-weight:700;}
   .iv-chip{display:flex;align-items:center;gap:8px;background:#141414;border:1px solid #1E1E1E;border-radius:20px;padding:5px 14px;font-size:12px;color:#555;cursor:pointer;transition:all 0.2s;}
   .iv-chip:hover{border-color:#7B2FBE;color:#fff;}
-  /* ── FOUNDING MEMBER BANNER ── */
-  .iv-founding-banner{background:linear-gradient(90deg,rgba(170,255,0,0.08),rgba(123,47,190,0.08));border-bottom:1px solid rgba(170,255,0,0.15);padding:10px 28px;display:flex;align-items:center;justify-content:center;gap:12px;}
-  .iv-founding-banner span{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;color:#AAFF00;}
+  /* ── MEMBER BANNER ── */
+  .iv-member-banner{background:linear-gradient(90deg,rgba(170,255,0,0.08),rgba(123,47,190,0.08));border-bottom:1px solid rgba(170,255,0,0.15);padding:10px 28px;display:flex;align-items:center;justify-content:center;gap:12px;}
+  .iv-member-banner span{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;color:#AAFF00;}
   .iv-hub{min-height:100vh;position:relative;z-index:1;}
   .iv-wrap{max-width:1080px;margin:0 auto;padding:44px 28px;}
   .iv-eyebrow{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:3px;color:#AAFF00;margin-bottom:10px;}
@@ -383,7 +383,7 @@ const CSS = `
     .iv-chip{display:none;}
     .iv-quiz-box{flex-direction:column;align-items:flex-start;}
     .iv-results-btns{flex-direction:column;}
-    .iv-founding-banner{padding:10px 16px;}
+    .iv-member-banner{padding:10px 16px;}
   }
 `;
 
@@ -572,10 +572,10 @@ export default function IronVaultAcademyUnlocked(){
           <div style={{maxWidth:520,width:"100%",background:"#0F0F0F",border:"1px solid rgba(123,47,190,0.3)",borderRadius:6,padding:"48px 40px",textAlign:"center"}}>
             <div className="iv-dot" style={{margin:"0 auto 20px"}}/>
             <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:44,letterSpacing:2,color:"#fff",marginBottom:10}}>
-              FOUNDING MEMBER<br/><span style={{color:"#AAFF00"}}>ACCESS VAULT</span>
+              MEMBER<br/><span style={{color:"#AAFF00"}}>ACCESS VAULT</span>
             </div>
             <p style={{fontSize:14,color:"#555",lineHeight:1.7,marginBottom:28}}>
-              All 6 modules unlocked for founding members. Sign in to access the full curriculum.
+              All 6 modules unlocked for members. Sign in to access the full curriculum.
             </p>
             <button
               style={{width:"100%",background:"#AAFF00",border:"none",borderRadius:3,padding:16,color:"#080808",fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:2,cursor:"pointer"}}
@@ -594,9 +594,9 @@ export default function IronVaultAcademyUnlocked(){
     return(
       <div className="iv">
         <style>{CSS}</style>
-        {/* Founding member banner */}
-        <div className="iv-founding-banner">
-          <span>🔐 FOUNDING MEMBER</span>
+        {/* Member banner */}
+        <div className="iv-member-banner">
+          <span>🔐 MEMBER</span>
           <span style={{color:"#555",fontSize:8,letterSpacing:1}}>·</span>
           <span>ALL 6 MODULES UNLOCKED</span>
           <span style={{color:"#555",fontSize:8,letterSpacing:1}}>·</span>
@@ -615,9 +615,9 @@ export default function IronVaultAcademyUnlocked(){
         </header>
         <div className="iv-hub">
           <div className="iv-wrap">
-            <div className="iv-eyebrow">▸ FOUNDING MEMBER — FULL CURRICULUM ACCESS</div>
+            <div className="iv-eyebrow">▸ MEMBER — FULL CURRICULUM ACCESS</div>
             <h1 className="iv-h1">Your Vault<br/>Dashboard</h1>
-            <p className="iv-sub">All 6 modules are unlocked as part of your founding member position. Complete each module and pass the quiz at 8/10 to earn XP and unlock the next level.</p>
+            <p className="iv-sub">All 6 modules are unlocked as part of your member position. Complete each module and pass the quiz at 8/10 to earn XP and unlock the next level.</p>
             <div className="iv-stats">
               <div className="iv-stat"><div className="iv-stat-l">VAULT XP</div><div className="iv-stat-v">{totalXP.toLocaleString()}</div><div className="iv-stat-u">of {TOTAL_XP.toLocaleString()} total</div></div>
               <div className="iv-stat"><div className="iv-stat-l">MODULES PASSED</div><div className="iv-stat-v">{modsDone}</div><div className="iv-stat-u">of {MODULES.length}</div></div>
@@ -668,8 +668,8 @@ export default function IronVaultAcademyUnlocked(){
     return(
       <div className="iv">
         <style>{CSS}</style>
-        <div className="iv-founding-banner">
-          <span>🔐 FOUNDING MEMBER</span>
+        <div className="iv-member-banner">
+          <span>🔐 MEMBER</span>
           <span style={{color:"#555",fontSize:8}}>·</span>
           <span>ALL 6 MODULES UNLOCKED</span>
         </div>

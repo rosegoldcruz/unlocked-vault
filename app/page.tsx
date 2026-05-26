@@ -3,7 +3,7 @@
 import IronVaultAcademyUnlocked from "@/iron-vault-academy-unlocked"
 
 /**
- * member.ironvaulttoken.com — founding member / existing investor academy.
+ * member.ironvaulttoken.com — member / existing investor academy.
  * No payment wall. All 6 modules unlocked immediately after Privy login.
  */
 export default function MemberPage() {
