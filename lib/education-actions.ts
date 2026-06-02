@@ -33,35 +33,73 @@ type QuizResultRow = {
   attempted_at: string
 }
 
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+function getStableMemberEmail(userId: string) {
+  const digest = createHash("sha1").update(`iron-vault-member:${userId}`).digest("hex")
+  return `privy_${digest.slice(0, 24)}@member.ironvault.local`
+}
 
-function normalizeUserId(userId: string) {
-  if (UUID_REGEX.test(userId)) {
-    return userId
+async function resolveProgressUserId(userId: string) {
+  const memberEmail = getStableMemberEmail(userId)
+
+  const { data: createdUserData, error: createUserError } = await admin.auth.admin.createUser({
+    email: memberEmail,
+    email_confirm: true,
+    user_metadata: {
+      external_user_id: userId,
+      provider: "privy",
+    },
+  })
+
+  let resolvedUserId = createdUserData?.user?.id
+
+  if (!resolvedUserId) {
+    const alreadyExists = createUserError?.message?.toLowerCase().includes("already")
+
+    if (!alreadyExists) {
+      throw new Error(createUserError?.message ?? "Failed to resolve member identity")
+    }
+
+    const { data: usersData, error: listUsersError } = await admin.auth.admin.listUsers({
+      page: 1,
+      perPage: 1000,
+    })
+
+    if (listUsersError) {
+      throw new Error(listUsersError.message)
+    }
+
+    const existingUser = usersData?.users.find((user) => user.email === memberEmail)
+    if (!existingUser?.id) {
+      throw new Error("Failed to find existing member auth user")
+    }
+
+    resolvedUserId = existingUser.id
   }
 
-  const namespace = "iron-vault-progress"
-  const hash = createHash("sha1").update(`${namespace}:${userId}`).digest("hex")
-  const raw = hash.slice(0, 32).split("")
+  const { error: profileError } = await admin.from("profiles").upsert(
+    { id: resolvedUserId },
+    { onConflict: "id", ignoreDuplicates: true },
+  )
 
-  raw[12] = "5"
-  raw[16] = ((parseInt(raw[16], 16) & 0x3) | 0x8).toString(16)
+  if (profileError) {
+    throw new Error(profileError.message)
+  }
 
-  return `${raw.slice(0, 8).join("")}-${raw.slice(8, 12).join("")}-${raw.slice(12, 16).join("")}-${raw.slice(16, 20).join("")}-${raw.slice(20, 32).join("")}`
+  return resolvedUserId
 }
 
 export async function getProgress(userId: string) {
-  const normalizedUserId = normalizeUserId(userId)
+  const resolvedUserId = await resolveProgressUserId(userId)
 
   const [{ data: lessons, error: lessonsError }, { data: quizRows, error: quizError }] = await Promise.all([
     admin
       .from("progress")
       .select("module_index, lesson_index")
-      .eq("user_id", normalizedUserId),
+      .eq("user_id", resolvedUserId),
     admin
       .from("quiz_results")
       .select("module_index, score, passed, attempted_at")
-      .eq("user_id", normalizedUserId)
+      .eq("user_id", resolvedUserId)
       .order("attempted_at", { ascending: false }),
   ])
 
@@ -92,11 +130,11 @@ export async function getProgress(userId: string) {
 }
 
 export async function markLessonComplete(userId: string, moduleIndex: number, lessonIndex: number) {
-  const normalizedUserId = normalizeUserId(userId)
+  const resolvedUserId = await resolveProgressUserId(userId)
 
   const { error } = await admin.from("progress").upsert(
     {
-      user_id: normalizedUserId,
+      user_id: resolvedUserId,
       module_index: moduleIndex,
       lesson_index: lessonIndex,
     },
@@ -112,10 +150,10 @@ export async function markLessonComplete(userId: string, moduleIndex: number, le
 }
 
 export async function saveQuizResult(userId: string, moduleIndex: number, score: number, passed: boolean) {
-  const normalizedUserId = normalizeUserId(userId)
+  const resolvedUserId = await resolveProgressUserId(userId)
 
   const { error } = await admin.from("quiz_results").insert({
-    user_id: normalizedUserId,
+    user_id: resolvedUserId,
     module_index: moduleIndex,
     score,
     passed,
