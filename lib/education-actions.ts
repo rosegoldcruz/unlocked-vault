@@ -1,5 +1,6 @@
 "use server"
 
+import { createHash } from "node:crypto"
 import { createClient } from "@supabase/supabase-js"
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -32,16 +33,35 @@ type QuizResultRow = {
   attempted_at: string
 }
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
+function normalizeUserId(userId: string) {
+  if (UUID_REGEX.test(userId)) {
+    return userId
+  }
+
+  const namespace = "iron-vault-progress"
+  const hash = createHash("sha1").update(`${namespace}:${userId}`).digest("hex")
+  const raw = hash.slice(0, 32).split("")
+
+  raw[12] = "5"
+  raw[16] = ((parseInt(raw[16], 16) & 0x3) | 0x8).toString(16)
+
+  return `${raw.slice(0, 8).join("")}-${raw.slice(8, 12).join("")}-${raw.slice(12, 16).join("")}-${raw.slice(16, 20).join("")}-${raw.slice(20, 32).join("")}`
+}
+
 export async function getProgress(userId: string) {
+  const normalizedUserId = normalizeUserId(userId)
+
   const [{ data: lessons, error: lessonsError }, { data: quizRows, error: quizError }] = await Promise.all([
     admin
       .from("progress")
       .select("module_index, lesson_index")
-      .eq("user_id", userId),
+      .eq("user_id", normalizedUserId),
     admin
       .from("quiz_results")
       .select("module_index, score, passed, attempted_at")
-      .eq("user_id", userId)
+      .eq("user_id", normalizedUserId)
       .order("attempted_at", { ascending: false }),
   ])
 
@@ -72,9 +92,11 @@ export async function getProgress(userId: string) {
 }
 
 export async function markLessonComplete(userId: string, moduleIndex: number, lessonIndex: number) {
+  const normalizedUserId = normalizeUserId(userId)
+
   const { error } = await admin.from("progress").upsert(
     {
-      user_id: userId,
+      user_id: normalizedUserId,
       module_index: moduleIndex,
       lesson_index: lessonIndex,
     },
@@ -90,8 +112,10 @@ export async function markLessonComplete(userId: string, moduleIndex: number, le
 }
 
 export async function saveQuizResult(userId: string, moduleIndex: number, score: number, passed: boolean) {
+  const normalizedUserId = normalizeUserId(userId)
+
   const { error } = await admin.from("quiz_results").insert({
-    user_id: userId,
+    user_id: normalizedUserId,
     module_index: moduleIndex,
     score,
     passed,
