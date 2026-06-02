@@ -524,6 +524,11 @@ export default function IronVaultAcademyUnlocked(){
     };
   }, [ready, authenticated, user?.id]);
 
+  useEffect(() => {
+    if (view !== "lesson") return;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [view, lessonIdx]);
+
   // ── Computed ──
   const totalXP = progress.reduce((s,p,i)=>s+(p.passed?MODULES[i].xpReward:0),0);
   const modsDone = progress.filter(p=>p.passed).length;
