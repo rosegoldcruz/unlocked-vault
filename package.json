@@ -16,7 +16,6 @@
     "react-dom": "^19"
   },
   "devDependencies": {
-    "@next/swc-win32-x64-msvc": "^16.2.7",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
