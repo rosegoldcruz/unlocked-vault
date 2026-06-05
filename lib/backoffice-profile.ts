@@ -16,6 +16,13 @@ function buildReferralCode(privyUserId: string, attempt: number) {
   return `IV${digest.toUpperCase()}`
 }
 
+function throwIfSupabaseError(error: { message?: string; code?: string; details?: string; hint?: string } | null) {
+  if (!error) return
+  const wrapped = new Error(error.message ?? 'Supabase request failed')
+  wrapped.name = error.code ?? 'SupabaseError'
+  throw wrapped
+}
+
 export type BackofficeProfile = {
   id: string
   privy_user_id: string
@@ -36,11 +43,12 @@ export async function ensureUserProfile(
 ): Promise<BackofficeProfile> {
   const supabase = getSupabaseAdmin()
 
-  const { data: existing } = await supabase
+  const { data: existing, error: readError } = await supabase
     .from('iv_user_profiles')
     .select('*')
     .eq('privy_user_id', privyUserId)
     .maybeSingle<BackofficeProfile>()
+  throwIfSupabaseError(readError)
 
   if (existing?.referral_code) {
     const patch: Partial<BackofficeProfile> = {}
@@ -49,7 +57,8 @@ export async function ensureUserProfile(
     if (params?.tier && params.tier !== existing.current_tier) { patch.current_tier = params.tier; patch.role = tierToRole(params.tier) }
     if (Object.keys(patch).length === 0) return existing
     const { data, error } = await supabase.from('iv_user_profiles').update(patch).eq('privy_user_id', privyUserId).select('*').single<BackofficeProfile>()
-    if (error) throw error
+    throwIfSupabaseError(error)
+    if (!data) throw new Error('Failed to load profile')
     return data
   }
 
@@ -66,7 +75,7 @@ export async function ensureUserProfile(
     }
     const { data, error } = await supabase.from('iv_user_profiles').upsert(payload, { onConflict: 'privy_user_id' }).select('*').single<BackofficeProfile>()
     if (!error && data) return data
-    if (error?.code !== '23505') throw error
+    if (error?.code !== '23505') throwIfSupabaseError(error)
   }
 
   throw new Error('Failed to generate unique referral code')
