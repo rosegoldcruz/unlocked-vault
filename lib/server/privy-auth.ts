@@ -16,7 +16,12 @@ function getBearerToken(req: NextRequest): string | null {
 
 async function getPrivyUser(accessToken: string) {
   const client = new PrivyClient(requireEnv('NEXT_PUBLIC_PRIVY_APP_ID'), requireEnv('PRIVY_APP_SECRET'))
-  const claims = await client.verifyAuthToken(accessToken)
+  let claims: Awaited<ReturnType<PrivyClient['verifyAuthToken']>>
+  try {
+    claims = await client.verifyAuthToken(accessToken)
+  } catch {
+    throw new Error('Unauthorized: invalid bearer token')
+  }
   const user = await client.getUser(claims.userId)
   return { claims, user }
 }
