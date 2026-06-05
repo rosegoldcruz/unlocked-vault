@@ -10,6 +10,12 @@ export default function AccessRequiredPage() {
         </p>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           <Link
+            href="/redeem-invite"
+            className="inline-flex items-center justify-center rounded-md bg-zinc-100 px-5 py-2.5 text-sm font-semibold text-zinc-900 hover:bg-zinc-200"
+          >
+            Redeem Invite
+          </Link>
+          <Link
             href="https://ironvaulttoken.com/learn"
             className="inline-flex items-center justify-center rounded-md bg-lime-300 px-5 py-2.5 text-sm font-semibold text-zinc-900 hover:bg-lime-200"
           >
