@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getProgress, markLessonComplete, saveQuizResult } from "@/lib/education-actions"
 import { requireMemberAccess } from "@/lib/server/member-access"
+import { getUserModuleCompletionStatus } from "@/lib/server/module-completion"
+import { recordVerifiedModuleCompletion } from "@/lib/server/reward-milestones"
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0
@@ -11,6 +13,43 @@ function mapAccessErrorToStatus(error: unknown): number {
   if (message.startsWith("Unauthorized:")) return 401
   if (message.startsWith("Forbidden:")) return 403
   return 500
+}
+
+async function syncRewardsForUser(privyUserId: string) {
+  const completionStatuses = await getUserModuleCompletionStatus(privyUserId)
+  const completedModules = completionStatuses.filter((status) => status.completed).map((status) => status.moduleNumber)
+
+  const eligibleMilestoneSet = new Set<number>()
+  const queuedMilestoneSet = new Set<number>()
+  let walletMissing = false
+
+  for (const moduleNumber of completedModules) {
+    const result = await recordVerifiedModuleCompletion({
+      privyUserId,
+      moduleNumber,
+      source: "academy",
+      metadata: {
+        trigger: "education-progress",
+      },
+    })
+
+    for (const milestone of result.eligibleMilestones) {
+      eligibleMilestoneSet.add(milestone)
+    }
+
+    for (const milestone of result.queuedMilestones) {
+      queuedMilestoneSet.add(milestone)
+    }
+
+    walletMissing = walletMissing || result.walletMissing
+  }
+
+  return {
+    completedModules,
+    eligibleMilestones: Array.from(eligibleMilestoneSet).sort((a, b) => a - b),
+    queuedMilestones: Array.from(queuedMilestoneSet).sort((a, b) => a - b),
+    walletMissing,
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -60,7 +99,8 @@ export async function POST(req: NextRequest) {
       }
 
       await markLessonComplete(privyUserId, moduleIndex, lessonIndex)
-      return NextResponse.json({ success: true })
+      const rewardSummary = await syncRewardsForUser(privyUserId)
+      return NextResponse.json({ success: true, ...rewardSummary })
     }
 
     if (payload.action === "quiz") {
@@ -73,7 +113,8 @@ export async function POST(req: NextRequest) {
       }
 
       await saveQuizResult(privyUserId, moduleIndex, score, passed)
-      return NextResponse.json({ success: true })
+      const rewardSummary = await syncRewardsForUser(privyUserId)
+      return NextResponse.json({ success: true, ...rewardSummary })
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 })
