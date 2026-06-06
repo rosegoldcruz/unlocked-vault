@@ -38,7 +38,7 @@ function getStableMemberEmail(privyUserId: string) {
   return `privy_${digest.slice(0, 24)}@member.ironvault.local`
 }
 
-async function resolveProgressUserId(privyUserId: string) {
+export async function resolveEducationAuthUserId(privyUserId: string) {
   const memberEmail = getStableMemberEmail(privyUserId)
 
   const { data: createdUserData, error: createUserError } = await admin.auth.admin.createUser({
@@ -89,7 +89,7 @@ async function resolveProgressUserId(privyUserId: string) {
 }
 
 export async function getProgress(privyUserId: string) {
-  const resolvedUserId = await resolveProgressUserId(privyUserId)
+  const resolvedUserId = await resolveEducationAuthUserId(privyUserId)
 
   const [{ data: lessons, error: lessonsError }, { data: quizRows, error: quizError }] = await Promise.all([
     admin
@@ -130,7 +130,7 @@ export async function getProgress(privyUserId: string) {
 }
 
 export async function markLessonComplete(privyUserId: string, moduleIndex: number, lessonIndex: number) {
-  const resolvedUserId = await resolveProgressUserId(privyUserId)
+  const resolvedUserId = await resolveEducationAuthUserId(privyUserId)
 
   const { error } = await admin.from("progress").upsert(
     {
@@ -150,7 +150,7 @@ export async function markLessonComplete(privyUserId: string, moduleIndex: numbe
 }
 
 export async function saveQuizResult(privyUserId: string, moduleIndex: number, score: number, passed: boolean) {
-  const resolvedUserId = await resolveProgressUserId(privyUserId)
+  const resolvedUserId = await resolveEducationAuthUserId(privyUserId)
 
   const { error } = await admin.from("quiz_results").insert({
     user_id: resolvedUserId,
