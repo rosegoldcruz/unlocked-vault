@@ -73,6 +73,7 @@ export function AdminRewardsDashboard() {
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [actionJobId, setActionJobId] = useState<string | null>(null)
 
   const fetchJson = useCallback(async (path: string) => {
     const token = await getAccessToken()
@@ -135,13 +136,29 @@ export function AdminRewardsDashboard() {
   }, [jobs, search])
 
   async function retryJob(id: string) {
-    await fetchJson(`/api/admin/rewards/payout-jobs/${id}/retry`)
-    await loadData()
+    setActionJobId(id)
+    setError(null)
+    try {
+      await fetchJson(`/api/admin/rewards/payout-jobs/${id}/retry`)
+      await loadData()
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to retry payout job')
+    } finally {
+      setActionJobId(null)
+    }
   }
 
   async function cancelJob(id: string) {
-    await fetchJson(`/api/admin/rewards/payout-jobs/${id}/cancel`)
-    await loadData()
+    setActionJobId(id)
+    setError(null)
+    try {
+      await fetchJson(`/api/admin/rewards/payout-jobs/${id}/cancel`)
+      await loadData()
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to cancel payout job')
+    } finally {
+      setActionJobId(null)
+    }
   }
 
   return (
@@ -187,6 +204,13 @@ export function AdminRewardsDashboard() {
             placeholder="Search user, wallet, or job id"
             className="min-w-[260px] flex-1 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
           />
+
+          <button
+            onClick={() => void loadData()}
+            className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-200"
+          >
+            Refresh
+          </button>
         </div>
       </div>
 
@@ -212,14 +236,22 @@ export function AdminRewardsDashboard() {
                   </span>
 
                   {job.status === 'failed' ? (
-                    <button onClick={() => void retryJob(job.id)} className="rounded-md border border-lime-400/40 bg-lime-500/10 px-3 py-1.5 text-xs text-lime-200">
-                      Retry
+                    <button
+                      onClick={() => void retryJob(job.id)}
+                      disabled={actionJobId === job.id}
+                      className="rounded-md border border-lime-400/40 bg-lime-500/10 px-3 py-1.5 text-xs text-lime-200 disabled:opacity-50"
+                    >
+                      {actionJobId === job.id ? 'Retrying...' : 'Retry'}
                     </button>
                   ) : null}
 
                   {(job.status === 'failed' || job.status === 'queued' || job.status === 'processing') ? (
-                    <button onClick={() => void cancelJob(job.id)} className="rounded-md border border-rose-400/40 bg-rose-500/10 px-3 py-1.5 text-xs text-rose-200">
-                      Cancel
+                    <button
+                      onClick={() => void cancelJob(job.id)}
+                      disabled={actionJobId === job.id}
+                      className="rounded-md border border-rose-400/40 bg-rose-500/10 px-3 py-1.5 text-xs text-rose-200 disabled:opacity-50"
+                    >
+                      {actionJobId === job.id ? 'Canceling...' : 'Cancel'}
                     </button>
                   ) : null}
                 </div>
