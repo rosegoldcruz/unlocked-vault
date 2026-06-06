@@ -12,6 +12,7 @@ import {
   Star,
   LifeBuoy,
   UserCircle2,
+  Shield,
   LogOut,
   Menu,
   X,
@@ -37,11 +38,16 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/account', label: 'Account', icon: UserCircle2 },
 ]
 
-function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+const ADMIN_NAV_ITEMS: NavItem[] = [
+  { href: '/admin/rewards', label: 'Admin Rewards', icon: Shield },
+]
+
+function NavLinks({ pathname, onNavigate, isAdmin }: { pathname: string; onNavigate?: () => void; isAdmin: boolean }) {
   const { logout } = usePrivy()
+  const navItems = isAdmin ? [...NAV_ITEMS, ...ADMIN_NAV_ITEMS] : NAV_ITEMS
   return (
     <nav className="space-y-1">
-      {NAV_ITEMS.map((item) => {
+      {navItems.map((item) => {
         const Icon = item.icon
         const isActive = pathname === item.href || (pathname.startsWith(item.href + '/') && item.href !== '/')
         return (
@@ -77,6 +83,7 @@ export function BackofficeLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const { profile } = useBackofficeAuth()
+  const isAdmin = profile?.role === 'ADMIN'
 
   return (
     <div className="min-h-screen bg-[#070707] text-zinc-100">
@@ -89,7 +96,7 @@ export function BackofficeLayout({ children }: { children: ReactNode }) {
             <p className="text-xs uppercase tracking-[0.24em] text-lime-300">Iron Vault</p>
             <h1 className="mt-1 text-base font-semibold text-zinc-100">Member Portal</h1>
           </div>
-          <NavLinks pathname={pathname} />
+          <NavLinks pathname={pathname} isAdmin={isAdmin} />
           <div className="mt-auto rounded-lg border border-zinc-800 bg-zinc-900/60 p-3">
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-400 mb-1">Tier</p>
             <p className="text-sm text-zinc-100">{profile?.current_tier ?? 'MEMBER'}</p>
@@ -142,7 +149,7 @@ export function BackofficeLayout({ children }: { children: ReactNode }) {
               <p className="text-zinc-100">{profile?.email ?? 'No email on file'}</p>
               <p className="mt-1 text-zinc-400">{profile?.role ?? 'MEMBER'} · {profile?.current_tier ?? 'MEMBER'}</p>
             </div>
-            <NavLinks pathname={pathname} onNavigate={() => setMobileNavOpen(false)} />
+            <NavLinks pathname={pathname} onNavigate={() => setMobileNavOpen(false)} isAdmin={isAdmin} />
           </div>
         </div>
       )}
