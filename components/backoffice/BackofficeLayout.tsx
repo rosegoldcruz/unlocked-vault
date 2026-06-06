@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   GraduationCap,
   Vault,
+  Coins,
   Users,
   Star,
   LifeBuoy,
@@ -28,6 +29,7 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/academy', label: 'Academy', icon: GraduationCap },
+  { href: '/rewards', label: 'Rewards', icon: Coins },
   { href: '/vault', label: 'Vault', icon: Vault },
   { href: '/referrals', label: 'Referrals', icon: Users },
   { href: '/vip', label: 'VIP', icon: Star },
