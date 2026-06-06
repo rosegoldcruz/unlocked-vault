@@ -20,7 +20,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         },
       }}
     >
-      {children}
+      <div className="min-h-screen bg-slate-950 text-slate-50">{children}</div>
     </PrivyProvider>
   )
 }

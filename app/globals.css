@@ -1,3 +1,20 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+html,
+body {
+	background: #020617;
+	color: #f8fafc;
+	min-height: 100%;
+}
+
+body {
+	margin: 0;
+}
+
+#__next,
+[data-nextjs-root] {
+	min-height: 100%;
+	background: #020617;
+}

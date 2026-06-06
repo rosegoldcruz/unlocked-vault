@@ -18,8 +18,10 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   }
 
   return (
-    <BackofficeProvider>
-      <BackofficeLayout>{children}</BackofficeLayout>
-    </BackofficeProvider>
+    <div className="min-h-screen bg-[#070707] text-zinc-100">
+      <BackofficeProvider>
+        <BackofficeLayout>{children}</BackofficeLayout>
+      </BackofficeProvider>
+    </div>
   )
 }
