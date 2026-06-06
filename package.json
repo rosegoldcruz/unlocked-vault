@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "rewards:payout:dry-run": "tsx scripts/rewards-payout-dry-run.ts"
+    "rewards:payout:dry-run": "tsx scripts/rewards-payout-dry-run.ts",
+    "rewards:worker:once": "tsx scripts/reward-payout-worker.ts once",
+    "rewards:worker": "tsx scripts/reward-payout-worker.ts loop"
   },
   "dependencies": {
     "@privy-io/react-auth": "^3.22.1",
