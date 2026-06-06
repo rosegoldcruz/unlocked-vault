@@ -246,6 +246,142 @@ were read/written for any user, and the worker was not run in this pass.
 4. Production env deployment — runtime reward env values exist only in local `.env.local` and still
    need to be set in the target deployment provider.
 
+## Step 16C — Supabase Reward Schema Deployment
+
+Date: 2026-06-06
+
+Status: COMPLETE — schema deployed, tables verified, build passes
+
+### 1. Project confirmed
+
+- `pujoapdxuddaavuklueh` ("iron-vault-token", East US (Ohio)) — confirmed via `supabase projects list`
+  and `supabase/.temp/linked-project.json` after linking (`supabase link --project-ref
+  pujoapdxuddaavuklueh`).
+
+### 2. Migration method
+
+- `supabase db push` (CLI version `2.105.0`, run via `npx supabase`).
+
+### Pre-push conflict and resolution
+
+`supabase migration list` showed 3 remote-only versions with no local file —
+`20260420125802`, `20260424200921`, `20260602023030` — none of which ever existed in this repo's
+git history for `supabase/migrations/` (confirmed via `git log -- supabase/migrations/`, which shows
+only the 3 migrations below, added in commits `f1bd64c`, `a649a11`, `2b701d3`). They were applied to
+the remote DB outside this repo's tracked history (e.g. dashboard SQL editor).
+
+`supabase db push --dry-run` refused to proceed:
+
+```text
+Remote migration versions not found in local migrations directory.
+Make sure your local git repo is up-to-date. If the error persists, try repairing the migration
+history table: supabase migration repair --status reverted 20260420125802 20260424200921 20260602023030
+```
+
+Resolution (explicit user approval obtained before running): ran
+`supabase migration repair --status reverted 20260420125802 20260424200921 20260602023030` — a
+metadata-only mutation of the remote `supabase_migrations.schema_migrations` tracking table (does not
+touch any application table or row). Result: `Repaired migration history: [...] => reverted`. A
+follow-up `supabase migration list` then showed only the 3 expected local migrations as pending, and
+`db push --dry-run` cleanly listed exactly those 3 with no further conflicts.
+
+### 3. Migrations applied
+
+```text
+20260605042000_create_backoffice_tables.sql
+20260605121500_create_member_entitlements.sql
+20260605193000_create_reward_payout_tables.sql
+```
+
+`supabase db push` output (`[Y/n]` prompt accepted):
+
+```text
+Applying migration 20260605042000_create_backoffice_tables.sql...
+NOTICE (42710): extension "pgcrypto" already exists, skipping
+NOTICE (42P07): relation "iv_user_profiles" already exists, skipping
+NOTICE (42P07): relation "iv_user_positions" already exists, skipping
+NOTICE (42P07): relation "iv_referral_leads" already exists, skipping
+NOTICE (42P07): relation "iv_status_tickets" already exists, skipping
+NOTICE (42P07): relation "iv_referral_leads_privy_user_id_created_at_idx" already exists, skipping
+NOTICE (42P07): relation "iv_status_tickets_privy_user_id_created_at_idx" already exists, skipping
+Applying migration 20260605121500_create_member_entitlements.sql...
+NOTICE (42710): extension "pgcrypto" already exists, skipping
+NOTICE (00000): trigger "set_iv_member_entitlements_updated_at" ... does not exist, skipping
+Applying migration 20260605193000_create_reward_payout_tables.sql...
+NOTICE (42710): extension "pgcrypto" already exists, skipping
+NOTICE (00000): trigger "set_iv_module_completions_updated_at" ... does not exist, skipping
+NOTICE (00000): trigger "set_iv_reward_milestones_updated_at" ... does not exist, skipping
+NOTICE (00000): trigger "set_iv_payout_jobs_updated_at" ... does not exist, skipping
+NOTICE (00000): trigger "set_iv_payout_transactions_updated_at" ... does not exist, skipping
+Finished supabase db push.
+```
+
+The backoffice migration's `if not exists` / `or replace` / `drop ... if exists` guards made it fully
+idempotent against the pre-existing `iv_user_profiles`, `iv_user_positions`, `iv_referral_leads`, and
+`iv_status_tickets` tables — only NOTICEs (skips), zero errors, zero data touched. The two new
+migrations created all 6 entitlement/reward tables cleanly.
+
+A final `supabase migration list` shows local and remote fully in sync for all 3 versions
+(`20260605042000`, `20260605121500`, `20260605193000`).
+
+### 4. Tables verified (via `information_schema.tables`, metadata only)
+
+| Table | Exists |
+| --- | --- |
+| `iv_member_entitlements` | yes |
+| `iv_member_invites` | yes |
+| `iv_module_completions` | yes |
+| `iv_reward_milestones` | yes |
+| `iv_payout_jobs` | yes |
+| `iv_payout_transactions` | yes |
+
+### 5. RLS status (via `pg_tables`, metadata only)
+
+| Table | RLS enabled |
+| --- | --- |
+| `iv_member_entitlements` | yes |
+| `iv_member_invites` | yes |
+| `iv_module_completions` | yes |
+| `iv_reward_milestones` | yes |
+| `iv_payout_jobs` | yes |
+| `iv_payout_transactions` | yes |
+
+No application data rows were read or written at any point in this step — only schema metadata
+(`information_schema.tables`, `pg_tables`, migration history) was inspected.
+
+### 6. Build result
+
+`npm run build`: **PASS** — compiled successfully in 22.8s, all routes generated, exit 0. Only the
+two pre-existing, expected non-blocking warnings appeared (unchanged from Step 16B):
+`Module not found: '@farcaster/mini-app-solana'` (Privy optional dependency) and
+`bigint: Failed to load bindings, pure JS will be used` (native binding fallback).
+
+### 7. Remaining blockers
+
+1. **Create/confirm one controlled entitled test user** — the schema now exists, so the path
+   documented in Step 16B ("Path to unblock", step 2 — insert exactly one labeled
+   `iv_member_entitlements` row for a real, known identity) is now actionable. No such row has been
+   created yet; this remains a separate, explicit decision for the user to make/approve.
+2. **Re-run Step 16B** from Step 2 once that controlled test entitlement exists.
+3. **Complete modules 1-2 through the real server flow** — depends on (1) and (2).
+4. **Mainnet micro-payout** — still requires `IVT_REWARD_WALLET_SECRET_KEY` (funded signer) and
+   `IVT_PAYOUT_DRY_RUN=false`, neither configured here by design.
+5. **Production env deployment** — runtime reward env values still exist only in local `.env.local`
+   and still need to be set in the target deployment provider.
+
+### Confirmations (Step 16C)
+
+- Real transfer attempted: **no**
+- Fake signature created: **no**
+- Test data inserted: **no** (no rows created in any table — schema-only deployment)
+- App code modified: **no**
+- Auth modified: **no**
+- Privy modified: **no**
+- Reward worker logic modified: **no**
+- `.env.local` committed: **no**
+- `IVT_REWARD_WALLET_SECRET_KEY` added: **no**
+- `IVT_PAYOUT_DRY_RUN` changed: **no** (remains `true`)
+
 ## Production Ready
 
 PRODUCTION READY: NO
