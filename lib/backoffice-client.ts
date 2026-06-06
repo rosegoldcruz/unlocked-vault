@@ -28,8 +28,6 @@ export async function fetchBackofficeJson<T>(
   options: BackofficeRequestOptions = {},
 ): Promise<T> {
   const method = options.method ?? 'GET'
-  // Safe diagnostics — no token value logged, only presence and length
-  console.log(`[backoffice-client] ${method} ${path} | token present: ${Boolean(accessToken)} | token length: ${accessToken?.length ?? 0}`)
   const res = await fetch(path, {
     method,
     cache: options.cache ?? 'no-store',
@@ -39,7 +37,6 @@ export async function fetchBackofficeJson<T>(
     },
     body: options.body ? JSON.stringify(options.body) : undefined,
   })
-  console.log(`[backoffice-client] ${method} ${path} | response status: ${res.status}`)
 
   if (!res.ok) throw new Error(await readErrorMessage(res))
   return (await res.json()) as T
