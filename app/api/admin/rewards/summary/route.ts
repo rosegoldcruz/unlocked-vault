@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
         const amountRaw = (row as { amount_raw: string }).amount_raw
         if (!/^\d+$/.test(amountRaw)) return sum
         return sum + BigInt(amountRaw)
-      }, 0n)
+      }, BigInt(0))
       .toString()
 
     return NextResponse.json({
