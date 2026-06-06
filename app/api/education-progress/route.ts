@@ -1,46 +1,78 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getProgress, markLessonComplete, saveQuizResult } from "@/lib/education-actions"
+import { requireMemberAccess } from "@/lib/server/member-access"
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0
 }
 
+function mapAccessErrorToStatus(error: unknown): number {
+  const message = error instanceof Error ? error.message : ""
+  if (message.startsWith("Unauthorized:")) return 401
+  if (message.startsWith("Forbidden:")) return 403
+  return 500
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
-    const { action, userId } = body as { action?: string; userId?: string }
+    let body: unknown
 
-    if (!isNonEmptyString(userId)) {
-      return NextResponse.json({ error: "Missing userId" }, { status: 400 })
+    try {
+      body = await req.json()
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 })
     }
 
-    if (action === "get") {
-      const data = await getProgress(userId)
+    const payload = (body ?? {}) as {
+      action?: string
+      moduleIndex?: unknown
+      lessonIndex?: unknown
+      score?: unknown
+      passed?: unknown
+      userId?: unknown
+    }
+
+    if (!isNonEmptyString(payload.action)) {
+      return NextResponse.json({ error: "Invalid action" }, { status: 400 })
+    }
+
+    let privyUserId: string
+    try {
+      const access = await requireMemberAccess(req)
+      privyUserId = access.auth.privyUserId
+    } catch (error: unknown) {
+      const status = mapAccessErrorToStatus(error)
+      const message = error instanceof Error ? error.message : "Failed to verify member access"
+      return NextResponse.json({ error: message }, { status })
+    }
+
+    if (payload.action === "get") {
+      const data = await getProgress(privyUserId)
       return NextResponse.json(data)
     }
 
-    if (action === "lesson") {
-      const moduleIndex = Number(body?.moduleIndex)
-      const lessonIndex = Number(body?.lessonIndex)
+    if (payload.action === "lesson") {
+      const moduleIndex = Number(payload.moduleIndex)
+      const lessonIndex = Number(payload.lessonIndex)
 
       if (!Number.isInteger(moduleIndex) || !Number.isInteger(lessonIndex)) {
         return NextResponse.json({ error: "Invalid moduleIndex or lessonIndex" }, { status: 400 })
       }
 
-      await markLessonComplete(userId, moduleIndex, lessonIndex)
+      await markLessonComplete(privyUserId, moduleIndex, lessonIndex)
       return NextResponse.json({ success: true })
     }
 
-    if (action === "quiz") {
-      const moduleIndex = Number(body?.moduleIndex)
-      const score = Number(body?.score)
-      const passed = Boolean(body?.passed)
+    if (payload.action === "quiz") {
+      const moduleIndex = Number(payload.moduleIndex)
+      const score = Number(payload.score)
+      const passed = Boolean(payload.passed)
 
       if (!Number.isInteger(moduleIndex) || !Number.isInteger(score)) {
         return NextResponse.json({ error: "Invalid moduleIndex or score" }, { status: 400 })
       }
 
-      await saveQuizResult(userId, moduleIndex, score, passed)
+      await saveQuizResult(privyUserId, moduleIndex, score, passed)
       return NextResponse.json({ success: true })
     }
 

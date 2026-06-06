@@ -33,19 +33,19 @@ type QuizResultRow = {
   attempted_at: string
 }
 
-function getStableMemberEmail(userId: string) {
-  const digest = createHash("sha1").update(`iron-vault-member:${userId}`).digest("hex")
+function getStableMemberEmail(privyUserId: string) {
+  const digest = createHash("sha1").update(`iron-vault-member:${privyUserId}`).digest("hex")
   return `privy_${digest.slice(0, 24)}@member.ironvault.local`
 }
 
-async function resolveProgressUserId(userId: string) {
-  const memberEmail = getStableMemberEmail(userId)
+async function resolveProgressUserId(privyUserId: string) {
+  const memberEmail = getStableMemberEmail(privyUserId)
 
   const { data: createdUserData, error: createUserError } = await admin.auth.admin.createUser({
     email: memberEmail,
     email_confirm: true,
     user_metadata: {
-      external_user_id: userId,
+      external_user_id: privyUserId,
       provider: "privy",
     },
   })
@@ -88,8 +88,8 @@ async function resolveProgressUserId(userId: string) {
   return resolvedUserId
 }
 
-export async function getProgress(userId: string) {
-  const resolvedUserId = await resolveProgressUserId(userId)
+export async function getProgress(privyUserId: string) {
+  const resolvedUserId = await resolveProgressUserId(privyUserId)
 
   const [{ data: lessons, error: lessonsError }, { data: quizRows, error: quizError }] = await Promise.all([
     admin
@@ -129,8 +129,8 @@ export async function getProgress(userId: string) {
   }
 }
 
-export async function markLessonComplete(userId: string, moduleIndex: number, lessonIndex: number) {
-  const resolvedUserId = await resolveProgressUserId(userId)
+export async function markLessonComplete(privyUserId: string, moduleIndex: number, lessonIndex: number) {
+  const resolvedUserId = await resolveProgressUserId(privyUserId)
 
   const { error } = await admin.from("progress").upsert(
     {
@@ -149,8 +149,8 @@ export async function markLessonComplete(userId: string, moduleIndex: number, le
   }
 }
 
-export async function saveQuizResult(userId: string, moduleIndex: number, score: number, passed: boolean) {
-  const resolvedUserId = await resolveProgressUserId(userId)
+export async function saveQuizResult(privyUserId: string, moduleIndex: number, score: number, passed: boolean) {
+  const resolvedUserId = await resolveProgressUserId(privyUserId)
 
   const { error } = await admin.from("quiz_results").insert({
     user_id: resolvedUserId,

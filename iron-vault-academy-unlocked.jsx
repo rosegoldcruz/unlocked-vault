@@ -488,7 +488,7 @@ function ContentBlock({b}){
 
 // ─── MAIN ─────────────────────────────────────────────────────────────────
 export default function IronVaultAcademyUnlocked(){
-  const { ready, authenticated, user, login, logout } = usePrivy();
+  const { ready, authenticated, user, login, logout, getAccessToken } = usePrivy();
   const displayName = user?.email?.address || user?.phone?.number || "Member";
 
   const [view, setView] = useState("hub");
@@ -516,16 +516,24 @@ export default function IronVaultAcademyUnlocked(){
   }, [ready]);
 
   useEffect(() => {
-    if (!ready || !authenticated || !user?.id) return;
+    if (!ready || !authenticated) return;
 
     let cancelled = false;
     setProgressHydrated(false);
 
-    fetch("/api/education-progress", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "get", userId: user.id }),
-    })
+    getAccessToken()
+      .then((token) => {
+        if (!token) throw new Error("Missing access token")
+
+        return fetch("/api/education-progress", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ action: "get" }),
+        })
+      })
       .then((response) => response.json())
       .then((data) => {
         if (cancelled) return;
@@ -543,7 +551,7 @@ export default function IronVaultAcademyUnlocked(){
     return () => {
       cancelled = true;
     };
-  }, [ready, authenticated, user?.id]);
+  }, [ready, authenticated, getAccessToken]);
 
   useEffect(() => {
     if (view !== "lesson") return;
@@ -590,12 +598,21 @@ export default function IronVaultAcademyUnlocked(){
       return next;
     });
 
-    if (user?.id) {
-      fetch("/api/education-progress", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "lesson", userId: user.id, moduleIndex: mi, lessonIndex: li }),
-      }).catch(() => {});
+    if (authenticated) {
+      getAccessToken()
+        .then((token) => {
+          if (!token) return;
+
+          fetch("/api/education-progress", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ action: "lesson", moduleIndex: mi, lessonIndex: li }),
+          }).catch(() => {});
+        })
+        .catch(() => {});
     }
   }
 
@@ -620,12 +637,21 @@ export default function IronVaultAcademyUnlocked(){
         return next;
       });
 
-      if (user?.id) {
-        fetch("/api/education-progress", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "quiz", userId: user.id, moduleIndex: modIdx, score, passed }),
-        }).catch(() => {});
+      if (authenticated) {
+        getAccessToken()
+          .then((token) => {
+            if (!token) return;
+
+            fetch("/api/education-progress", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ action: "quiz", moduleIndex: modIdx, score, passed }),
+            }).catch(() => {});
+          })
+          .catch(() => {});
       }
 
       if(passed){setConfetti(true);setTimeout(()=>setConfetti(false),4000);}
