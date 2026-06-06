@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from '@/lib/server/supabase-admin'
 import { isModuleComplete } from '@/lib/server/module-completion'
+import { syncPayoutJobsForUser } from '@/lib/server/reward-payout-queue'
 
 type MilestoneNumber = 1 | 2 | 3
 
@@ -131,7 +132,7 @@ export async function syncRewardMilestonesForUser(privyUserId: string): Promise<
 
 export async function recordVerifiedModuleCompletion(
   input: RecordVerifiedModuleCompletionInput,
-): Promise<{ recorded: boolean; eligibleMilestones: number[]; reason?: string }> {
+): Promise<{ recorded: boolean; eligibleMilestones: number[]; queuedMilestones: number[]; walletMissing: boolean; reason?: string }> {
   const moduleNumber = normalizeModuleNumber(input.moduleNumber)
 
   const completionConfirmed = await isModuleComplete(input.privyUserId, moduleNumber)
@@ -139,6 +140,8 @@ export async function recordVerifiedModuleCompletion(
     return {
       recorded: false,
       eligibleMilestones: [],
+      queuedMilestones: [],
+      walletMissing: false,
       reason: 'Module is not yet complete according to quiz completion state',
     }
   }
@@ -166,9 +169,12 @@ export async function recordVerifiedModuleCompletion(
   }
 
   const { eligibleMilestones } = await syncRewardMilestonesForUser(input.privyUserId)
+  const { queuedMilestones, walletMissing } = await syncPayoutJobsForUser(input.privyUserId)
 
   return {
     recorded: true,
     eligibleMilestones,
+    queuedMilestones,
+    walletMissing,
   }
 }
