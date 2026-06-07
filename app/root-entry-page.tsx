@@ -12,10 +12,18 @@ type AccessMeResponse = {
   entitled?: boolean
 }
 
+const MAX_SYNC_ATTEMPTS = 5
+const RETRY_DELAYS_MS = [500, 1_000, 2_000, 4_000, 8_000] as const
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 export default function RootEntryPage() {
   const router = useRouter()
   const { ready, authenticated, login, getAccessToken } = usePrivy()
   const [accessCheck, setAccessCheck] = useState<AccessCheckState>('idle')
+  const [failureReason, setFailureReason] = useState<string | null>(null)
   const [retryNonce, setRetryNonce] = useState(0)
   const checkedRef = useRef(false)
 
@@ -31,29 +39,42 @@ export default function RootEntryPage() {
 
     let cancelled = false
     setAccessCheck('checking')
+    setFailureReason(null)
 
     const syncAndVerifyServerAccess = async () => {
       try {
-        const token = await getAccessToken()
+        let token: string | null = null
+        for (let attempt = 0; attempt < MAX_SYNC_ATTEMPTS; attempt += 1) {
+          token = await getAccessToken()
+          if (cancelled || token) break
+          await delay(RETRY_DELAYS_MS[attempt] ?? RETRY_DELAYS_MS[RETRY_DELAYS_MS.length - 1])
+        }
+
         if (!token) {
-          if (!cancelled) setAccessCheck('failed')
+          if (!cancelled) {
+            setFailureReason('empty_access_token')
+            setAccessCheck('failed')
+          }
           return
         }
 
         const sessionResponse = await fetch('/api/auth/privy-session', {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
           cache: 'no-store',
         })
 
         if (cancelled) return
 
         if (!sessionResponse.ok) {
+          const data = (await sessionResponse.json().catch(() => null)) as { reason?: string } | null
+          setFailureReason(data?.reason ?? 'session_sync_failed')
           setAccessCheck('failed')
           return
         }
 
-        const response = await fetch('/api/access/me', { cache: 'no-store' })
+        const response = await fetch('/api/access/me', { credentials: 'include', cache: 'no-store' })
 
         if (cancelled) return
 
@@ -70,9 +91,13 @@ export default function RootEntryPage() {
           return
         }
 
+        setFailureReason(response.status === 401 ? 'access_check_unauthorized' : 'access_check_failed')
         setAccessCheck('failed')
       } catch {
-        if (!cancelled) setAccessCheck('failed')
+        if (!cancelled) {
+          setFailureReason('session_sync_error')
+          setAccessCheck('failed')
+        }
       }
     }
 
@@ -105,10 +130,14 @@ export default function RootEntryPage() {
           <p className="text-sm text-zinc-400 mb-6">
             We could not confirm your access with the server yet. Retry to sync your session again.
           </p>
+          {failureReason ? (
+            <p className="mb-6 text-xs text-zinc-500">Diagnostic: {failureReason}</p>
+          ) : null}
           <button
             type="button"
             onClick={() => {
               checkedRef.current = false
+              setFailureReason(null)
               setAccessCheck('checking')
               setRetryNonce((value) => value + 1)
             }}
