@@ -12,7 +12,8 @@ function computeNextAttemptAt(attempt: number): string {
   return new Date(Date.now() + backoffMinutes * 60 * 1000).toISOString()
 }
 
-async function markMilestonePaid(privyUserId: string, milestoneNumber: number) {
+async function markMilestonePaid(privyUserId: string, milestoneNumber: number | null) {
+  if (milestoneNumber === null) return
   const { error } = await getSupabaseAdmin()
     .from('iv_reward_milestones')
     .update({ status: 'paid' })
@@ -25,7 +26,11 @@ async function markMilestonePaid(privyUserId: string, milestoneNumber: number) {
 async function processLockedJob(input: {
   id: string
   privy_user_id: string
-  milestone_number: number
+  milestone_number: number | null
+  reward_track: string
+  access_type: string
+  module_number: number | null
+  entitlement_id: string | null
   wallet_address: string
   token_mint: string
   amount_raw: string
@@ -80,6 +85,10 @@ async function processLockedJob(input: {
     payout_job_id: input.id,
     privy_user_id: input.privy_user_id,
     milestone_number: input.milestone_number,
+    reward_track: input.reward_track,
+    access_type: input.access_type,
+    module_number: input.module_number,
+    entitlement_id: input.entitlement_id,
     wallet_address: input.wallet_address,
     token_mint: input.token_mint,
     amount_raw: input.amount_raw,
@@ -162,7 +171,7 @@ export async function runRewardPayoutWorker(): Promise<RewardWorkerResult> {
   for (let index = 0; index < config.maxPayoutsPerRun; index += 1) {
     const { data: candidateRows, error: candidateError } = await getSupabaseAdmin()
       .from('iv_payout_jobs')
-      .select('id, privy_user_id, milestone_number, wallet_address, token_mint, amount_raw, attempts, max_attempts, next_attempt_at, created_at')
+      .select('id, privy_user_id, milestone_number, reward_track, access_type, module_number, entitlement_id, wallet_address, token_mint, amount_raw, attempts, max_attempts, next_attempt_at, created_at')
       .eq('status', 'queued')
       .order('created_at', { ascending: true })
       .limit(Math.max(5, config.maxPayoutsPerRun))
@@ -178,7 +187,11 @@ export async function runRewardPayoutWorker(): Promise<RewardWorkerResult> {
     }) as {
       id: string
       privy_user_id: string
-      milestone_number: number
+      milestone_number: number | null
+      reward_track: string
+      access_type: string
+      module_number: number | null
+      entitlement_id: string | null
       wallet_address: string
       token_mint: string
       amount_raw: string

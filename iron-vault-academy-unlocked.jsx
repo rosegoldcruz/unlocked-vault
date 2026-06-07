@@ -487,7 +487,7 @@ function ContentBlock({b}){
 }
 
 // ─── MAIN ─────────────────────────────────────────────────────────────────
-export default function IronVaultAcademyUnlocked(){
+export default function IronVaultAcademyUnlocked({ allowedModules = [1, 2, 3, 4, 5, 6], accessType = "all_modules" }){
   const { ready, authenticated, user, login, logout, getAccessToken } = usePrivy();
   const displayName = user?.email?.address || user?.phone?.number || "Member";
 
@@ -563,6 +563,8 @@ export default function IronVaultAcademyUnlocked(){
   const modsDone = progress.filter(p=>p.passed).length;
   const lessonsDone = progress.reduce((s,p)=>s+p.done.size,0);
   const totalLessons = MODULES.reduce((s,m)=>s+m.lessons.length,0);
+  const allowedModuleSet = new Set(allowedModules);
+  const isSingleModuleAccess = accessType === "single_module";
 
   /**
    * UNLOCKED VARIANT: Module access rules
@@ -571,6 +573,12 @@ export default function IronVaultAcademyUnlocked(){
    * - NO payment check. All modules present, gated only by sequential quiz completion.
    */
   function modStatus(i){
+    if(!allowedModuleSet.has(i + 1)) return "locked";
+    if(isSingleModuleAccess){
+      if(progress[i].passed) return "passed";
+      if(progress[i].done.size > 0) return "progress";
+      return "available";
+    }
     if(i === 0){
       if(progress[0].passed) return "passed";
       if(progress[0].done.size > 0) return "progress";

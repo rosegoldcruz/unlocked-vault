@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireMemberAccess } from '@/lib/server/member-access'
+import { getMemberAccessScope, requireMemberAccess } from '@/lib/server/member-access'
 
 function mapAccessErrorToStatus(error: unknown): number {
   const message = error instanceof Error ? error.message : ''
@@ -11,7 +11,8 @@ function mapAccessErrorToStatus(error: unknown): number {
 export async function GET(req: NextRequest) {
   try {
     await requireMemberAccess(req)
-    return NextResponse.json({ authenticated: true, entitled: true })
+    const scope = await getMemberAccessScope(req)
+    return NextResponse.json({ authenticated: true, entitled: true, scope })
   } catch (error: unknown) {
     const status = mapAccessErrorToStatus(error)
 

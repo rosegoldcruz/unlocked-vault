@@ -69,6 +69,10 @@ export function getRewardAmountRawForMilestone(milestoneNumber: number): string 
   return assertRawAmount(envName, readEnv(envName))
 }
 
+export function getSingleModuleRewardAmountRaw(): string {
+  return assertRawAmount('IVT_REWARD_SINGLE_MODULE_AMOUNT_RAW', readEnv('IVT_REWARD_SINGLE_MODULE_AMOUNT_RAW'))
+}
+
 export function getRewardConfig(): RewardConfig {
   const tokenMintAddress = readEnv('IVT_TOKEN_MINT_ADDRESS').trim()
   const rewardWalletPublicKey = readEnv('IVT_REWARD_WALLET_PUBLIC_KEY').trim()

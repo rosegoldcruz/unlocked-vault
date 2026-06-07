@@ -1,6 +1,6 @@
 import { PrivyClient } from '@privy-io/server-auth'
 import { getSupabaseAdmin } from '@/lib/server/supabase-admin'
-import { getRewardAmountRawForMilestone, getRewardConfig } from '@/lib/server/reward-config'
+import { getRewardAmountRawForMilestone, getRewardConfig, getSingleModuleRewardAmountRaw } from '@/lib/server/reward-config'
 
 function requireEnv(name: string): string {
   const value = process.env[name]
@@ -111,6 +111,10 @@ export async function queuePayoutForEligibleMilestone(input: {
   const { error: insertJobError } = await getSupabaseAdmin().from('iv_payout_jobs').insert({
     privy_user_id: input.privyUserId,
     milestone_number: milestoneNumber,
+    reward_track: 'full_academy',
+    access_type: 'all_modules',
+    module_number: null,
+    entitlement_id: null,
     wallet_address: walletAddress,
     token_mint: config.tokenMintAddress,
     amount_raw: amountRaw,
@@ -135,6 +139,63 @@ export async function queuePayoutForEligibleMilestone(input: {
     throw new Error(milestoneUpdateError.message)
   }
 
+  return { queued: true, walletMissing: false }
+}
+
+export async function queuePayoutForSingleModule(input: {
+  privyUserId: string
+  moduleNumber: number
+  entitlementId?: string
+}): Promise<{ queued: boolean; walletMissing: boolean }> {
+  if (!Number.isInteger(input.moduleNumber) || input.moduleNumber < 1 || input.moduleNumber > 6) {
+    throw new Error('Invalid moduleNumber: expected integer between 1 and 6')
+  }
+
+  const walletAddress = await resolveWalletAddress(input.privyUserId)
+  if (!walletAddress) {
+    return { queued: false, walletMissing: true }
+  }
+
+  let existingQuery = getSupabaseAdmin()
+    .from('iv_payout_jobs')
+    .select('id')
+    .eq('privy_user_id', input.privyUserId)
+    .eq('reward_track', 'single_module')
+    .eq('module_number', input.moduleNumber)
+
+  existingQuery = input.entitlementId
+    ? existingQuery.eq('entitlement_id', input.entitlementId)
+    : existingQuery.is('entitlement_id', null)
+
+  const { data: existingJob, error: existingJobError } = await existingQuery.maybeSingle<{ id: string }>()
+  if (existingJobError) throw new Error(existingJobError.message)
+  if (existingJob?.id) return { queued: false, walletMissing: false }
+
+  const config = getRewardConfig()
+  const amountRaw = getSingleModuleRewardAmountRaw()
+
+  const { error } = await getSupabaseAdmin().from('iv_payout_jobs').insert({
+    privy_user_id: input.privyUserId,
+    milestone_number: null,
+    reward_track: 'single_module',
+    access_type: 'single_module',
+    module_number: input.moduleNumber,
+    entitlement_id: input.entitlementId ?? null,
+    wallet_address: walletAddress,
+    token_mint: config.tokenMintAddress,
+    amount_raw: amountRaw,
+    status: 'queued',
+    metadata: {
+      source: 'single-module-completion',
+      reward_track: 'single_module',
+      access_type: 'single_module',
+      module_number: input.moduleNumber,
+      entitlement_id: input.entitlementId ?? null,
+      wallet_source: 'privy_or_profile',
+    },
+  })
+
+  if (error) throw new Error(error.message)
   return { queued: true, walletMissing: false }
 }
 

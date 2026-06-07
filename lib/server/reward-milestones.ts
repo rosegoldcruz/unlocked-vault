@@ -1,6 +1,6 @@
 import { getSupabaseAdmin } from '@/lib/server/supabase-admin'
 import { isModuleComplete } from '@/lib/server/module-completion'
-import { syncPayoutJobsForUser } from '@/lib/server/reward-payout-queue'
+import { queuePayoutForSingleModule, syncPayoutJobsForUser } from '@/lib/server/reward-payout-queue'
 
 type MilestoneNumber = 1 | 2 | 3
 
@@ -12,6 +12,8 @@ type RecordVerifiedModuleCompletionInput = {
   source?: string
   sourceEventId?: string | null
   metadata?: Record<string, unknown>
+  rewardTrack?: 'full_academy' | 'single_module'
+  entitlementId?: string
 }
 
 export function normalizeModuleNumber(input: unknown): number {
@@ -166,6 +168,21 @@ export async function recordVerifiedModuleCompletion(
 
   if (error) {
     throw new Error(error.message)
+  }
+
+  if (input.rewardTrack === 'single_module') {
+    const result = await queuePayoutForSingleModule({
+      privyUserId: input.privyUserId,
+      moduleNumber,
+      entitlementId: input.entitlementId,
+    })
+
+    return {
+      recorded: true,
+      eligibleMilestones: [],
+      queuedMilestones: [],
+      walletMissing: result.walletMissing,
+    }
   }
 
   const { eligibleMilestones } = await syncRewardMilestonesForUser(input.privyUserId)

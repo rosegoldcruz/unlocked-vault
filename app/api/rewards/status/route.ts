@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireMemberAccess } from '@/lib/server/member-access'
+import { getMemberAccessScope, requireMemberAccess } from '@/lib/server/member-access'
 import { getSupabaseAdmin } from '@/lib/server/supabase-admin'
 
 function mapAccessErrorToStatus(error: unknown): number {
@@ -20,11 +20,13 @@ function getNextRequiredModule(completedModules: number[]): number | null {
 export async function GET(req: NextRequest) {
   let privyUserId: string
   let walletAddress: string | null
+  let scope: Awaited<ReturnType<typeof getMemberAccessScope>>
 
   try {
     const access = await requireMemberAccess(req)
     privyUserId = access.auth.privyUserId
     walletAddress = access.auth.walletAddress
+    scope = await getMemberAccessScope(req)
   } catch (error: unknown) {
     const status = mapAccessErrorToStatus(error)
     const message = error instanceof Error ? error.message : 'Failed to verify member access'
@@ -56,12 +58,12 @@ export async function GET(req: NextRequest) {
         .order('milestone_number', { ascending: true }),
       getSupabaseAdmin()
         .from('iv_payout_jobs')
-        .select('milestone_number, status, amount_raw, token_mint, attempts, last_error')
+        .select('milestone_number, reward_track, access_type, module_number, entitlement_id, status, amount_raw, token_mint, attempts, last_error')
         .eq('privy_user_id', privyUserId)
         .order('milestone_number', { ascending: true }),
       getSupabaseAdmin()
         .from('iv_payout_transactions')
-        .select('milestone_number, signature, status, confirmed_at')
+        .select('milestone_number, reward_track, access_type, module_number, entitlement_id, signature, status, confirmed_at')
         .eq('privy_user_id', privyUserId)
         .order('created_at', { ascending: false }),
     ])
@@ -88,7 +90,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       walletAddress: resolvedWalletAddress,
       completedModules,
-      milestones: (milestonesResult.data ?? []).map((row) => ({
+      accessScope: scope,
+      milestones: scope.rewardTrack === 'single_module' ? [] : (milestonesResult.data ?? []).map((row) => ({
         milestoneNumber: (row as { milestone_number: number }).milestone_number,
         moduleStart: (row as { module_start: number }).module_start,
         moduleEnd: (row as { module_end: number }).module_end,
@@ -97,6 +100,10 @@ export async function GET(req: NextRequest) {
       })),
       payoutJobs: (payoutJobsResult.data ?? []).map((row) => ({
         milestoneNumber: (row as { milestone_number: number }).milestone_number,
+        rewardTrack: (row as { reward_track: string }).reward_track,
+        accessType: (row as { access_type: string }).access_type,
+        moduleNumber: (row as { module_number: number | null }).module_number,
+        entitlementId: (row as { entitlement_id: string | null }).entitlement_id,
         status: (row as { status: string }).status,
         amountRaw: (row as { amount_raw: string }).amount_raw,
         tokenMint: (row as { token_mint: string }).token_mint,
@@ -105,6 +112,10 @@ export async function GET(req: NextRequest) {
       })),
       transactions: (transactionsResult.data ?? []).map((row) => ({
         milestoneNumber: (row as { milestone_number: number }).milestone_number,
+        rewardTrack: (row as { reward_track: string }).reward_track,
+        accessType: (row as { access_type: string }).access_type,
+        moduleNumber: (row as { module_number: number | null }).module_number,
+        entitlementId: (row as { entitlement_id: string | null }).entitlement_id,
         signature: (row as { signature: string }).signature,
         status: (row as { status: string }).status,
         confirmedAt: (row as { confirmed_at: string | null }).confirmed_at,

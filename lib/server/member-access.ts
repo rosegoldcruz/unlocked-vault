@@ -34,6 +34,14 @@ export type MemberAccessContext = {
 	entitlement: MemberEntitlement | null
 }
 
+export type MemberAccessScope = {
+	hasAccess: boolean
+	accessType: 'all_modules' | 'single_module' | 'admin'
+	allowedModules: number[]
+	entitlementId?: string
+	rewardTrack?: 'full_academy' | 'single_module'
+}
+
 const ACCESS_TOKEN_COOKIE_NAMES = ['privy-token', 'privy-id-token'] as const
 
 function getErrorMessage(error: unknown): string {
@@ -135,6 +143,65 @@ export async function requireMemberAccess(request?: Request): Promise<MemberAcce
 	}
 
 	throw new Error('Forbidden: member entitlement required')
+}
+
+function scopeFromEntitlement(entitlement: MemberEntitlement): MemberAccessScope {
+	const metadata = entitlement.metadata ?? {}
+	const accessType = metadata.access_type
+	const moduleNumber = Number(metadata.module_number)
+
+	if (accessType === 'single_module' && Number.isInteger(moduleNumber) && moduleNumber >= 1 && moduleNumber <= 6) {
+		return {
+			hasAccess: true,
+			accessType: 'single_module',
+			allowedModules: [moduleNumber],
+			entitlementId: entitlement.id,
+			rewardTrack: 'single_module',
+		}
+	}
+
+	return {
+		hasAccess: true,
+		accessType: 'all_modules',
+		allowedModules: [1, 2, 3, 4, 5, 6],
+		entitlementId: entitlement.id,
+		rewardTrack: 'full_academy',
+	}
+}
+
+export async function getMemberAccessScope(request?: Request): Promise<MemberAccessScope> {
+	const access = await requireMemberAccess(request)
+	if (access.isAdmin) {
+		return {
+			hasAccess: true,
+			accessType: 'admin',
+			allowedModules: [1, 2, 3, 4, 5, 6],
+			rewardTrack: 'full_academy',
+		}
+	}
+
+	if (!access.entitlement) {
+		throw new Error('Forbidden: member entitlement required')
+	}
+
+	return scopeFromEntitlement(access.entitlement)
+}
+
+export function canAccessModule(scope: MemberAccessScope, moduleNumber: number): boolean {
+	return scope.hasAccess && scope.allowedModules.includes(moduleNumber)
+}
+
+export async function requireModuleAccess(request: Request | undefined, moduleNumber: number): Promise<MemberAccessScope> {
+	if (!Number.isInteger(moduleNumber) || moduleNumber < 1 || moduleNumber > 6) {
+		throw new Error('Forbidden: invalid module access request')
+	}
+
+	const scope = await getMemberAccessScope(request)
+	if (!canAccessModule(scope, moduleNumber)) {
+		throw new Error('Forbidden: module access not purchased')
+	}
+
+	return scope
 }
 
 export async function requireAdminAccess(request?: Request): Promise<MemberAccessContext> {

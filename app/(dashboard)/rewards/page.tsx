@@ -6,6 +6,11 @@ import { usePrivy } from '@privy-io/react-auth'
 type RewardStatusPayload = {
   walletAddress: string | null
   completedModules: number[]
+  accessScope: {
+    accessType: 'all_modules' | 'single_module' | 'admin'
+    allowedModules: number[]
+    rewardTrack?: 'full_academy' | 'single_module'
+  }
   milestones: Array<{
     milestoneNumber: number
     moduleStart: number
@@ -20,6 +25,8 @@ type RewardStatusPayload = {
     tokenMint: string
     attempts: number
     lastError: string | null
+    rewardTrack?: string
+    moduleNumber?: number | null
   }>
   transactions: Array<{
     milestoneNumber: number
@@ -110,6 +117,8 @@ export default function RewardsPage() {
   }, [authenticated, getAccessToken, ready])
 
   const completionSet = useMemo(() => new Set(data?.completedModules ?? []), [data?.completedModules])
+  const isSingleModule = data?.accessScope.rewardTrack === 'single_module'
+  const selectedModule = data?.accessScope.allowedModules[0] ?? null
 
   return (
     <section className="space-y-6">
@@ -117,7 +126,9 @@ export default function RewardsPage() {
         <p className="text-xs uppercase tracking-[0.24em] text-lime-300 mb-2">Rewards</p>
         <h1 className="text-3xl font-semibold text-zinc-100 mb-2">Reward Milestones</h1>
         <p className="text-zinc-400 max-w-2xl">
-          Complete all academy modules. Rewards unlock at module milestones 2, 4, and 6.
+          {isSingleModule
+            ? `Single Module Access: complete Module ${selectedModule} to queue your selected-module reward.`
+            : 'Complete all academy modules. Rewards unlock at module milestones 2, 4, and 6.'}
         </p>
       </div>
 
@@ -142,7 +153,7 @@ export default function RewardsPage() {
 
             <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-5">
               <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-2">Next Required Module</p>
-              <p className="text-sm text-zinc-100">{data.nextRequiredModule ?? 'All modules complete'}</p>
+              <p className="text-sm text-zinc-100">{isSingleModule ? `Module ${selectedModule}` : data.nextRequiredModule ?? 'All modules complete'}</p>
               <p className="mt-3 text-xs text-zinc-400">Completed: {(data.completedModules ?? []).join(', ') || 'None yet'}</p>
             </div>
           </div>
@@ -160,17 +171,19 @@ export default function RewardsPage() {
                     className={`rounded-lg border px-3 py-2 text-center text-sm ${
                       completed
                         ? 'border-lime-400/40 bg-lime-500/10 text-lime-200'
+                        : isSingleModule && moduleNumber !== selectedModule
+                        ? 'border-zinc-800 bg-zinc-950/60 text-zinc-600'
                         : 'border-zinc-700 bg-zinc-900/40 text-zinc-400'
                     }`}
                   >
-                    Module {moduleNumber}
+                    Module {moduleNumber}{isSingleModule && moduleNumber !== selectedModule ? ' Locked' : ''}
                   </div>
                 )
               })}
             </div>
           </div>
 
-          <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-5">
+          {!isSingleModule ? <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-5">
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-3">Milestones</p>
             <div className="space-y-3">
               {data.milestones.map((milestone) => (
@@ -191,7 +204,7 @@ export default function RewardsPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </div> : null}
 
           <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-5">
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-3">Payout Jobs</p>
@@ -203,7 +216,9 @@ export default function RewardsPage() {
                   <div key={`${job.milestoneNumber}-${job.status}-${job.attempts}`} className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="text-sm font-semibold text-zinc-100">Milestone {job.milestoneNumber}</p>
+                        <p className="text-sm font-semibold text-zinc-100">
+                          {job.rewardTrack === 'single_module' ? `Module ${job.moduleNumber} Reward` : `Milestone ${job.milestoneNumber}`}
+                        </p>
                         <p className="text-xs text-zinc-400 mt-1">Amount Raw: {job.amountRaw}</p>
                         <p className="text-xs text-zinc-400">Token Mint: {job.tokenMint}</p>
                         <p className="text-xs text-zinc-400">Attempts: {job.attempts}</p>
