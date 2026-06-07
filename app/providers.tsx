@@ -1,6 +1,7 @@
 ﻿"use client"
 
 import { PrivyProvider } from "@privy-io/react-auth"
+import { PrivyTokenCookieBridge } from "@/components/auth/PrivyTokenCookieBridge"
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID
@@ -20,6 +21,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         },
       }}
     >
+      <PrivyTokenCookieBridge />
       <div className="min-h-screen bg-slate-950 text-slate-50">{children}</div>
     </PrivyProvider>
   )
