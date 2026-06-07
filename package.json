@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "members:grandfather:dry-run": "tsx scripts/grandfather-existing-privy-users.ts --dry-run",
+    "members:grandfather:apply": "tsx scripts/grandfather-existing-privy-users.ts --apply",
     "rewards:payout:dry-run": "tsx scripts/rewards-payout-dry-run.ts",
     "rewards:worker:once": "tsx scripts/reward-payout-worker.ts once",
     "rewards:worker": "tsx scripts/reward-payout-worker.ts loop"
