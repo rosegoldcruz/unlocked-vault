@@ -20,6 +20,7 @@ import {
 import { usePrivy } from '@privy-io/react-auth'
 import { useBackofficeAuth } from '@/hooks/useBackofficeAuth'
 import { cn } from '@/lib/utils'
+import { CoinBurst } from '@/components/ui/coin-burst'
 
 type NavItem = {
   href: string
@@ -51,30 +52,33 @@ function NavLinks({ pathname, onNavigate, isAdmin }: { pathname: string; onNavig
         const Icon = item.icon
         const isActive = pathname === item.href || (pathname.startsWith(item.href + '/') && item.href !== '/')
         return (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={onNavigate}
-            className={cn(
-              'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors',
-              isActive
-                ? 'bg-lime-300/15 text-lime-200 border border-lime-300/30'
-                : 'text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 border border-transparent',
-            )}
-          >
-            <Icon className="h-4 w-4" />
-            <span>{item.label}</span>
-          </Link>
+          <CoinBurst key={item.href}>
+            <Link
+              href={item.href}
+              onClick={onNavigate}
+              className={cn(
+                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors',
+                isActive
+                  ? 'bg-lime-300/15 text-lime-200 border border-lime-300/30'
+                  : 'text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 border border-transparent',
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              <span>{item.label}</span>
+            </Link>
+          </CoinBurst>
         )
       })}
-      <button
-        type="button"
-        onClick={() => { onNavigate?.(); void logout() }}
-        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-zinc-400 hover:bg-zinc-900 hover:text-red-300 border border-transparent transition-colors"
-      >
-        <LogOut className="h-4 w-4" />
-        <span>Logout</span>
-      </button>
+      <CoinBurst>
+        <button
+          type="button"
+          onClick={() => { onNavigate?.(); void logout() }}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-zinc-400 hover:bg-zinc-900 hover:text-red-300 border border-transparent transition-colors"
+        >
+          <LogOut className="h-4 w-4" />
+          <span>Logout</span>
+        </button>
+      </CoinBurst>
     </nav>
   )
 }
