@@ -22,7 +22,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       }}
     >
       <PrivyTokenCookieBridge />
-      <div className="min-h-screen bg-slate-950 text-slate-50">{children}</div>
+      <div className="min-h-screen bg-[#080808] text-zinc-100">{children}</div>
     </PrivyProvider>
   )
 }

@@ -51,12 +51,12 @@ const MILESTONE_OPTIONS = ['all', '1', '2', '3'] as const
 function statusClasses(status: string): string {
   switch (status) {
     case 'eligible': return 'text-amber-300 border-amber-500/30 bg-amber-500/10'
-    case 'queued': return 'text-sky-300 border-sky-500/30 bg-sky-500/10'
-    case 'processing': return 'text-indigo-300 border-indigo-500/30 bg-indigo-500/10'
+    case 'queued': return 'text-purple-300 border-purple-500/30 bg-purple-500/10'
+    case 'processing': return 'text-purple-200 border-purple-500/30 bg-purple-500/10'
     case 'paid': return 'text-lime-300 border-lime-500/30 bg-lime-500/10'
     case 'failed': return 'text-rose-300 border-rose-500/30 bg-rose-500/10'
-    case 'canceled': return 'text-zinc-400 border-zinc-700 bg-zinc-800/60'
-    default: return 'text-zinc-400 border-zinc-700 bg-zinc-900/40'
+    case 'canceled': return 'text-zinc-400 border-[#2a2a2a] bg-[#141414]'
+    default: return 'text-zinc-400 border-[#2a2a2a] bg-[#141414]'
   }
 }
 
@@ -163,38 +163,38 @@ export function AdminRewardsDashboard() {
 
   return (
     <section className="space-y-6">
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-6">
-        <p className="text-xs uppercase tracking-[0.24em] text-lime-300 mb-2">Admin</p>
-        <h1 className="text-3xl font-semibold text-zinc-100 mb-2">Reward Operations</h1>
-        <p className="text-zinc-400">Monitor milestones, payout jobs, and transaction history.</p>
+      <div className="iv-panel iv-panel-lime p-6">
+        <p className="iv-label mb-2">Admin</p>
+        <h1 className="iv-title mb-2 text-5xl">Reward Operations</h1>
+        <p className="iv-body text-sm">Monitor milestones, payout jobs, and transaction history.</p>
       </div>
 
-      {loading ? <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-5 text-sm text-zinc-400">Loading admin rewards...</div> : null}
-      {error ? <div className="rounded-xl border border-rose-900/40 bg-zinc-950/50 p-5 text-sm text-rose-300">{error}</div> : null}
+      {loading ? <div className="iv-panel p-5 text-sm text-zinc-400">Loading admin rewards...</div> : null}
+      {error ? <div className="rounded border border-rose-900/40 bg-[#0f0f0f] p-5 text-sm text-rose-300">{error}</div> : null}
 
       {summary ? (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-4"><p className="text-xs text-zinc-500">Completions</p><p className="text-xl text-zinc-100">{summary.totalCompletions}</p></div>
-          <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-4"><p className="text-xs text-zinc-500">Eligible</p><p className="text-xl text-zinc-100">{summary.eligibleMilestones}</p></div>
-          <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-4"><p className="text-xs text-zinc-500">Queued / Processing</p><p className="text-xl text-zinc-100">{summary.queuedPayouts} / {summary.processingPayouts}</p></div>
-          <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-4"><p className="text-xs text-zinc-500">Paid / Failed</p><p className="text-xl text-zinc-100">{summary.paidPayouts} / {summary.failedPayouts}</p></div>
+          <div className="iv-panel p-4"><p className="iv-label-muted">Completions</p><p className="iv-card-title text-3xl">{summary.totalCompletions}</p></div>
+          <div className="iv-panel p-4"><p className="iv-label-muted">Eligible</p><p className="iv-card-title text-3xl">{summary.eligibleMilestones}</p></div>
+          <div className="iv-panel p-4"><p className="iv-label-muted">Queued / Processing</p><p className="iv-card-title text-3xl">{summary.queuedPayouts} / {summary.processingPayouts}</p></div>
+          <div className="iv-panel p-4"><p className="iv-label-muted">Paid / Failed</p><p className="iv-card-title text-3xl">{summary.paidPayouts} / {summary.failedPayouts}</p></div>
         </div>
       ) : null}
 
       {summary ? (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-5">
-          <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-1">Total Raw Amount Paid</p>
+        <div className="iv-panel p-5">
+          <p className="iv-label-muted mb-1">Total Raw Amount Paid</p>
           <p className="text-sm text-lime-300 break-all">{summary.totalAmountRawPaid}</p>
         </div>
       ) : null}
 
-      <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-5 space-y-4">
+      <div className="iv-panel space-y-4 p-5">
         <div className="flex flex-wrap gap-3">
-          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as (typeof STATUS_OPTIONS)[number])} className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100">
+          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as (typeof STATUS_OPTIONS)[number])} className="iv-field px-3 py-2 text-sm">
             {STATUS_OPTIONS.map((status) => <option key={status} value={status}>{status}</option>)}
           </select>
 
-          <select value={milestoneFilter} onChange={(event) => setMilestoneFilter(event.target.value as (typeof MILESTONE_OPTIONS)[number])} className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100">
+          <select value={milestoneFilter} onChange={(event) => setMilestoneFilter(event.target.value as (typeof MILESTONE_OPTIONS)[number])} className="iv-field px-3 py-2 text-sm">
             {MILESTONE_OPTIONS.map((milestone) => <option key={milestone} value={milestone}>milestone {milestone}</option>)}
           </select>
 
@@ -202,27 +202,27 @@ export function AdminRewardsDashboard() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search user, wallet, or job id"
-            className="min-w-[260px] flex-1 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
+            className="iv-field min-w-[260px] flex-1 px-3 py-2 text-sm"
           />
 
           <button
             onClick={() => void loadData()}
-            className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-200"
+            className="iv-button-ghost px-3 py-2 text-xs"
           >
             Refresh
           </button>
         </div>
       </div>
 
-      <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-5">
-        <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-3">Payout Jobs</p>
+      <div className="iv-panel p-5">
+        <p className="iv-label-muted mb-3">Payout Jobs</p>
         <div className="space-y-3">
           {filteredJobs.length === 0 ? <p className="text-sm text-zinc-400">No jobs found.</p> : null}
           {filteredJobs.map((job) => (
-            <div key={job.id} className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+            <div key={job.id} className="rounded border border-[#1a1a1a] bg-[#080808] p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-zinc-100 break-all">{job.id}</p>
+                  <p className="iv-card-title text-xl break-all">{job.id}</p>
                   <p className="text-xs text-zinc-400 break-all">User: {job.privy_user_id}</p>
                   <p className="text-xs text-zinc-400 break-all">Wallet: {job.wallet_address}</p>
                   <p className="text-xs text-zinc-400">Milestone {job.milestone_number} · Amount {job.amount_raw}</p>
@@ -231,7 +231,7 @@ export function AdminRewardsDashboard() {
                 </div>
 
                 <div className="flex flex-col items-end gap-2">
-                  <span className={`inline-flex rounded-md border px-2.5 py-1 text-xs uppercase tracking-[0.14em] ${statusClasses(job.status)}`}>
+                  <span className={`inline-flex rounded border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] ${statusClasses(job.status)}`}>
                     {job.status}
                   </span>
 
@@ -239,7 +239,7 @@ export function AdminRewardsDashboard() {
                     <button
                       onClick={() => void retryJob(job.id)}
                       disabled={actionJobId === job.id}
-                      className="rounded-md border border-lime-400/40 bg-lime-500/10 px-3 py-1.5 text-xs text-lime-200 disabled:opacity-50"
+                      className="rounded border border-lime-400/40 bg-lime-500/10 px-3 py-1.5 text-xs text-lime-200 disabled:opacity-50"
                     >
                       {actionJobId === job.id ? 'Retrying...' : 'Retry'}
                     </button>
@@ -249,7 +249,7 @@ export function AdminRewardsDashboard() {
                     <button
                       onClick={() => void cancelJob(job.id)}
                       disabled={actionJobId === job.id}
-                      className="rounded-md border border-rose-400/40 bg-rose-500/10 px-3 py-1.5 text-xs text-rose-200 disabled:opacity-50"
+                      className="rounded border border-rose-400/40 bg-rose-500/10 px-3 py-1.5 text-xs text-rose-200 disabled:opacity-50"
                     >
                       {actionJobId === job.id ? 'Canceling...' : 'Cancel'}
                     </button>
@@ -261,21 +261,21 @@ export function AdminRewardsDashboard() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-5">
-        <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-3">Transactions</p>
+      <div className="iv-panel p-5">
+        <p className="iv-label-muted mb-3">Transactions</p>
         <div className="space-y-3">
           {transactions.length === 0 ? <p className="text-sm text-zinc-400">No transactions found.</p> : null}
           {transactions.map((tx) => (
-            <div key={tx.id} className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+            <div key={tx.id} className="rounded border border-[#1a1a1a] bg-[#080808] p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-zinc-100">Milestone {tx.milestone_number}</p>
+                  <p className="iv-card-title text-xl">Milestone {tx.milestone_number}</p>
                   <p className="text-xs text-zinc-400 break-all">Signature: {tx.signature}</p>
                   <p className="text-xs text-zinc-400 break-all">User: {tx.privy_user_id}</p>
                   <p className="text-xs text-zinc-400">Amount Raw: {tx.amount_raw}</p>
                   <p className="text-xs text-zinc-400">Confirmed: {tx.confirmed_at ?? 'Pending'}</p>
                 </div>
-                <span className={`inline-flex rounded-md border px-2.5 py-1 text-xs uppercase tracking-[0.14em] ${statusClasses(tx.status)}`}>
+                <span className={`inline-flex rounded border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] ${statusClasses(tx.status)}`}>
                   {tx.status}
                 </span>
               </div>

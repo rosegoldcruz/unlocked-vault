@@ -39,10 +39,10 @@ type RewardStatusPayload = {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  locked: 'text-zinc-400 border-zinc-700 bg-zinc-900/40',
+  locked: 'text-zinc-400 border-[#2a2a2a] bg-[#141414]',
   eligible: 'text-amber-300 border-amber-400/40 bg-amber-500/10',
-  queued: 'text-sky-300 border-sky-400/40 bg-sky-500/10',
-  processing: 'text-indigo-300 border-indigo-400/40 bg-indigo-500/10',
+  queued: 'text-purple-300 border-purple-400/40 bg-purple-500/10',
+  processing: 'text-purple-200 border-purple-400/40 bg-purple-500/10',
   paid: 'text-lime-300 border-lime-400/40 bg-lime-500/10',
   failed: 'text-rose-300 border-rose-400/40 bg-rose-500/10',
   canceled: 'text-zinc-400 border-zinc-600 bg-zinc-800/60',
@@ -122,10 +122,10 @@ export default function RewardsPage() {
 
   return (
     <section className="space-y-6">
-      <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-6 transition-colors duration-200">
-        <p className="text-xs uppercase tracking-[0.24em] text-lime-300 mb-2">Rewards</p>
-        <h1 className="text-3xl font-semibold text-zinc-100 mb-2">Reward Milestones</h1>
-        <p className="text-zinc-400 max-w-2xl">
+      <div className="iv-panel iv-panel-lime p-6">
+        <p className="iv-label mb-2">Rewards</p>
+        <h1 className="iv-title mb-2 text-5xl">Reward Milestones</h1>
+        <p className="iv-body max-w-2xl text-sm">
           {isSingleModule
             ? `Single Module Access: complete Module ${selectedModule} to queue your selected-module reward.`
             : 'Complete all academy modules. Rewards unlock at module milestones 2, 4, and 6.'}
@@ -133,33 +133,33 @@ export default function RewardsPage() {
       </div>
 
       {loading ? (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-5 text-sm text-zinc-400">Loading reward status...</div>
+        <div className="iv-panel p-5 text-sm text-zinc-400">Loading reward status...</div>
       ) : null}
 
       {error ? (
-        <div className="rounded-xl border border-rose-900/40 bg-zinc-950/50 p-5 text-sm text-rose-300">{error}</div>
+        <div className="rounded border border-rose-900/40 bg-[#0f0f0f] p-5 text-sm text-rose-300">{error}</div>
       ) : null}
 
       {data ? (
         <>
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-xl border border-white/10 bg-black/30 backdrop-blur-md p-5">
-              <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-2">Wallet</p>
+            <div className="iv-panel p-5">
+              <p className="iv-label-muted mb-2">Wallet</p>
               <p className="text-sm text-zinc-100 break-all">{data.walletAddress ?? 'No wallet detected'}</p>
               {data.walletMissing ? (
                 <p className="mt-3 text-sm text-amber-300">Wallet required before eligible milestones can be queued.</p>
               ) : null}
             </div>
 
-            <div className="rounded-xl border border-white/10 bg-black/30 backdrop-blur-md p-5">
-              <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-2">Next Required Module</p>
-              <p className="text-sm text-zinc-100">{isSingleModule ? `Module ${selectedModule}` : data.nextRequiredModule ?? 'All modules complete'}</p>
+            <div className="iv-panel p-5">
+              <p className="iv-label-muted mb-2">Next Required Module</p>
+              <p className="iv-card-title text-3xl text-lime-300">{isSingleModule ? `Module ${selectedModule}` : data.nextRequiredModule ?? 'All modules complete'}</p>
               <p className="mt-3 text-xs text-zinc-400">Completed: {(data.completedModules ?? []).join(', ') || 'None yet'}</p>
             </div>
           </div>
 
-          <div className="rounded-xl border border-white/10 bg-black/30 backdrop-blur-md p-5">
-            <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-3">Modules 1-6</p>
+          <div className="iv-panel p-5">
+            <p className="iv-label-muted mb-3">Modules 1-6</p>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
               {Array.from({ length: 6 }, (_, index) => {
                 const moduleNumber = index + 1
@@ -168,12 +168,12 @@ export default function RewardsPage() {
                 return (
                   <div
                     key={moduleNumber}
-                    className={`rounded-lg border px-3 py-2 text-center text-sm backdrop-blur-sm ${
+                    className={`rounded border px-3 py-2 text-center font-mono text-[10px] uppercase tracking-[0.12em] ${
                       completed
                         ? 'border-lime-400/40 bg-lime-500/10 text-lime-200'
                         : isSingleModule && moduleNumber !== selectedModule
-                        ? 'border-white/[0.05] bg-black/20 text-zinc-600'
-                        : 'border-white/10 bg-black/25 text-zinc-400'
+                        ? 'border-[#1a1a1a] bg-[#080808] text-zinc-600'
+                        : 'border-[#1a1a1a] bg-[#080808] text-zinc-400'
                     }`}
                   >
                     Module {moduleNumber}{isSingleModule && moduleNumber !== selectedModule ? ' Locked' : ''}
@@ -183,21 +183,21 @@ export default function RewardsPage() {
             </div>
           </div>
 
-          {!isSingleModule ? <div className="rounded-xl border border-white/10 bg-black/30 backdrop-blur-md p-5">
-            <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-3">Milestones</p>
+          {!isSingleModule ? <div className="iv-panel p-5">
+            <p className="iv-label-muted mb-3">Milestones</p>
             <div className="space-y-3">
               {data.milestones.map((milestone) => (
-                <div key={milestone.milestoneNumber} className="rounded-lg border border-white/[0.07] bg-black/20 p-4">
+                <div key={milestone.milestoneNumber} className="rounded border border-[#1a1a1a] bg-[#080808] p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold text-zinc-100">
+                      <p className="iv-card-title text-xl">
                         Milestone {milestone.milestoneNumber} · Modules {milestone.moduleStart}-{milestone.moduleEnd}
                       </p>
                       <p className="text-xs text-zinc-400 mt-1">
                         Eligible At: {milestone.eligibleAt ?? 'Not yet eligible'}
                       </p>
                     </div>
-                    <span className={`inline-flex rounded-md border px-2.5 py-1 text-xs uppercase tracking-[0.14em] ${statusClasses(milestone.status)}`}>
+                    <span className={`inline-flex rounded border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] ${statusClasses(milestone.status)}`}>
                       {milestone.status}
                     </span>
                   </div>
@@ -206,17 +206,17 @@ export default function RewardsPage() {
             </div>
           </div> : null}
 
-          <div className="rounded-xl border border-white/10 bg-black/30 backdrop-blur-md p-5">
-            <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-3">Payout Jobs</p>
+          <div className="iv-panel p-5">
+            <p className="iv-label-muted mb-3">Payout Jobs</p>
             {data.payoutJobs.length === 0 ? (
               <p className="text-sm text-zinc-400">No payout jobs yet.</p>
             ) : (
               <div className="space-y-3">
                 {data.payoutJobs.map((job) => (
-                  <div key={`${job.milestoneNumber}-${job.status}-${job.attempts}`} className="rounded-lg border border-white/[0.07] bg-black/20 p-4">
+                  <div key={`${job.milestoneNumber}-${job.status}-${job.attempts}`} className="rounded border border-[#1a1a1a] bg-[#080808] p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="text-sm font-semibold text-zinc-100">
+                        <p className="iv-card-title text-xl">
                           {job.rewardTrack === 'single_module' ? `Module ${job.moduleNumber} Reward` : `Milestone ${job.milestoneNumber}`}
                         </p>
                         <p className="text-xs text-zinc-400 mt-1">Amount Raw: {job.amountRaw}</p>
@@ -224,7 +224,7 @@ export default function RewardsPage() {
                         <p className="text-xs text-zinc-400">Attempts: {job.attempts}</p>
                         {job.lastError ? <p className="text-xs text-rose-300 mt-1">Last Error: {job.lastError}</p> : null}
                       </div>
-                      <span className={`inline-flex rounded-md border px-2.5 py-1 text-xs uppercase tracking-[0.14em] ${statusClasses(job.status)}`}>
+                      <span className={`inline-flex rounded border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] ${statusClasses(job.status)}`}>
                         {job.status}
                       </span>
                     </div>
@@ -234,21 +234,21 @@ export default function RewardsPage() {
             )}
           </div>
 
-          <div className="rounded-xl border border-white/10 bg-black/30 backdrop-blur-md p-5">
-            <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-3">Transactions</p>
+          <div className="iv-panel p-5">
+            <p className="iv-label-muted mb-3">Transactions</p>
             {data.transactions.length === 0 ? (
               <p className="text-sm text-zinc-400">No transactions yet.</p>
             ) : (
               <div className="space-y-3">
                 {data.transactions.map((transaction) => (
-                  <div key={transaction.signature} className="rounded-lg border border-white/[0.07] bg-black/20 p-4">
+                  <div key={transaction.signature} className="rounded border border-[#1a1a1a] bg-[#080808] p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="text-sm font-semibold text-zinc-100">Milestone {transaction.milestoneNumber}</p>
+                        <p className="iv-card-title text-xl">Milestone {transaction.milestoneNumber}</p>
                         <p className="text-xs text-zinc-400 mt-1 break-all">Signature: {transaction.signature}</p>
                         <p className="text-xs text-zinc-400">Confirmed At: {transaction.confirmedAt ?? 'Pending confirmation'}</p>
                       </div>
-                      <span className={`inline-flex rounded-md border px-2.5 py-1 text-xs uppercase tracking-[0.14em] ${statusClasses(transaction.status)}`}>
+                      <span className={`inline-flex rounded border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] ${statusClasses(transaction.status)}`}>
                         {transaction.status}
                       </span>
                     </div>

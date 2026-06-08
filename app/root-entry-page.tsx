@@ -124,10 +124,10 @@ export default function RootEntryPage() {
   if (authenticated && accessCheck === 'failed') {
     return (
       <main className="min-h-screen bg-[#080808] text-zinc-100 grid place-items-center px-6">
-        <div className="w-full max-w-md rounded-xl border border-zinc-800 bg-zinc-950/70 p-8 text-center">
-          <p className="text-xs uppercase tracking-[0.24em] text-lime-300 mb-3">Iron Vault</p>
-          <h1 className="text-2xl font-semibold mb-3">Session sync failed</h1>
-          <p className="text-sm text-zinc-400 mb-6">
+        <div className="iv-panel w-full max-w-md p-8 text-center">
+          <p className="iv-label mb-3">Iron Vault</p>
+          <h1 className="iv-title mb-3 text-4xl">Session sync failed</h1>
+          <p className="iv-body mb-6 text-sm">
             We could not confirm your access with the server yet. Retry to sync your session again.
           </p>
           {failureReason ? (
@@ -141,7 +141,7 @@ export default function RootEntryPage() {
               setAccessCheck('checking')
               setRetryNonce((value) => value + 1)
             }}
-            className="inline-flex items-center justify-center rounded-md bg-lime-300 px-5 py-2.5 text-sm font-semibold text-zinc-900 hover:bg-lime-200"
+            className="iv-button inline-flex items-center justify-center px-5 py-2.5 text-sm"
           >
             Retry
           </button>
@@ -152,16 +152,16 @@ export default function RootEntryPage() {
 
   return (
     <main className="min-h-screen bg-[#080808] text-zinc-100 grid place-items-center px-6">
-      <div className="w-full max-w-md rounded-xl border border-zinc-800 bg-zinc-950/70 p-8 text-center">
-        <p className="text-xs uppercase tracking-[0.24em] text-lime-300 mb-3">Iron Vault</p>
-        <h1 className="text-2xl font-semibold mb-3">Member Portal</h1>
-        <p className="text-sm text-zinc-400 mb-6">
+      <div className="iv-panel w-full max-w-md p-8 text-center">
+        <p className="iv-label mb-3">Iron Vault</p>
+        <h1 className="iv-title mb-3 text-4xl">Member Portal</h1>
+        <p className="iv-body mb-6 text-sm">
           Sign in to continue. Access is limited to approved members.
         </p>
         <button
           type="button"
           onClick={() => login()}
-          className="inline-flex items-center justify-center rounded-md bg-lime-300 px-5 py-2.5 text-sm font-semibold text-zinc-900 hover:bg-lime-200"
+          className="iv-button inline-flex items-center justify-center px-5 py-2.5 text-sm"
           disabled={!ready}
         >
           {ready ? 'Sign In' : 'Loading...'}

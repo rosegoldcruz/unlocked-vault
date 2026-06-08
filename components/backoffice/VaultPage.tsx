@@ -14,8 +14,8 @@ function StatusBadge({ value }: { value: StatusFlag | string }) {
   const classes =
     value === 'YES' ? 'border-lime-300/40 bg-lime-300/10 text-lime-200'
     : value === 'DISCONTINUED' ? 'border-amber-400/40 bg-amber-400/10 text-amber-200'
-    : 'border-zinc-700 bg-zinc-900 text-zinc-300'
-  return <span className={`rounded-md border px-2.5 py-1 text-xs font-medium ${classes}`}>{value}</span>
+    : 'border-[#2a2a2a] bg-[#141414] text-zinc-400'
+  return <span className={`rounded border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] ${classes}`}>{value}</span>
 }
 
 function formatCurrency(value: number) {
@@ -75,17 +75,17 @@ export function VaultPage() {
 
   return (
     <section className="space-y-6">
-      <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-6 transition-colors duration-200">
-        <p className="text-xs uppercase tracking-[0.24em] text-lime-300 mb-1">Community Participation</p>
-        <h1 className="text-3xl font-semibold text-zinc-100">Vault</h1>
+      <div className="iv-panel iv-panel-lime p-6">
+        <p className="iv-label mb-1">Community Participation</p>
+        <h1 className="iv-title text-5xl">Vault</h1>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_420px]">
         {/* LEFT COLUMN */}
         <div className="space-y-6">
           {/* Participation Matrix */}
-          <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-6 transition-colors duration-200">
-            <h2 className="text-lg font-semibold text-zinc-100 mb-4">Vault Participation Matrix</h2>
+          <div className="iv-panel p-6">
+            <h2 className="iv-card-title mb-4 text-3xl">Vault Participation Matrix</h2>
             {posLoading ? (
               <p className="text-sm text-zinc-400">Loading position data...</p>
             ) : posError ? (
@@ -93,7 +93,7 @@ export function VaultPage() {
             ) : (
               <div className="space-y-2">
                 {participationRows.map((row) => (
-                  <div key={row.label} className="flex items-center justify-between rounded-lg border border-white/[0.07] bg-black/20 px-4 py-3">
+                  <div key={row.label} className="flex items-center justify-between rounded border border-[#1a1a1a] bg-[#080808] px-4 py-3">
                     <span className="text-sm text-zinc-300">{row.label}</span>
                     <StatusBadge value={row.value} />
                   </div>
@@ -103,8 +103,8 @@ export function VaultPage() {
           </div>
 
           {/* Investment Summary */}
-          <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-6 transition-colors duration-200">
-            <h2 className="text-lg font-semibold text-zinc-100 mb-4">Investment Summary</h2>
+          <div className="iv-panel iv-panel-lime p-6">
+            <h2 className="iv-card-title mb-4 text-3xl">Investment Summary</h2>
             {posLoading ? (
               <p className="text-sm text-zinc-400">Loading...</p>
             ) : posError ? (
@@ -118,9 +118,9 @@ export function VaultPage() {
                   { label: 'Token Balance', value: formatNumber(position.token_balance) },
                   { label: 'Dividends Total', value: formatCurrency(position.dividends_total) },
                 ].map((item) => (
-                  <div key={item.label} className="rounded-lg border border-white/10 bg-black/30 backdrop-blur-sm p-4">
-                    <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-2">{item.label}</p>
-                    <p className="text-xl font-semibold text-zinc-100">{item.value}</p>
+                  <div key={item.label} className="iv-panel p-4">
+                    <p className="iv-label-muted mb-2">{item.label}</p>
+                    <p className="iv-card-title text-3xl text-lime-300">{item.value}</p>
                   </div>
                 ))}
               </div>
@@ -130,28 +130,28 @@ export function VaultPage() {
           </div>
 
           {/* Resource / Education block */}
-          <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-6 transition-colors duration-200">
-            <h2 className="text-lg font-semibold text-zinc-100 mb-3">Resources &amp; Education</h2>
+          <div className="iv-panel p-6">
+            <h2 className="iv-card-title mb-3 text-3xl">Resources &amp; Education</h2>
             <div className="space-y-3">
               {[
                 { title: 'Iron Vault Academy', desc: 'Complete all 6 modules to unlock your full token allocation.' },
                 { title: 'Vault Fundamentals', desc: 'Understanding royalty positions, dividends, and token mechanics.' },
                 { title: 'Referral Program', desc: 'Refer qualified members and track your network growth.' },
               ].map((item) => (
-                <div key={item.title} className="rounded-lg border border-white/[0.07] bg-black/20 p-4">
-                  <p className="text-sm font-semibold text-zinc-100 mb-1">{item.title}</p>
-                  <p className="text-xs text-zinc-400">{item.desc}</p>
+                <div key={item.title} className="rounded border border-[#1a1a1a] bg-[#080808] p-4">
+                  <p className="iv-card-title mb-1 text-xl">{item.title}</p>
+                  <p className="iv-body text-xs">{item.desc}</p>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Referral Link box */}
-          <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-6 transition-colors duration-200">
-            <h2 className="text-lg font-semibold text-zinc-100 mb-3">Your Referral Link</h2>
-            <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-2">Code: {profile?.referral_code ?? 'Unavailable'}</p>
+          <div className="iv-panel p-6">
+            <h2 className="iv-card-title mb-3 text-3xl">Your Referral Link</h2>
+            <p className="iv-label-muted mb-2">Code: {profile?.referral_code ?? 'Unavailable'}</p>
             <p className="text-sm text-zinc-400 break-all mb-4">{referralLink || 'Referral link available after profile sync.'}</p>
-            <button type="button" onClick={copyLink} className="inline-flex items-center gap-2 rounded-md border border-zinc-700 px-3 py-2 text-sm text-zinc-100 hover:border-lime-300/40 hover:text-lime-200">
+            <button type="button" onClick={copyLink} className="iv-button-ghost inline-flex items-center gap-2 px-3 py-2 text-xs">
               <Copy className="h-4 w-4" />
               {copyState === 'copied' ? 'Copied!' : copyState === 'failed' ? 'Copy failed' : 'Copy referral link'}
             </button>

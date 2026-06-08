@@ -7,7 +7,7 @@ export function VIPGate({ children }: { children: ReactNode }) {
   const { loading, isVip, isAdmin } = useBackofficeAuth()
 
   if (loading) return (
-    <div className="min-h-[420px] grid place-items-center rounded-2xl border border-zinc-800 bg-zinc-950/60 p-8">
+    <div className="iv-panel min-h-[420px] grid place-items-center p-8">
       <p className="text-sm text-zinc-300">Loading access policy...</p>
     </div>
   )
@@ -15,9 +15,9 @@ export function VIPGate({ children }: { children: ReactNode }) {
   if (isVip || isAdmin) return <>{children}</>
 
   return (
-    <div className="min-h-[420px] grid place-items-center rounded-2xl border border-zinc-800 bg-zinc-950/60 p-8">
+    <div className="iv-panel min-h-[420px] grid place-items-center p-8">
       <div className="text-center max-w-sm">
-        <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full border border-purple-500/30 bg-purple-500/10">
+        <div className="iv-chip-purple mb-4 inline-flex h-14 w-14 items-center justify-center rounded">
           <span className="text-2xl">🔒</span>
         </div>
         <h2 className="text-2xl font-semibold text-zinc-100 mb-3">Become VIP to access</h2>

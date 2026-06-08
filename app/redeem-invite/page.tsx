@@ -71,22 +71,22 @@ export default function RedeemInvitePage() {
 
   return (
     <main className="min-h-screen bg-[#080808] text-zinc-100 grid place-items-center px-6">
-      <div className="w-full max-w-md rounded-xl border border-zinc-800 bg-zinc-950/70 p-8">
-        <p className="text-xs uppercase tracking-[0.24em] text-lime-300 mb-3">Iron Vault</p>
-        <h1 className="text-2xl font-semibold">Redeem Invite</h1>
-        <p className="mt-3 text-sm text-zinc-400">
+      <div className="iv-panel w-full max-w-md p-8">
+        <p className="iv-label mb-3">Iron Vault</p>
+        <h1 className="iv-title text-4xl">Redeem Invite</h1>
+        <p className="iv-body mt-3 text-sm">
           Enter the invite code issued to you. Redemption is tied to your current signed-in account.
         </p>
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <label className="block">
-            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-zinc-400">Invite Code</span>
+            <span className="iv-label-muted mb-2 block">Invite Code</span>
             <input
               type="text"
               autoComplete="off"
               value={inviteCode}
               onChange={(event) => setInviteCode(event.target.value.toUpperCase())}
-              className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 outline-none ring-lime-300/40 focus:border-lime-300 focus:ring"
+              className="iv-field w-full px-3 py-2.5 text-sm"
               placeholder="ENTER-CODE"
               disabled={state.type === 'loading'}
             />
@@ -95,7 +95,7 @@ export default function RedeemInvitePage() {
           <button
             type="submit"
             disabled={!canSubmit}
-            className="inline-flex w-full items-center justify-center rounded-md bg-lime-300 px-5 py-2.5 text-sm font-semibold text-zinc-900 hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-60"
+            className="iv-button inline-flex w-full items-center justify-center px-5 py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
           >
             {state.type === 'loading' ? 'Redeeming...' : 'Redeem Invite'}
           </button>
@@ -112,13 +112,13 @@ export default function RedeemInvitePage() {
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Link
             href="/access-required"
-            className="inline-flex items-center justify-center rounded-md border border-zinc-700 px-5 py-2.5 text-sm font-semibold text-zinc-100 hover:bg-zinc-900"
+            className="iv-button-ghost inline-flex items-center justify-center px-5 py-2.5 text-xs"
           >
             Back
           </Link>
           <Link
             href="https://ironvaulttoken.com/learn"
-            className="inline-flex items-center justify-center rounded-md border border-zinc-700 px-5 py-2.5 text-sm font-semibold text-zinc-100 hover:bg-zinc-900"
+            className="iv-button-ghost inline-flex items-center justify-center px-5 py-2.5 text-xs"
           >
             Learn Page
           </Link>

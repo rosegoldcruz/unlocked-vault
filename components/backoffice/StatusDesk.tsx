@@ -46,40 +46,41 @@ export function StatusDesk() {
 
   return (
     <section className="space-y-6">
-      <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-6 transition-colors duration-200">
-        <h1 className="text-2xl font-semibold text-zinc-100 mb-2">Status Desk</h1>
-        <p className="text-sm text-zinc-400">Send a support request and follow response updates from your ticket timeline.</p>
+      <div className="iv-panel iv-panel-lime p-6">
+        <p className="iv-label mb-2">Support</p>
+        <h1 className="iv-title mb-2 text-5xl">Status Desk</h1>
+        <p className="iv-body text-sm">Send a support request and follow response updates from your ticket timeline.</p>
       </div>
       <div className="grid gap-6 xl:grid-cols-2">
-        <form onSubmit={submitTicket} className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-zinc-100">Create Ticket</h2>
+        <form onSubmit={submitTicket} className="iv-panel space-y-4 p-6">
+          <h2 className="iv-card-title text-3xl">Create Ticket</h2>
           {(['name', 'email', 'subject'] as const).map((field) => (
             <div key={field}>
-              <label htmlFor={`ticket-${field}`} className="mb-1.5 block text-sm text-zinc-300 capitalize">{field}</label>
-              <input id={`ticket-${field}`} value={form[field]} onChange={(e) => setForm((prev) => ({ ...prev, [field]: e.target.value }))} className="w-full rounded-md border border-white/10 bg-black/50 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-lime-400/30" required={field === 'subject'} />
+              <label htmlFor={`ticket-${field}`} className="iv-label-muted mb-1.5 block">{field}</label>
+              <input id={`ticket-${field}`} value={form[field]} onChange={(e) => setForm((prev) => ({ ...prev, [field]: e.target.value }))} className="iv-field w-full px-3 py-2 text-sm" required={field === 'subject'} />
             </div>
           ))}
           <div>
-            <label htmlFor="ticket-message" className="mb-1.5 block text-sm text-zinc-300">Message</label>
-            <textarea id="ticket-message" value={form.message} onChange={(e) => setForm((prev) => ({ ...prev, message: e.target.value }))} className="min-h-32 w-full rounded-md border border-white/10 bg-black/50 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-lime-400/30" required />
+            <label htmlFor="ticket-message" className="iv-label-muted mb-1.5 block">Message</label>
+            <textarea id="ticket-message" value={form.message} onChange={(e) => setForm((prev) => ({ ...prev, message: e.target.value }))} className="iv-field min-h-32 w-full px-3 py-2 text-sm" required />
           </div>
           {error && <p className="text-sm text-red-300">{error}</p>}
-          <button type="submit" disabled={submitting} className="inline-flex items-center justify-center rounded-md bg-lime-300 px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-lime-200 disabled:opacity-50">
+          <button type="submit" disabled={submitting} className="iv-button inline-flex items-center justify-center px-4 py-2 text-sm disabled:opacity-50">
             {submitting ? 'Submitting...' : 'Submit ticket'}
           </button>
         </form>
-        <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-6 transition-colors duration-200">
-          <h2 className="text-lg font-semibold text-zinc-100 mb-4">Your Tickets</h2>
+        <div className="iv-panel p-6">
+          <h2 className="iv-card-title mb-4 text-3xl">Your Tickets</h2>
           {loading ? <p className="text-sm text-zinc-400">Loading tickets...</p> : tickets.length === 0 ? <p className="text-sm text-zinc-400">No tickets submitted yet.</p> : (
             <div className="space-y-3">
               {tickets.map((ticket) => (
-                <article key={ticket.id} className="rounded-lg border border-white/[0.07] bg-black/20 p-4">
+                <article key={ticket.id} className="rounded border border-[#1a1a1a] bg-[#080808] p-4">
                   <div className="flex items-start justify-between gap-3">
-                    <div><h3 className="text-sm font-semibold text-zinc-100">{ticket.subject}</h3><p className="text-xs text-zinc-400">{new Date(ticket.created_at).toLocaleString()}</p></div>
-                    <span className="rounded-md border border-zinc-700 px-2 py-0.5 text-xs text-zinc-300">{ticket.status}</span>
+                    <div><h3 className="iv-card-title text-xl">{ticket.subject}</h3><p className="text-xs text-zinc-400">{new Date(ticket.created_at).toLocaleString()}</p></div>
+                    <span className="rounded border border-[#2a2a2a] px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400">{ticket.status}</span>
                   </div>
                   <p className="mt-3 text-sm text-zinc-300 whitespace-pre-wrap">{ticket.message}</p>
-                  {ticket.admin_response && <div className="mt-3 rounded-md border border-lime-300/30 bg-lime-300/10 p-3"><p className="text-xs uppercase tracking-[0.2em] text-lime-200 mb-2">Admin response</p><p className="text-sm text-zinc-100 whitespace-pre-wrap">{ticket.admin_response}</p></div>}
+                  {ticket.admin_response && <div className="iv-chip-lime mt-3 rounded p-3"><p className="iv-label-muted mb-2 text-lime-200">Admin response</p><p className="text-sm text-zinc-100 whitespace-pre-wrap">{ticket.admin_response}</p></div>}
                 </article>
               ))}
             </div>

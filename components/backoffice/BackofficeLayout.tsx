@@ -48,7 +48,7 @@ function NavLinks({ pathname, onNavigate, isAdmin }: { pathname: string; onNavig
   const { logout } = usePrivy()
   const navItems = isAdmin ? [...NAV_ITEMS, ...ADMIN_NAV_ITEMS] : NAV_ITEMS
   return (
-    <nav className="space-y-1">
+    <nav className="space-y-2">
       {navItems.map((item) => {
         const Icon = item.icon
         const isActive = pathname === item.href || (pathname.startsWith(item.href + '/') && item.href !== '/')
@@ -58,10 +58,10 @@ function NavLinks({ pathname, onNavigate, isAdmin }: { pathname: string; onNavig
               href={item.href}
               onClick={onNavigate}
               className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150',
+                'flex items-center gap-3 rounded px-3 py-2.5 text-sm transition-all duration-150 border',
                 isActive
-                  ? 'bg-lime-400/15 text-lime-300 border border-lime-400/40 shadow-[0_0_14px_rgba(163,230,53,0.12)]'
-                  : 'text-zinc-300 hover:bg-white/5 hover:text-zinc-100 border border-transparent hover:border-white/10',
+                  ? 'iv-chip-lime shadow-[0_0_14px_rgba(170,255,0,0.12)]'
+                  : 'border-[#1a1a1a] bg-[#0f0f0f] text-zinc-400 hover:border-[#7b2fbe]/60 hover:text-zinc-100',
               )}
             >
               <Icon className="h-4 w-4" />
@@ -74,7 +74,7 @@ function NavLinks({ pathname, onNavigate, isAdmin }: { pathname: string; onNavig
         <button
           type="button"
           onClick={() => { onNavigate?.(); void logout() }}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-zinc-400 hover:bg-white/5 hover:text-red-300 border border-transparent hover:border-white/10 transition-all duration-150"
+          className="flex w-full items-center gap-3 rounded border border-[#1a1a1a] bg-[#0f0f0f] px-3 py-2.5 text-sm text-zinc-400 transition-all duration-150 hover:border-red-400/30 hover:text-red-300"
         >
           <LogOut className="h-4 w-4" />
           <span>Logout</span>
@@ -91,19 +91,19 @@ export function BackofficeLayout({ children }: { children: ReactNode }) {
   const isAdmin = profile?.role === 'ADMIN'
 
   return (
-    <div className="min-h-screen text-zinc-100">
+    <div className="iv-portal-shell min-h-screen text-zinc-100">
       <IronVaultBackground />
 
       {/* Sidebar */}
-      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-64 border-r border-white/10 bg-black/50 backdrop-blur-xl flex-col shadow-xl shadow-black/30">
+      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-64 border-r border-[#1a1a1a] bg-[#080808] flex-col shadow-xl shadow-black/30">
         <div className="flex h-full w-full flex-col p-5">
           <div className="mb-8">
-            <p className="text-xs uppercase tracking-[0.24em] text-lime-300">Iron Vault</p>
-            <h1 className="mt-1 text-base font-semibold text-zinc-100">Member Portal</h1>
+            <p className="iv-label">Iron Vault</p>
+            <h1 className="iv-title mt-1 text-2xl">Member Portal</h1>
           </div>
           <NavLinks pathname={pathname} isAdmin={isAdmin} />
-          <div className="mt-auto rounded-lg border border-white/10 bg-black/30 p-3">
-            <p className="text-xs uppercase tracking-[0.2em] text-zinc-400 mb-1">Tier</p>
+          <div className="iv-panel iv-panel-lime mt-auto p-3">
+            <p className="iv-label-muted mb-1">Tier</p>
             <p className="text-sm text-zinc-100">{profile?.current_tier ?? 'MEMBER'}</p>
           </div>
         </div>
@@ -111,46 +111,46 @@ export function BackofficeLayout({ children }: { children: ReactNode }) {
 
       {/* Main content */}
       <div className="lg:pl-64">
-        <header className="sticky top-0 z-30 border-b border-white/10 bg-black/40 backdrop-blur-xl">
+        <header className="sticky top-0 z-30 border-b border-[#1a1a1a] bg-[#080808]">
           <div className="mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
             <button
               type="button"
               onClick={() => setMobileNavOpen(true)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-zinc-700 text-zinc-200 lg:hidden"
+              className="inline-flex h-9 w-9 items-center justify-center rounded border border-[#1e1e1e] text-zinc-200 lg:hidden"
               aria-label="Open navigation"
             >
               <Menu className="h-4 w-4" />
             </button>
             <div className="hidden lg:block">
-              <p className="text-sm text-zinc-200">{profile?.email ?? 'No email on file'}</p>
+              <p className="font-mono text-xs text-zinc-500">{profile?.email ?? 'No email on file'}</p>
             </div>
             <div className="flex items-center gap-3 text-xs sm:text-sm">
-              <span className="rounded-md border border-zinc-700 px-2.5 py-1 text-zinc-200">{profile?.role ?? 'MEMBER'}</span>
-              <span className="rounded-md border border-lime-300/30 bg-lime-300/10 px-2.5 py-1 text-lime-200">
+              <span className="rounded border border-[#2a2a2a] px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400">{profile?.role ?? 'MEMBER'}</span>
+              <span className="iv-chip-lime rounded px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.16em]">
                 XP {profile?.vault_xp?.toLocaleString() ?? '0'}
               </span>
             </div>
           </div>
         </header>
 
-        <main className="mx-auto px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+        <main className="mx-auto px-4 py-8 sm:px-6 lg:px-8">{children}</main>
       </div>
 
       {/* Mobile nav overlay */}
       {mobileNavOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <button type="button" className="absolute inset-0 bg-black/60" aria-label="Close navigation overlay" onClick={() => setMobileNavOpen(false)} />
-          <div className="absolute inset-y-0 left-0 w-72 max-w-[85vw] border-r border-white/10 bg-black/80 backdrop-blur-xl p-5">
+          <button type="button" className="absolute inset-0 bg-black/70" aria-label="Close navigation overlay" onClick={() => setMobileNavOpen(false)} />
+          <div className="absolute inset-y-0 left-0 w-72 max-w-[85vw] border-r border-[#1a1a1a] bg-[#080808] p-5">
             <div className="mb-5 flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-lime-300">Iron Vault</p>
-                <p className="mt-1 text-base font-semibold">Member Portal</p>
+                <p className="iv-label">Iron Vault</p>
+                <p className="iv-title mt-1 text-2xl">Member Portal</p>
               </div>
-              <button type="button" onClick={() => setMobileNavOpen(false)} className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-zinc-700 text-zinc-200" aria-label="Close navigation">
+              <button type="button" onClick={() => setMobileNavOpen(false)} className="inline-flex h-9 w-9 items-center justify-center rounded border border-[#1e1e1e] text-zinc-200" aria-label="Close navigation">
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="mb-4 rounded-lg border border-white/10 bg-black/30 p-3 text-sm">
+            <div className="iv-panel mb-4 p-3 text-sm">
               <p className="text-zinc-100">{profile?.email ?? 'No email on file'}</p>
               <p className="mt-1 text-zinc-400">{profile?.role ?? 'MEMBER'} · {profile?.current_tier ?? 'MEMBER'}</p>
             </div>

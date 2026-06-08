@@ -3,63 +3,44 @@ export function IronVaultBackground() {
     <div
       aria-hidden
       className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
-      style={{ background: '#020617' }}
+      style={{ background: '#080808' }}
     >
-      {/* Animated green grid */}
+      {/* Academy grid */}
       <div
         className="iv-grid-animated absolute inset-0"
         style={{
           backgroundImage: [
-            'linear-gradient(rgba(163,230,53,0.05) 1px, transparent 1px)',
-            'linear-gradient(90deg, rgba(163,230,53,0.05) 1px, transparent 1px)',
+            'linear-gradient(rgba(123,47,190,0.055) 1px, transparent 1px)',
+            'linear-gradient(90deg, rgba(123,47,190,0.055) 1px, transparent 1px)',
           ].join(','),
-          backgroundSize: '64px 64px',
-          animation: 'iv-grid-scroll 22s linear infinite',
+          backgroundSize: '80px 80px',
+          animation: 'iv-grid-scroll 28s linear infinite',
         }}
       />
 
-      {/* Purple radial glow — top right */}
+      {/* Academy purple glow */}
       <div
-        className="iv-fog-animated absolute"
+        className="absolute"
         style={{
-          top: '-20%',
-          right: '-8%',
-          width: '58%',
-          height: '58%',
+          top: '-300px',
+          right: '-300px',
+          width: '800px',
+          height: '800px',
           background:
-            'radial-gradient(circle, rgba(139,92,246,0.20) 0%, rgba(109,40,217,0.09) 40%, transparent 68%)',
-          filter: 'blur(52px)',
-          animation: 'iv-fog-drift 16s ease-in-out infinite',
+            'radial-gradient(circle, rgba(123,47,190,0.08) 0%, transparent 70%)',
         }}
       />
 
-      {/* Green radial glow — lower left */}
+      {/* Subtle lime accent */}
       <div
-        className="iv-fog-animated absolute"
+        className="absolute"
         style={{
-          bottom: '-12%',
-          left: '-6%',
-          width: '52%',
-          height: '52%',
+          bottom: '-260px',
+          left: '-240px',
+          width: '620px',
+          height: '620px',
           background:
-            'radial-gradient(circle, rgba(163,230,53,0.14) 0%, rgba(101,163,13,0.06) 40%, transparent 66%)',
-          filter: 'blur(60px)',
-          animation: 'iv-fog-drift-alt 20s ease-in-out infinite',
-        }}
-      />
-
-      {/* Subtle center fog */}
-      <div
-        className="iv-fog-animated absolute"
-        style={{
-          top: '30%',
-          left: '35%',
-          width: '40%',
-          height: '40%',
-          background:
-            'radial-gradient(circle, rgba(139,92,246,0.07) 0%, transparent 65%)',
-          filter: 'blur(80px)',
-          animation: 'iv-fog-drift 26s ease-in-out infinite reverse',
+            'radial-gradient(circle, rgba(170,255,0,0.045) 0%, transparent 68%)',
         }}
       />
 
@@ -68,7 +49,7 @@ export function IronVaultBackground() {
         className="absolute inset-x-0 top-0 h-40"
         style={{
           background:
-            'linear-gradient(180deg, rgba(2,6,23,0.55) 0%, transparent 100%)',
+            'linear-gradient(180deg, rgba(8,8,8,0.86) 0%, transparent 100%)',
         }}
       />
 
@@ -77,7 +58,7 @@ export function IronVaultBackground() {
         className="absolute inset-x-0 bottom-0 h-40"
         style={{
           background:
-            'linear-gradient(0deg, rgba(2,6,23,0.55) 0%, transparent 100%)',
+            'linear-gradient(0deg, rgba(8,8,8,0.88) 0%, transparent 100%)',
         }}
       />
     </div>

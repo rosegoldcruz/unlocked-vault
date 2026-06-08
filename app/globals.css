@@ -1,12 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Space+Mono:wght@400;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 html,
 body {
-	background: #020617;
-	color: #f8fafc;
+	background: #080808;
+	color: #e8e8e8;
 	min-height: 100%;
+	font-family: 'DM Sans', sans-serif;
 }
 
 body {
@@ -19,24 +22,139 @@ body {
 	background: transparent;
 }
 
+@layer components {
+	.iv-portal-shell {
+		background: #080808;
+		color: #e8e8e8;
+		font-family: 'DM Sans', sans-serif;
+	}
+
+	.iv-panel {
+		position: relative;
+		overflow: hidden;
+		border: 1px solid #1a1a1a;
+		border-radius: 4px;
+		background: #0f0f0f;
+	}
+
+	.iv-panel::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		height: 2px;
+		background: linear-gradient(90deg, transparent, #7b2fbe, transparent);
+		opacity: 0.9;
+	}
+
+	.iv-panel-lime::before {
+		background: linear-gradient(90deg, transparent, #aaff00, transparent);
+	}
+
+	.iv-panel-hover {
+		transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+	}
+
+	.iv-panel-hover:hover {
+		border-color: rgba(123, 47, 190, 0.5);
+		transform: translateY(-2px);
+		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+	}
+
+	.iv-label {
+		font-family: 'Space Mono', monospace;
+		font-size: 9px;
+		letter-spacing: 3px;
+		text-transform: uppercase;
+		color: #aaff00;
+	}
+
+	.iv-label-muted {
+		font-family: 'Space Mono', monospace;
+		font-size: 8px;
+		letter-spacing: 2px;
+		text-transform: uppercase;
+		color: #444;
+	}
+
+	.iv-title {
+		font-family: 'Bebas Neue', sans-serif;
+		letter-spacing: 2px;
+		line-height: 1;
+		color: #fff;
+	}
+
+	.iv-card-title {
+		font-family: 'Bebas Neue', sans-serif;
+		letter-spacing: 1px;
+		line-height: 1.1;
+		color: #fff;
+	}
+
+	.iv-body {
+		color: #777;
+		line-height: 1.65;
+	}
+
+	.iv-chip-lime {
+		border: 1px solid rgba(170, 255, 0, 0.24);
+		background: rgba(170, 255, 0, 0.08);
+		color: #aaff00;
+	}
+
+	.iv-chip-purple {
+		border: 1px solid rgba(123, 47, 190, 0.34);
+		background: rgba(123, 47, 190, 0.12);
+		color: #9d4edd;
+	}
+
+	.iv-field {
+		border: 1px solid #1e1e1e;
+		border-radius: 4px;
+		background: #080808;
+		color: #e8e8e8;
+	}
+
+	.iv-field:focus {
+		border-color: rgba(170, 255, 0, 0.45);
+		outline: none;
+	}
+
+	.iv-button {
+		border-radius: 3px;
+		background: #aaff00;
+		color: #080808;
+		font-family: 'Bebas Neue', sans-serif;
+		letter-spacing: 2px;
+		transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+	}
+
+	.iv-button:hover {
+		background: #bfff33;
+	}
+
+	.iv-button-ghost {
+		border: 1px solid #2a2a2a;
+		border-radius: 3px;
+		background: transparent;
+		color: #888;
+		font-family: 'Space Mono', monospace;
+		letter-spacing: 1px;
+		transition: border-color 0.2s ease, color 0.2s ease;
+	}
+
+	.iv-button-ghost:hover {
+		border-color: #7b2fbe;
+		color: #aaff00;
+	}
+}
+
 @keyframes iv-grid-scroll {
 	from { background-position: 0 0; }
 	to   { background-position: 0 64px; }
 }
 
-@keyframes iv-fog-drift {
-	0%   { opacity: 0.55; transform: scale(1) translate(0, 0); }
-	50%  { opacity: 0.85; transform: scale(1.06) translate(-8px, -12px); }
-	100% { opacity: 0.55; transform: scale(1) translate(0, 0); }
-}
-
-@keyframes iv-fog-drift-alt {
-	0%   { opacity: 0.45; transform: scale(1) translate(0, 0); }
-	50%  { opacity: 0.7;  transform: scale(1.04) translate(10px, 8px); }
-	100% { opacity: 0.45; transform: scale(1) translate(0, 0); }
-}
-
 @media (prefers-reduced-motion: reduce) {
 	.iv-grid-animated { animation: none !important; }
-	.iv-fog-animated  { animation: none !important; }
 }

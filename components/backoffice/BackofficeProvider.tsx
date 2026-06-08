@@ -54,11 +54,11 @@ export function BackofficeProvider({ children }: { children: ReactNode }) {
 
   if (!authenticated) return (
     <div className="min-h-screen bg-[#080808] text-zinc-100 grid place-items-center px-6">
-      <div className="w-full max-w-md rounded-xl border border-zinc-800 bg-zinc-950/70 p-8 text-center">
-        <p className="text-xs uppercase tracking-[0.24em] text-lime-300 mb-3">Iron Vault</p>
-        <h1 className="text-2xl font-semibold mb-3">Sign in to continue</h1>
-        <p className="text-sm text-zinc-400 mb-6">Member backoffice access requires your authenticated Iron Vault account.</p>
-        <button type="button" onClick={() => login()} className="inline-flex items-center justify-center rounded-md bg-lime-300 px-5 py-2.5 text-sm font-semibold text-zinc-900 hover:bg-lime-200">
+      <div className="iv-panel w-full max-w-md p-8 text-center">
+        <p className="iv-label mb-3">Iron Vault</p>
+        <h1 className="iv-title mb-3 text-4xl">Sign in to continue</h1>
+        <p className="iv-body mb-6 text-sm">Member backoffice access requires your authenticated Iron Vault account.</p>
+        <button type="button" onClick={() => login()} className="iv-button inline-flex items-center justify-center px-5 py-2.5 text-sm">
           Sign In
         </button>
       </div>
@@ -73,10 +73,10 @@ export function BackofficeProvider({ children }: { children: ReactNode }) {
 
   if (error && !profile) return (
     <div className="min-h-screen bg-[#080808] text-zinc-100 grid place-items-center px-6">
-      <div className="w-full max-w-md rounded-xl border border-red-900/40 bg-zinc-950/70 p-8 text-center">
-        <h1 className="text-xl font-semibold mb-2">Unable to load backoffice</h1>
+      <div className="iv-panel w-full max-w-md p-8 text-center">
+        <h1 className="iv-card-title mb-2 text-3xl">Unable to load backoffice</h1>
         <p className="text-sm text-zinc-400 mb-6">{error}</p>
-        <button type="button" onClick={() => void refreshProfile()} className="inline-flex items-center justify-center rounded-md bg-lime-300 px-5 py-2.5 text-sm font-semibold text-zinc-900 hover:bg-lime-200">Retry</button>
+        <button type="button" onClick={() => void refreshProfile()} className="iv-button inline-flex items-center justify-center px-5 py-2.5 text-sm">Retry</button>
       </div>
     </div>
   )

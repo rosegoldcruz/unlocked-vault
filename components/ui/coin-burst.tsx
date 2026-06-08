@@ -8,11 +8,11 @@ const PARTICLES = [
 ]
 
 const PARTICLE_COUNT = 12
-const SIZE_MIN = 22
-const SIZE_MAX = 30
-const SPEED_HORZ = 7
-const SPEED_UP_MIN = 14
-const SPEED_UP_MAX = 18
+const SIZE_MIN = 28
+const SIZE_MAX = 38
+const SPEED_HORZ = 3.5
+const SPEED_UP_MIN = 7
+const SPEED_UP_MAX = 10
 
 const getContainer = () => {
   const id = "_coinBurst_effect"
@@ -73,15 +73,15 @@ function burst(x: number, y: number) {
     for (const p of particles) {
       p.left -= p.speedHorz * p.direction
       p.top -= p.speedUp
-      p.speedUp = Math.max(0, p.speedUp - 0.8)
-      p.spinVal += p.spinSpeed * 0.5
+      p.speedUp = Math.max(0, p.speedUp - 0.28)
+      p.spinVal += p.spinSpeed * 0.35
 
       if (p.top < window.innerHeight + p.size) {
         alive = true
         p.el.style.left = `${p.left}px`
         p.el.style.top = `${p.top}px`
         p.el.style.transform = `rotate(${p.spinVal}deg)`
-        p.el.style.opacity = p.speedUp <= 0 ? String(Math.max(0, parseFloat(p.el.style.opacity || "1") - 0.04)) : "1"
+        p.el.style.opacity = p.speedUp <= 0 ? String(Math.max(0, parseFloat(p.el.style.opacity || "1") - 0.018)) : "1"
       } else {
         p.el.remove()
       }

@@ -24,12 +24,12 @@ export function DashboardLanding() {
   return (
     <section className="space-y-8">
       {/* Welcome header */}
-      <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-6 transition-colors duration-200">
-        <p className="text-xs uppercase tracking-[0.24em] text-lime-300 mb-2">Iron Vault Member Portal</p>
-        <h1 className="text-3xl font-semibold text-zinc-100 mb-2">
+      <div className="iv-panel iv-panel-lime p-6">
+        <p className="iv-label mb-2">Iron Vault Member Portal</p>
+        <h1 className="iv-title mb-2 text-5xl">
           Welcome{profile?.email ? `, ${profile.email.split('@')[0]}` : ''}.
         </h1>
-        <p className="text-zinc-400 max-w-2xl">
+        <p className="iv-body max-w-2xl text-sm">
           This is your Iron Vault member command center. Navigate using the sidebar to access your Academy, Vault, Referrals, and more.
         </p>
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -39,9 +39,9 @@ export function DashboardLanding() {
             { label: 'Tier', value: profile?.current_tier ?? 'MEMBER' },
             { label: 'Vault XP', value: (profile?.vault_xp ?? 0).toLocaleString() },
           ].map((item) => (
-            <div key={item.label} className="rounded-lg border border-white/10 bg-black/30 backdrop-blur-sm p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-2">{item.label}</p>
-              <p className="text-sm text-zinc-100 break-all">{item.value}</p>
+            <div key={item.label} className="iv-panel p-4">
+              <p className="iv-label-muted mb-2">{item.label}</p>
+              <p className="font-mono text-sm text-zinc-100 break-all">{item.value}</p>
             </div>
           ))}
         </div>
@@ -49,7 +49,7 @@ export function DashboardLanding() {
 
       {/* Quick action links */}
       <div>
-        <h2 className="text-sm uppercase tracking-[0.2em] text-zinc-500 mb-4">Quick Access</h2>
+        <h2 className="iv-label-muted mb-4">Quick Access</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {quickLinks.map((card) => {
             const Icon = card.icon
@@ -58,14 +58,14 @@ export function DashboardLanding() {
               <Link
                 key={card.href}
                 href={card.href}
-                className="group rounded-2xl border border-white/10 bg-black/30 backdrop-blur-lg p-5 transition-all duration-200 hover:border-lime-400/30 hover:bg-black/50"
+                className="iv-panel iv-panel-hover group p-5"
               >
-                <div className={`mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg border ${isLime ? 'border-lime-400/30 bg-lime-400/5 text-lime-300' : 'border-purple-500/30 bg-purple-500/5 text-purple-400'}`}>
+                <div className={`mb-4 inline-flex h-11 w-11 items-center justify-center rounded border ${isLime ? 'iv-chip-lime' : 'iv-chip-purple'}`}>
                   <Icon className="h-5 w-5" />
                 </div>
-                <h3 className="text-base font-semibold text-zinc-100 mb-2">{card.title}</h3>
-                <p className="text-sm text-zinc-400 mb-4">{card.desc}</p>
-                <span className="inline-flex items-center gap-2 text-sm text-lime-200">
+                <h3 className="iv-card-title mb-2 text-2xl">{card.title}</h3>
+                <p className="iv-body mb-4 text-sm">{card.desc}</p>
+                <span className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.16em] text-lime-300">
                   Open <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
                 </span>
               </Link>
@@ -76,15 +76,15 @@ export function DashboardLanding() {
 
       {/* Iron Vault updates */}
       <div>
-        <h2 className="text-sm uppercase tracking-[0.2em] text-zinc-500 mb-4">Iron Vault Updates</h2>
+        <h2 className="iv-label-muted mb-4">Iron Vault Updates</h2>
         <div className="space-y-3">
           {updates.map((update) => (
-            <div key={update.title} className="rounded-xl border border-white/10 bg-black/25 backdrop-blur-sm p-5">
+            <div key={update.title} className="iv-panel p-5">
               <div className="flex items-start gap-3">
                 <span className="mt-0.5 h-2 w-2 flex-shrink-0 rounded-full bg-lime-400" />
                 <div>
-                  <p className="text-sm font-semibold text-zinc-100 mb-1">{update.title}</p>
-                  <p className="text-sm text-zinc-400">{update.body}</p>
+                  <p className="iv-card-title mb-1 text-xl">{update.title}</p>
+                  <p className="iv-body text-sm">{update.body}</p>
                 </div>
               </div>
             </div>
