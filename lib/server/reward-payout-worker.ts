@@ -68,8 +68,9 @@ async function processLockedJob(input: {
     const { error: dryRunUpdateError } = await getSupabaseAdmin()
       .from('iv_payout_jobs')
       .update({
-        status: 'failed',
+        status: 'queued',
         attempts: input.attempts + 1,
+        next_attempt_at: null,
         last_error: 'Dry run mode enabled; no on-chain transfer executed',
         locked_at: null,
         locked_by: null,
@@ -154,7 +155,7 @@ async function handleLockedJobError(input: {
   if (error) throw new Error(error.message)
 }
 
-export async function runRewardPayoutWorker(): Promise<RewardWorkerResult> {
+export async function runRewardPayoutWorker(input?: { payoutJobId?: string }): Promise<RewardWorkerResult> {
   const config = getRewardConfig()
   if (!config.payoutWorkerEnabled) {
     return {
@@ -168,13 +169,21 @@ export async function runRewardPayoutWorker(): Promise<RewardWorkerResult> {
   const workerId = `payout-worker-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
   const processed: Array<{ jobId: string; status: string }> = []
 
-  for (let index = 0; index < config.maxPayoutsPerRun; index += 1) {
-    const { data: candidateRows, error: candidateError } = await getSupabaseAdmin()
+  const maxPayouts = input?.payoutJobId ? 1 : config.maxPayoutsPerRun
+
+  for (let index = 0; index < maxPayouts; index += 1) {
+    let candidateQuery = getSupabaseAdmin()
       .from('iv_payout_jobs')
       .select('id, privy_user_id, milestone_number, reward_track, access_type, module_number, entitlement_id, wallet_address, token_mint, amount_raw, attempts, max_attempts, next_attempt_at, created_at')
       .eq('status', 'queued')
       .order('created_at', { ascending: true })
-      .limit(Math.max(5, config.maxPayoutsPerRun))
+      .limit(input?.payoutJobId ? 1 : Math.max(5, config.maxPayoutsPerRun))
+
+    if (input?.payoutJobId) {
+      candidateQuery = candidateQuery.eq('id', input.payoutJobId)
+    }
+
+    const { data: candidateRows, error: candidateError } = await candidateQuery
 
     if (candidateError) throw new Error(candidateError.message)
 

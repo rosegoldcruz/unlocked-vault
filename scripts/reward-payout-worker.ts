@@ -13,7 +13,8 @@ function readIntervalMs(): number {
 }
 
 async function runOnce() {
-  const result = await runRewardPayoutWorker()
+  const payoutJobId = process.argv[3] ?? process.env.IVT_PAYOUT_JOB_ID
+  const result = await runRewardPayoutWorker({ payoutJobId })
   console.log('[rewards:worker] processedCount=', result.processedCount)
   console.log('[rewards:worker] processed=', JSON.stringify(result.processed))
 }
@@ -26,7 +27,11 @@ async function main() {
   }
 
   if (mode !== 'loop') {
-    throw new Error('Usage: tsx scripts/reward-payout-worker.ts [once|loop]')
+    throw new Error('Usage: tsx scripts/reward-payout-worker.ts [once|loop] [payout_job_id]')
+  }
+
+  if (process.argv[3] || process.env.IVT_PAYOUT_JOB_ID) {
+    throw new Error('payout_job_id scoping is only supported in once mode')
   }
 
   const intervalMs = readIntervalMs()
