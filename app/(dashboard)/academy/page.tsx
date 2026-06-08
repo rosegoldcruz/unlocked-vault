@@ -3,11 +3,10 @@
 import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
 import { usePrivy } from '@privy-io/react-auth'
-import { IronVaultLoader } from '@/components/ui/iron-vault-loader'
 
 const IronVaultAcademyUnlocked = dynamic(
   () => import('@/iron-vault-academy-unlocked'),
-  { ssr: false, loading: () => <IronVaultLoader label="Academy unlocking" variant="panel" /> }
+  { ssr: false, loading: () => null }
 )
 
 export default function AcademyPage() {

@@ -5,7 +5,6 @@ import { type FormEvent, useEffect, useState } from 'react'
 import { fetchBackofficeJson, type BackofficeTicketCreateResponse, type BackofficeTicketsResponse } from '@/lib/backoffice-client'
 import type { StatusTicket } from '@/types/backoffice'
 import { useBackofficeAuth } from '@/hooks/useBackofficeAuth'
-import { IronVaultLoader } from '@/components/ui/iron-vault-loader'
 
 export function StatusDesk() {
   const { profile } = useBackofficeAuth()
@@ -72,7 +71,7 @@ export function StatusDesk() {
         </form>
         <div className="iv-panel p-6">
           <h2 className="iv-card-title mb-4 text-3xl">Your Tickets</h2>
-          {loading ? <IronVaultLoader label="Ticket timeline activating" variant="inline" /> : tickets.length === 0 ? <p className="text-sm text-zinc-400">No tickets submitted yet.</p> : (
+          {!loading && tickets.length === 0 ? <p className="text-sm text-zinc-400">No tickets submitted yet.</p> : !loading ? (
             <div className="space-y-3">
               {tickets.map((ticket) => (
                 <article key={ticket.id} className="rounded border border-[#1a1a1a] bg-[#080808] p-4">
@@ -85,7 +84,7 @@ export function StatusDesk() {
                 </article>
               ))}
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </section>

@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { usePrivy } from '@privy-io/react-auth'
-import { IronVaultLoader } from '@/components/ui/iron-vault-loader'
 
 type Summary = {
   totalCompletions: number
@@ -170,7 +169,6 @@ export function AdminRewardsDashboard() {
         <p className="iv-body text-sm">Monitor milestones, payout jobs, and transaction history.</p>
       </div>
 
-      {loading ? <IronVaultLoader label="Reward operations activating" variant="panel" /> : null}
       {error ? <div className="rounded border border-rose-900/40 bg-[#0f0f0f] p-5 text-sm text-rose-300">{error}</div> : null}
 
       {summary ? (

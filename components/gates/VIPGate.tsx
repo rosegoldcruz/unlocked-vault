@@ -2,12 +2,11 @@
 
 import type { ReactNode } from 'react'
 import { useBackofficeAuth } from '@/hooks/useBackofficeAuth'
-import { IronVaultLoader } from '@/components/ui/iron-vault-loader'
 
 export function VIPGate({ children }: { children: ReactNode }) {
   const { loading, isVip, isAdmin } = useBackofficeAuth()
 
-  if (loading) return <IronVaultLoader label="VIP access unlocking" variant="panel" />
+  if (loading) return null
 
   if (isVip || isAdmin) return <>{children}</>
 

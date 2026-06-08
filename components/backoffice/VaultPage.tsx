@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react'
 import { fetchBackofficeJson, type BackofficePositionResponse } from '@/lib/backoffice-client'
 import { useBackofficeAuth } from '@/hooks/useBackofficeAuth'
 import type { UserPosition } from '@/types/backoffice'
-import { IronVaultLoader } from '@/components/ui/iron-vault-loader'
 
 type StatusFlag = 'YES' | 'NO' | 'DISCONTINUED'
 
@@ -66,9 +65,7 @@ export function VaultPage() {
         <h1 className="iv-title text-5xl">Vault</h1>
       </div>
 
-      {posLoading ? (
-        <IronVaultLoader label="Vault positions activating" variant="panel" />
-      ) : posError ? (
+      {posLoading ? null : posError ? (
         <div className="rounded border border-rose-900/40 bg-[#0f0f0f] p-5 text-sm text-rose-300">{posError}</div>
       ) : (
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">

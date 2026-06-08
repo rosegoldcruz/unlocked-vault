@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { usePrivy } from '@privy-io/react-auth'
-import { IronVaultLoader } from '@/components/ui/iron-vault-loader'
 
 type RewardStatusPayload = {
   walletAddress: string | null
@@ -132,10 +131,6 @@ export default function RewardsPage() {
             : 'Complete all academy modules. Rewards unlock at module milestones 2, 4, and 6.'}
         </p>
       </div>
-
-      {loading ? (
-        <IronVaultLoader label="Reward milestones activating" variant="panel" />
-      ) : null}
 
       {error ? (
         <div className="rounded border border-rose-900/40 bg-[#0f0f0f] p-5 text-sm text-rose-300">{error}</div>

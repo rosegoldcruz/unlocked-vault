@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { usePrivy } from '@privy-io/react-auth'
-import { IronVaultLoader } from '@/components/ui/iron-vault-loader'
 
 type AccessCheckState = 'idle' | 'checking' | 'failed'
 
@@ -110,7 +109,7 @@ export default function RootEntryPage() {
   }, [authenticated, ready, router, getAccessToken, retryNonce])
 
   if (!ready || (authenticated && accessCheck !== 'failed')) {
-    return <IronVaultLoader label={!ready ? 'Portal activating' : 'Session syncing'} />
+    return null
   }
 
   if (authenticated && accessCheck === 'failed') {
@@ -156,7 +155,7 @@ export default function RootEntryPage() {
           className="iv-button inline-flex items-center justify-center px-5 py-2.5 text-sm"
           disabled={!ready}
         >
-          {ready ? 'Sign In' : 'Loading...'}
+          Sign In
         </button>
         <p className="mt-6 text-xs text-zinc-500">
           If you do not yet have access, continue on the{' '}

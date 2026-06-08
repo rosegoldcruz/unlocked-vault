@@ -723,22 +723,7 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [1, 2, 3, 4,
   }
 
   if(!progressHydrated){
-    return(
-      <div className="iv">
-        <style>{CSS}</style>
-        <div style={{minHeight:"100vh",display:"grid",placeItems:"center",padding:"40px 20px",position:"relative",zIndex:1}}>
-          <div style={{maxWidth:560,width:"100%",background:"#0F0F0F",border:"1px solid rgba(123,47,190,0.3)",borderRadius:6,padding:"40px 32px",textAlign:"center"}}>
-            <div className="iv-dot" style={{margin:"0 auto 16px"}}/>
-            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:34,letterSpacing:2,color:"#fff",marginBottom:10}}>
-              LOADING MEMBER PROGRESS
-            </div>
-            <p style={{fontSize:14,color:"#777",lineHeight:1.7}}>
-              Restoring your lesson and quiz completion...
-            </p>
-          </div>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   // ── HUB ──

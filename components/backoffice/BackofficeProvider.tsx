@@ -4,7 +4,6 @@ import { usePrivy } from '@privy-io/react-auth'
 import { createContext, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { fetchBackofficeJson, type BackofficeProfileResponse } from '@/lib/backoffice-client'
 import type { BackofficeProfile } from '@/types/backoffice'
-import { IronVaultLoader } from '@/components/ui/iron-vault-loader'
 
 type BackofficeContextValue = {
   profile: BackofficeProfile | null
@@ -47,7 +46,7 @@ export function BackofficeProvider({ children }: { children: ReactNode }) {
     return { profile, loading, error, refreshProfile, isVip: role === 'VIP' || role === 'ADMIN', isAdmin: role === 'ADMIN' }
   }, [error, loading, profile, refreshProfile])
 
-  if (!ready) return <IronVaultLoader label="Secure portal activating" />
+  if (!ready) return null
 
   if (!authenticated) return (
     <div className="min-h-screen bg-[#080808] text-zinc-100 grid place-items-center px-6">
@@ -62,7 +61,7 @@ export function BackofficeProvider({ children }: { children: ReactNode }) {
     </div>
   )
 
-  if (loading && !profile) return <IronVaultLoader label="Member vault unlocking" />
+  if (loading && !profile) return null
 
   if (error && !profile) return (
     <div className="min-h-screen bg-[#080808] text-zinc-100 grid place-items-center px-6">
