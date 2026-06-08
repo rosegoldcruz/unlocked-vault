@@ -2,15 +2,12 @@
 
 import type { ReactNode } from 'react'
 import { useBackofficeAuth } from '@/hooks/useBackofficeAuth'
+import { IronVaultLoader } from '@/components/ui/iron-vault-loader'
 
 export function VIPGate({ children }: { children: ReactNode }) {
   const { loading, isVip, isAdmin } = useBackofficeAuth()
 
-  if (loading) return (
-    <div className="iv-panel min-h-[420px] grid place-items-center p-8">
-      <p className="text-sm text-zinc-300">Loading access policy...</p>
-    </div>
-  )
+  if (loading) return <IronVaultLoader label="VIP access unlocking" variant="panel" />
 
   if (isVip || isAdmin) return <>{children}</>
 

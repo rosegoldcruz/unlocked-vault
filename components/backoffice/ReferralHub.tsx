@@ -6,6 +6,7 @@ import { Copy, Link2 } from 'lucide-react'
 import { fetchBackofficeJson, type BackofficeReferralCreateResponse, type BackofficeReferralsResponse } from '@/lib/backoffice-client'
 import { useBackofficeAuth } from '@/hooks/useBackofficeAuth'
 import type { ReferralLead } from '@/types/backoffice'
+import { IronVaultLoader } from '@/components/ui/iron-vault-loader'
 
 type ReferralFormState = { name: string; phone: string; relationship: string; bestTimeToCall: string; profession: string; linkSent: boolean }
 const defaultForm: ReferralFormState = { name: '', phone: '', relationship: '', bestTimeToCall: 'ANYTIME', profession: '', linkSent: false }
@@ -120,7 +121,7 @@ export function ReferralHub() {
         </form>
         <div className="iv-panel p-6 sm:p-8">
           <h2 className="iv-card-title mb-4 text-4xl">Referral Leads</h2>
-          {loading ? <p className="text-sm text-zinc-400">Loading referrals...</p> : referrals.length === 0 ? <p className="text-sm text-zinc-400">No referral leads submitted yet.</p> : (
+          {loading ? <IronVaultLoader label="Referral engine activating" variant="inline" /> : referrals.length === 0 ? <p className="text-sm text-zinc-400">No referral leads submitted yet.</p> : (
             <div className="space-y-3">
               {referrals.map((lead) => (
                 <article key={lead.id} className="rounded border border-[#1a1a1a] bg-[#080808]/90 p-5">

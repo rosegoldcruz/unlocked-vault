@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { fetchBackofficeJson, type BackofficePositionResponse } from '@/lib/backoffice-client'
 import { useBackofficeAuth } from '@/hooks/useBackofficeAuth'
 import type { UserPosition } from '@/types/backoffice'
+import { IronVaultLoader } from '@/components/ui/iron-vault-loader'
 
 type StatusFlag = 'YES' | 'NO' | 'DISCONTINUED'
 
@@ -65,14 +66,15 @@ export function VaultPage() {
         <h1 className="iv-title text-5xl">Vault</h1>
       </div>
 
+      {posLoading ? (
+        <IronVaultLoader label="Vault positions activating" variant="panel" />
+      ) : posError ? (
+        <div className="rounded border border-rose-900/40 bg-[#0f0f0f] p-5 text-sm text-rose-300">{posError}</div>
+      ) : (
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
         <div className="iv-panel p-6">
           <h2 className="iv-card-title mb-4 text-3xl">Vault Participation Matrix</h2>
-          {posLoading ? (
-            <p className="text-sm text-zinc-400">Loading position data...</p>
-          ) : posError ? (
-            <p className="text-sm text-red-300">{posError}</p>
-          ) : (
+          {position ? (
             <div className="space-y-2">
               {participationRows.map((row) => (
                 <div key={row.label} className="flex items-center justify-between rounded border border-[#1a1a1a] bg-[#080808] px-4 py-3">
@@ -81,17 +83,15 @@ export function VaultPage() {
                 </div>
               ))}
             </div>
+          ) : (
+            <p className="text-sm text-zinc-400">No position data available.</p>
           )}
         </div>
 
         <div className="space-y-6">
           <div className="iv-panel iv-panel-lime p-6">
             <h2 className="iv-card-title mb-4 text-3xl">Investment Summary</h2>
-            {posLoading ? (
-              <p className="text-sm text-zinc-400">Loading...</p>
-            ) : posError ? (
-              <p className="text-sm text-red-300">{posError}</p>
-            ) : position ? (
+            {position ? (
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
                 {[
                   { label: 'Investment Total', value: formatCurrency(position.investment_total) },
@@ -128,6 +128,7 @@ export function VaultPage() {
           </div>
         </div>
       </div>
+      )}
     </section>
   )
 }
