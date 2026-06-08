@@ -80,7 +80,7 @@ export function VaultPage() {
         <h1 className="iv-title text-5xl">Vault</h1>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_420px]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,0.82fr)_minmax(520px,1.18fr)] 2xl:grid-cols-[minmax(0,0.9fr)_minmax(600px,1.15fr)]">
         {/* LEFT COLUMN */}
         <div className="space-y-6">
           {/* Participation Matrix */}
@@ -159,7 +159,7 @@ export function VaultPage() {
         </div>
 
         {/* RIGHT COLUMN — referrals */}
-        <div>
+        <div className="xl:sticky xl:top-24 xl:self-start">
           <ReferralHub />
         </div>
       </div>

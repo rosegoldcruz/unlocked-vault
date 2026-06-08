@@ -91,11 +91,11 @@ export function BackofficeLayout({ children }: { children: ReactNode }) {
   const isAdmin = profile?.role === 'ADMIN'
 
   return (
-    <div className="iv-portal-shell min-h-screen text-zinc-100">
+    <div className="iv-portal-shell relative isolate min-h-screen overflow-x-hidden bg-black text-zinc-100">
       <IronVaultBackground />
 
       {/* Sidebar */}
-      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-64 border-r border-[#1a1a1a] bg-[#080808] flex-col shadow-xl shadow-black/30">
+      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-64 border-r border-[#1a1a1a] bg-[#080808]/92 flex-col shadow-xl shadow-black/30">
         <div className="flex h-full w-full flex-col p-5">
           <div className="mb-8">
             <p className="iv-label">Iron Vault</p>
@@ -110,8 +110,8 @@ export function BackofficeLayout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Main content */}
-      <div className="lg:pl-64">
-        <header className="sticky top-0 z-30 border-b border-[#1a1a1a] bg-[#080808]">
+      <div className="relative z-10 lg:pl-64">
+        <header className="sticky top-0 z-30 border-b border-[#1a1a1a] bg-[#080808]/90">
           <div className="mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
             <button
               type="button"

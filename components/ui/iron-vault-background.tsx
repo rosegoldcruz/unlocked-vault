@@ -1,66 +1,28 @@
+import Waves from "@/components/ui/Waves"
+
 export function IronVaultBackground() {
   return (
     <div
       aria-hidden
-      className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
-      style={{ background: '#080808' }}
+      className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-black"
     >
-      {/* Academy grid */}
-      <div
-        className="iv-grid-animated absolute inset-0"
-        style={{
-          backgroundImage: [
-            'linear-gradient(rgba(123,47,190,0.055) 1px, transparent 1px)',
-            'linear-gradient(90deg, rgba(123,47,190,0.055) 1px, transparent 1px)',
-          ].join(','),
-          backgroundSize: '80px 80px',
-          animation: 'iv-grid-scroll 28s linear infinite',
-        }}
-      />
+      <div className="absolute inset-0 opacity-85">
+        <Waves
+          lineColor="rgba(131, 216, 64, 0.68)"
+          backgroundColor="transparent"
+          waveSpeedX={0.02}
+          waveSpeedY={0.01}
+          waveAmpX={40}
+          waveAmpY={20}
+          friction={0.9}
+          tension={0.01}
+          maxCursorMove={120}
+          xGap={12}
+          yGap={36}
+        />
+      </div>
 
-      {/* Academy purple glow */}
-      <div
-        className="absolute"
-        style={{
-          top: '-300px',
-          right: '-300px',
-          width: '800px',
-          height: '800px',
-          background:
-            'radial-gradient(circle, rgba(123,47,190,0.08) 0%, transparent 70%)',
-        }}
-      />
-
-      {/* Subtle lime accent */}
-      <div
-        className="absolute"
-        style={{
-          bottom: '-260px',
-          left: '-240px',
-          width: '620px',
-          height: '620px',
-          background:
-            'radial-gradient(circle, rgba(170,255,0,0.045) 0%, transparent 68%)',
-        }}
-      />
-
-      {/* Top vignette */}
-      <div
-        className="absolute inset-x-0 top-0 h-40"
-        style={{
-          background:
-            'linear-gradient(180deg, rgba(8,8,8,0.86) 0%, transparent 100%)',
-        }}
-      />
-
-      {/* Bottom vignette */}
-      <div
-        className="absolute inset-x-0 bottom-0 h-40"
-        style={{
-          background:
-            'linear-gradient(0deg, rgba(8,8,8,0.88) 0%, transparent 100%)',
-        }}
-      />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_18%,rgba(168,85,247,0.16),transparent_34%),radial-gradient(circle_at_22%_76%,rgba(132,204,22,0.10),transparent_42%),linear-gradient(to_bottom,rgba(0,0,0,0.03),rgba(0,0,0,0.72))]" />
     </div>
   )
 }
