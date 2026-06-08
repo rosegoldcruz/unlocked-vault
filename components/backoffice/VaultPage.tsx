@@ -1,12 +1,10 @@
 "use client"
 
 import { usePrivy } from '@privy-io/react-auth'
-import { useEffect, useMemo, useState } from 'react'
-import { Copy } from 'lucide-react'
-import { fetchBackofficeJson, type BackofficePositionResponse, type BackofficeReferralCreateResponse, type BackofficeReferralsResponse } from '@/lib/backoffice-client'
+import { useEffect, useState } from 'react'
+import { fetchBackofficeJson, type BackofficePositionResponse } from '@/lib/backoffice-client'
 import { useBackofficeAuth } from '@/hooks/useBackofficeAuth'
-import type { ReferralLead, UserPosition } from '@/types/backoffice'
-import { ReferralHub } from './ReferralHub'
+import type { UserPosition } from '@/types/backoffice'
 
 type StatusFlag = 'YES' | 'NO' | 'DISCONTINUED'
 
@@ -32,12 +30,6 @@ export function VaultPage() {
   const [position, setPosition] = useState<UserPosition | null>(null)
   const [posLoading, setPosLoading] = useState(true)
   const [posError, setPosError] = useState<string | null>(null)
-  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle')
-
-  const referralLink = useMemo(() => {
-    if (!profile?.referral_code || typeof window === 'undefined') return ''
-    return `${window.location.origin}?ref=${encodeURIComponent(profile.referral_code)}`
-  }, [profile?.referral_code])
 
   useEffect(() => {
     if (!ready || !authenticated) return
@@ -53,12 +45,6 @@ export function VaultPage() {
     void load()
   }, [authenticated, getAccessToken, ready])
 
-  const copyLink = async () => {
-    if (!referralLink) { setCopyState('failed'); return }
-    try { await navigator.clipboard.writeText(referralLink); setCopyState('copied'); window.setTimeout(() => setCopyState('idle'), 1500) }
-    catch { setCopyState('failed') }
-  }
-
   const participationRows = position ? [
     { label: '2% Royalty Positions', value: position.royalty_2_percent_status },
     { label: '1% Royalty Positions', value: position.royalty_1_percent_status },
@@ -67,7 +53,6 @@ export function VaultPage() {
     { label: 'Winning Portfolio', value: position.winning_portfolio_status },
     { label: '2% Dividend', value: 'NO' },
     { label: '3% Dividend', value: 'NO' },
-    { label: 'Leads', value: 'NO' },
     { label: 'Token Balance', value: position.token_balance > 0 ? 'YES' : 'NO' },
     { label: 'Bitcoin Mining', value: 'NO' },
     { label: 'VIP / Bonus Status', value: profile?.role === 'VIP' || profile?.role === 'ADMIN' ? 'YES' : 'NO' },
@@ -80,29 +65,26 @@ export function VaultPage() {
         <h1 className="iv-title text-5xl">Vault</h1>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,0.82fr)_minmax(520px,1.18fr)] 2xl:grid-cols-[minmax(0,0.9fr)_minmax(600px,1.15fr)]">
-        {/* LEFT COLUMN */}
-        <div className="space-y-6">
-          {/* Participation Matrix */}
-          <div className="iv-panel p-6">
-            <h2 className="iv-card-title mb-4 text-3xl">Vault Participation Matrix</h2>
-            {posLoading ? (
-              <p className="text-sm text-zinc-400">Loading position data...</p>
-            ) : posError ? (
-              <p className="text-sm text-red-300">{posError}</p>
-            ) : (
-              <div className="space-y-2">
-                {participationRows.map((row) => (
-                  <div key={row.label} className="flex items-center justify-between rounded border border-[#1a1a1a] bg-[#080808] px-4 py-3">
-                    <span className="text-sm text-zinc-300">{row.label}</span>
-                    <StatusBadge value={row.value} />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
+        <div className="iv-panel p-6">
+          <h2 className="iv-card-title mb-4 text-3xl">Vault Participation Matrix</h2>
+          {posLoading ? (
+            <p className="text-sm text-zinc-400">Loading position data...</p>
+          ) : posError ? (
+            <p className="text-sm text-red-300">{posError}</p>
+          ) : (
+            <div className="space-y-2">
+              {participationRows.map((row) => (
+                <div key={row.label} className="flex items-center justify-between rounded border border-[#1a1a1a] bg-[#080808] px-4 py-3">
+                  <span className="text-sm text-zinc-300">{row.label}</span>
+                  <StatusBadge value={row.value} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
-          {/* Investment Summary */}
+        <div className="space-y-6">
           <div className="iv-panel iv-panel-lime p-6">
             <h2 className="iv-card-title mb-4 text-3xl">Investment Summary</h2>
             {posLoading ? (
@@ -110,7 +92,7 @@ export function VaultPage() {
             ) : posError ? (
               <p className="text-sm text-red-300">{posError}</p>
             ) : position ? (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
                 {[
                   { label: 'Investment Total', value: formatCurrency(position.investment_total) },
                   { label: 'Advance Amount', value: formatCurrency(position.advance_amount) },
@@ -129,14 +111,13 @@ export function VaultPage() {
             )}
           </div>
 
-          {/* Resource / Education block */}
           <div className="iv-panel p-6">
             <h2 className="iv-card-title mb-3 text-3xl">Resources &amp; Education</h2>
             <div className="space-y-3">
               {[
                 { title: 'Iron Vault Academy', desc: 'Complete all 6 modules to unlock your full token allocation.' },
                 { title: 'Vault Fundamentals', desc: 'Understanding royalty positions, dividends, and token mechanics.' },
-                { title: 'Referral Program', desc: 'Refer qualified members and track your network growth.' },
+                { title: 'Position Status', desc: 'Review royalty, ownership, equity, dividend, token, and VIP status from your vault matrix.' },
               ].map((item) => (
                 <div key={item.title} className="rounded border border-[#1a1a1a] bg-[#080808] p-4">
                   <p className="iv-card-title mb-1 text-xl">{item.title}</p>
@@ -145,22 +126,6 @@ export function VaultPage() {
               ))}
             </div>
           </div>
-
-          {/* Referral Link box */}
-          <div className="iv-panel p-6">
-            <h2 className="iv-card-title mb-3 text-3xl">Your Referral Link</h2>
-            <p className="iv-label-muted mb-2">Code: {profile?.referral_code ?? 'Unavailable'}</p>
-            <p className="text-sm text-zinc-400 break-all mb-4">{referralLink || 'Referral link available after profile sync.'}</p>
-            <button type="button" onClick={copyLink} className="iv-button-ghost inline-flex items-center gap-2 px-3 py-2 text-xs">
-              <Copy className="h-4 w-4" />
-              {copyState === 'copied' ? 'Copied!' : copyState === 'failed' ? 'Copy failed' : 'Copy referral link'}
-            </button>
-          </div>
-        </div>
-
-        {/* RIGHT COLUMN — referrals */}
-        <div className="xl:sticky xl:top-24 xl:self-start">
-          <ReferralHub />
         </div>
       </div>
     </section>
