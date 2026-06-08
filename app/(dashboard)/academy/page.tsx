@@ -1,13 +1,8 @@
 "use client"
 
-import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
 import { usePrivy } from '@privy-io/react-auth'
-
-const IronVaultAcademyUnlocked = dynamic(
-  () => import('@/iron-vault-academy-unlocked'),
-  { ssr: false, loading: () => null }
-)
+import IronVaultAcademyUnlocked from '@/iron-vault-academy-unlocked'
 
 export default function AcademyPage() {
   const { ready, authenticated, getAccessToken } = usePrivy()

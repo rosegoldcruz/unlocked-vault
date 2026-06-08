@@ -136,125 +136,125 @@ export default function RewardsPage() {
         <div className="rounded border border-rose-900/40 bg-[#0f0f0f] p-5 text-sm text-rose-300">{error}</div>
       ) : null}
 
-      {data ? (
-        <>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="iv-panel p-5">
-              <p className="iv-label-muted mb-2">Wallet</p>
-              <p className="text-sm text-zinc-100 break-all">{data.walletAddress ?? 'No wallet detected'}</p>
-              {data.walletMissing ? (
-                <p className="mt-3 text-sm text-amber-300">Wallet required before eligible milestones can be queued.</p>
-              ) : null}
-            </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="iv-panel p-5">
+          <p className="iv-label-muted mb-2">Wallet</p>
+          <p className="text-sm text-zinc-100 break-all">{data?.walletAddress ?? 'No wallet detected'}</p>
+          {data?.walletMissing ? (
+            <p className="mt-3 text-sm text-amber-300">Wallet required before eligible milestones can be queued.</p>
+          ) : null}
+        </div>
 
-            <div className="iv-panel p-5">
-              <p className="iv-label-muted mb-2">Next Required Module</p>
-              <p className="iv-card-title text-3xl text-lime-300">{isSingleModule ? `Module ${selectedModule}` : data.nextRequiredModule ?? 'All modules complete'}</p>
-              <p className="mt-3 text-xs text-zinc-400">Completed: {(data.completedModules ?? []).join(', ') || 'None yet'}</p>
-            </div>
-          </div>
+        <div className="iv-panel p-5">
+          <p className="iv-label-muted mb-2">Next Required Module</p>
+          <p className="iv-card-title text-3xl text-lime-300">{isSingleModule ? `Module ${selectedModule}` : data?.nextRequiredModule ?? '—'}</p>
+          <p className="mt-3 text-xs text-zinc-400">Completed: {(data?.completedModules ?? []).join(', ') || 'None yet'}</p>
+        </div>
+      </div>
 
-          <div className="iv-panel p-5">
-            <p className="iv-label-muted mb-3">Modules 1-6</p>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-              {Array.from({ length: 6 }, (_, index) => {
-                const moduleNumber = index + 1
-                const completed = completionSet.has(moduleNumber)
+      <div className="iv-panel p-5">
+        <p className="iv-label-muted mb-3">Modules 1-6</p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {Array.from({ length: 6 }, (_, index) => {
+            const moduleNumber = index + 1
+            const completed = completionSet.has(moduleNumber)
 
-                return (
-                  <div
-                    key={moduleNumber}
-                    className={`rounded border px-3 py-2 text-center font-mono text-[10px] uppercase tracking-[0.12em] ${
-                      completed
-                        ? 'border-lime-400/40 bg-lime-500/10 text-lime-200'
-                        : isSingleModule && moduleNumber !== selectedModule
-                        ? 'border-[#1a1a1a] bg-[#080808] text-zinc-600'
-                        : 'border-[#1a1a1a] bg-[#080808] text-zinc-400'
-                    }`}
-                  >
-                    Module {moduleNumber}{isSingleModule && moduleNumber !== selectedModule ? ' Locked' : ''}
+            return (
+              <div
+                key={moduleNumber}
+                className={`rounded border px-3 py-2 text-center font-mono text-[10px] uppercase tracking-[0.12em] ${
+                  completed
+                    ? 'border-lime-400/40 bg-lime-500/10 text-lime-200'
+                    : isSingleModule && moduleNumber !== selectedModule
+                    ? 'border-[#1a1a1a] bg-[#080808] text-zinc-600'
+                    : 'border-[#1a1a1a] bg-[#080808] text-zinc-400'
+                }`}
+              >
+                Module {moduleNumber}{isSingleModule && moduleNumber !== selectedModule ? ' Locked' : ''}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {!isSingleModule ? <div className="iv-panel p-5">
+        <p className="iv-label-muted mb-3">Milestones</p>
+        {(data?.milestones ?? []).length === 0 ? (
+          <p className="text-sm text-zinc-400">No milestones yet.</p>
+        ) : (
+          <div className="space-y-3">
+            {data!.milestones.map((milestone) => (
+              <div key={milestone.milestoneNumber} className="rounded border border-[#1a1a1a] bg-[#080808] p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="iv-card-title text-xl">
+                      Milestone {milestone.milestoneNumber} · Modules {milestone.moduleStart}-{milestone.moduleEnd}
+                    </p>
+                    <p className="text-xs text-zinc-400 mt-1">
+                      Eligible At: {milestone.eligibleAt ?? 'Not yet eligible'}
+                    </p>
                   </div>
-                )
-              })}
-            </div>
-          </div>
-
-          {!isSingleModule ? <div className="iv-panel p-5">
-            <p className="iv-label-muted mb-3">Milestones</p>
-            <div className="space-y-3">
-              {data.milestones.map((milestone) => (
-                <div key={milestone.milestoneNumber} className="rounded border border-[#1a1a1a] bg-[#080808] p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="iv-card-title text-xl">
-                        Milestone {milestone.milestoneNumber} · Modules {milestone.moduleStart}-{milestone.moduleEnd}
-                      </p>
-                      <p className="text-xs text-zinc-400 mt-1">
-                        Eligible At: {milestone.eligibleAt ?? 'Not yet eligible'}
-                      </p>
-                    </div>
-                    <span className={`inline-flex rounded border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] ${statusClasses(milestone.status)}`}>
-                      {milestone.status}
-                    </span>
-                  </div>
+                  <span className={`inline-flex rounded border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] ${statusClasses(milestone.status)}`}>
+                    {milestone.status}
+                  </span>
                 </div>
-              ))}
-            </div>
-          </div> : null}
-
-          <div className="iv-panel p-5">
-            <p className="iv-label-muted mb-3">Payout Jobs</p>
-            {data.payoutJobs.length === 0 ? (
-              <p className="text-sm text-zinc-400">No payout jobs yet.</p>
-            ) : (
-              <div className="space-y-3">
-                {data.payoutJobs.map((job) => (
-                  <div key={`${job.milestoneNumber}-${job.status}-${job.attempts}`} className="rounded border border-[#1a1a1a] bg-[#080808] p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="iv-card-title text-xl">
-                          {job.rewardTrack === 'single_module' ? `Module ${job.moduleNumber} Reward` : `Milestone ${job.milestoneNumber}`}
-                        </p>
-                        <p className="text-xs text-zinc-400 mt-1">Amount Raw: {job.amountRaw}</p>
-                        <p className="text-xs text-zinc-400">Token Mint: {job.tokenMint}</p>
-                        <p className="text-xs text-zinc-400">Attempts: {job.attempts}</p>
-                        {job.lastError ? <p className="text-xs text-rose-300 mt-1">Last Error: {job.lastError}</p> : null}
-                      </div>
-                      <span className={`inline-flex rounded border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] ${statusClasses(job.status)}`}>
-                        {job.status}
-                      </span>
-                    </div>
-                  </div>
-                ))}
               </div>
-            )}
+            ))}
           </div>
+        )}
+      </div> : null}
 
-          <div className="iv-panel p-5">
-            <p className="iv-label-muted mb-3">Transactions</p>
-            {data.transactions.length === 0 ? (
-              <p className="text-sm text-zinc-400">No transactions yet.</p>
-            ) : (
-              <div className="space-y-3">
-                {data.transactions.map((transaction) => (
-                  <div key={transaction.signature} className="rounded border border-[#1a1a1a] bg-[#080808] p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="iv-card-title text-xl">Milestone {transaction.milestoneNumber}</p>
-                        <p className="text-xs text-zinc-400 mt-1 break-all">Signature: {transaction.signature}</p>
-                        <p className="text-xs text-zinc-400">Confirmed At: {transaction.confirmedAt ?? 'Pending confirmation'}</p>
-                      </div>
-                      <span className={`inline-flex rounded border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] ${statusClasses(transaction.status)}`}>
-                        {transaction.status}
-                      </span>
-                    </div>
+      <div className="iv-panel p-5">
+        <p className="iv-label-muted mb-3">Payout Jobs</p>
+        {(data?.payoutJobs ?? []).length === 0 ? (
+          <p className="text-sm text-zinc-400">No payout jobs yet.</p>
+        ) : (
+          <div className="space-y-3">
+            {data!.payoutJobs.map((job) => (
+              <div key={`${job.milestoneNumber}-${job.status}-${job.attempts}`} className="rounded border border-[#1a1a1a] bg-[#080808] p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="iv-card-title text-xl">
+                      {job.rewardTrack === 'single_module' ? `Module ${job.moduleNumber} Reward` : `Milestone ${job.milestoneNumber}`}
+                    </p>
+                    <p className="text-xs text-zinc-400 mt-1">Amount Raw: {job.amountRaw}</p>
+                    <p className="text-xs text-zinc-400">Token Mint: {job.tokenMint}</p>
+                    <p className="text-xs text-zinc-400">Attempts: {job.attempts}</p>
+                    {job.lastError ? <p className="text-xs text-rose-300 mt-1">Last Error: {job.lastError}</p> : null}
                   </div>
-                ))}
+                  <span className={`inline-flex rounded border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] ${statusClasses(job.status)}`}>
+                    {job.status}
+                  </span>
+                </div>
               </div>
-            )}
+            ))}
           </div>
-        </>
-      ) : null}
+        )}
+      </div>
+
+      <div className="iv-panel p-5">
+        <p className="iv-label-muted mb-3">Transactions</p>
+        {(data?.transactions ?? []).length === 0 ? (
+          <p className="text-sm text-zinc-400">No transactions yet.</p>
+        ) : (
+          <div className="space-y-3">
+            {data!.transactions.map((transaction) => (
+              <div key={transaction.signature} className="rounded border border-[#1a1a1a] bg-[#080808] p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="iv-card-title text-xl">Milestone {transaction.milestoneNumber}</p>
+                    <p className="text-xs text-zinc-400 mt-1 break-all">Signature: {transaction.signature}</p>
+                    <p className="text-xs text-zinc-400">Confirmed At: {transaction.confirmedAt ?? 'Pending confirmation'}</p>
+                  </div>
+                  <span className={`inline-flex rounded border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] ${statusClasses(transaction.status)}`}>
+                    {transaction.status}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </section>
   )
 }

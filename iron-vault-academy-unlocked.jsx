@@ -722,10 +722,6 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [1, 2, 3, 4,
     );
   }
 
-  if(!progressHydrated){
-    return null;
-  }
-
   // ── HUB ──
   if(view==="hub"){
     return(

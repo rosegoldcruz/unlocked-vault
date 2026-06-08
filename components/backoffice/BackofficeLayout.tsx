@@ -56,6 +56,7 @@ function NavLinks({ pathname, onNavigate, isAdmin }: { pathname: string; onNavig
           <CoinBurst key={item.href}>
             <Link
               href={item.href}
+              prefetch
               onClick={onNavigate}
               className={cn(
                 'flex items-center gap-3 rounded px-3 py-2.5 text-sm transition-all duration-150 border',
