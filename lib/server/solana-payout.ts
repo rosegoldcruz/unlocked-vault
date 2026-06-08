@@ -5,6 +5,7 @@ import {
   getMint,
   getOrCreateAssociatedTokenAccount,
   TOKEN_PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID,
 } from '@solana/spl-token'
 import { getPayoutTransferConfig, getRewardConfig } from '@/lib/server/reward-config'
 
@@ -63,6 +64,19 @@ function resolveConnection(rpcUrl: string, network: string): Connection {
   return new Connection(endpoint, 'confirmed')
 }
 
+async function resolveTokenProgramId(connection: Connection, tokenMint: PublicKey): Promise<PublicKey> {
+  const mintAccount = await connection.getAccountInfo(tokenMint, 'confirmed')
+  if (!mintAccount) {
+    throw new Error('Token mint account not found')
+  }
+
+  if (mintAccount.owner.equals(TOKEN_PROGRAM_ID) || mintAccount.owner.equals(TOKEN_2022_PROGRAM_ID)) {
+    return mintAccount.owner
+  }
+
+  throw new Error('Unsupported token mint program')
+}
+
 export function validatePayoutTransferConfig(): {
   tokenMint: PublicKey
   rewardWalletPublicKey: PublicKey
@@ -89,27 +103,30 @@ export async function sendTokenRewardPayout(request: PayoutRequest): Promise<Pay
   const destinationWallet = new PublicKey(request.destinationWalletAddress)
   const amount = parseAmountRaw(request.amountRaw)
 
-  const transferConfig = getPayoutTransferConfig()
-  const rewardWalletSecretKey = parseSecretKey(transferConfig.rewardWalletSecretKey)
-  const signer = Keypair.fromSecretKey(rewardWalletSecretKey)
+  const config = getRewardConfig()
+  const connection = resolveConnection(config.solanaRpcUrl, config.network)
+  const tokenMint = new PublicKey(config.tokenMintAddress)
+  const rewardWalletPublicKey = new PublicKey(config.rewardWalletPublicKey)
+  const tokenProgramId = await resolveTokenProgramId(connection, tokenMint)
 
-  if (signer.publicKey.toBase58() !== transferConfig.rewardWalletPublicKey) {
-    throw new Error('IVT_REWARD_WALLET_SECRET_KEY does not match IVT_REWARD_WALLET_PUBLIC_KEY')
-  }
+  const sourceTokenAccount = getAssociatedTokenAddressSync(tokenMint, rewardWalletPublicKey, false, tokenProgramId)
+  const destinationTokenAccount = getAssociatedTokenAddressSync(tokenMint, destinationWallet, false, tokenProgramId)
 
-  const connection = resolveConnection(transferConfig.solanaRpcUrl, transferConfig.network)
-  const tokenMint = new PublicKey(transferConfig.tokenMintAddress)
-
-  const sourceTokenAccount = getAssociatedTokenAddressSync(tokenMint, signer.publicKey)
-  const destinationTokenAccount = getAssociatedTokenAddressSync(tokenMint, destinationWallet)
-
-  if (transferConfig.payoutDryRun) {
+  if (config.payoutDryRun) {
     return {
       dryRun: true,
       signature: null,
       sourceTokenAccount: sourceTokenAccount.toBase58(),
       destinationTokenAccount: destinationTokenAccount.toBase58(),
     }
+  }
+
+  const transferConfig = getPayoutTransferConfig()
+  const rewardWalletSecretKey = parseSecretKey(transferConfig.rewardWalletSecretKey)
+  const signer = Keypair.fromSecretKey(rewardWalletSecretKey)
+
+  if (signer.publicKey.toBase58() !== transferConfig.rewardWalletPublicKey) {
+    throw new Error('IVT_REWARD_WALLET_SECRET_KEY does not match IVT_REWARD_WALLET_PUBLIC_KEY')
   }
 
   const destinationAta = await getOrCreateAssociatedTokenAccount(
@@ -122,10 +139,10 @@ export async function sendTokenRewardPayout(request: PayoutRequest): Promise<Pay
     {
       commitment: 'confirmed',
     },
-    TOKEN_PROGRAM_ID,
+    tokenProgramId,
   )
 
-  const mintInfo = await getMint(connection, tokenMint, 'confirmed', TOKEN_PROGRAM_ID)
+  const mintInfo = await getMint(connection, tokenMint, 'confirmed', tokenProgramId)
   const transferInstruction = createTransferCheckedInstruction(
     sourceTokenAccount,
     tokenMint,
@@ -134,7 +151,7 @@ export async function sendTokenRewardPayout(request: PayoutRequest): Promise<Pay
     amount,
     mintInfo.decimals,
     [],
-    TOKEN_PROGRAM_ID,
+    tokenProgramId,
   )
 
   const latestBlockhash = await connection.getLatestBlockhash('confirmed')
