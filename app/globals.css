@@ -16,5 +16,27 @@ body {
 #__next,
 [data-nextjs-root] {
 	min-height: 100%;
-	background: #020617;
+	background: transparent;
+}
+
+@keyframes iv-grid-scroll {
+	from { background-position: 0 0; }
+	to   { background-position: 0 64px; }
+}
+
+@keyframes iv-fog-drift {
+	0%   { opacity: 0.55; transform: scale(1) translate(0, 0); }
+	50%  { opacity: 0.85; transform: scale(1.06) translate(-8px, -12px); }
+	100% { opacity: 0.55; transform: scale(1) translate(0, 0); }
+}
+
+@keyframes iv-fog-drift-alt {
+	0%   { opacity: 0.45; transform: scale(1) translate(0, 0); }
+	50%  { opacity: 0.7;  transform: scale(1.04) translate(10px, 8px); }
+	100% { opacity: 0.45; transform: scale(1) translate(0, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.iv-grid-animated { animation: none !important; }
+	.iv-fog-animated  { animation: none !important; }
 }

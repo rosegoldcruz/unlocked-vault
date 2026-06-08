@@ -21,6 +21,7 @@ import { usePrivy } from '@privy-io/react-auth'
 import { useBackofficeAuth } from '@/hooks/useBackofficeAuth'
 import { cn } from '@/lib/utils'
 import { CoinBurst } from '@/components/ui/coin-burst'
+import { IronVaultBackground } from '@/components/ui/iron-vault-background'
 
 type NavItem = {
   href: string
@@ -57,10 +58,10 @@ function NavLinks({ pathname, onNavigate, isAdmin }: { pathname: string; onNavig
               href={item.href}
               onClick={onNavigate}
               className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors',
+                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150',
                 isActive
-                  ? 'bg-lime-300/15 text-lime-200 border border-lime-300/30'
-                  : 'text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 border border-transparent',
+                  ? 'bg-lime-400/15 text-lime-300 border border-lime-400/40 shadow-[0_0_14px_rgba(163,230,53,0.12)]'
+                  : 'text-zinc-300 hover:bg-white/5 hover:text-zinc-100 border border-transparent hover:border-white/10',
               )}
             >
               <Icon className="h-4 w-4" />
@@ -73,7 +74,7 @@ function NavLinks({ pathname, onNavigate, isAdmin }: { pathname: string; onNavig
         <button
           type="button"
           onClick={() => { onNavigate?.(); void logout() }}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-zinc-400 hover:bg-zinc-900 hover:text-red-300 border border-transparent transition-colors"
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-zinc-400 hover:bg-white/5 hover:text-red-300 border border-transparent hover:border-white/10 transition-all duration-150"
         >
           <LogOut className="h-4 w-4" />
           <span>Logout</span>
@@ -90,18 +91,18 @@ export function BackofficeLayout({ children }: { children: ReactNode }) {
   const isAdmin = profile?.role === 'ADMIN'
 
   return (
-    <div className="min-h-screen bg-[#070707] text-zinc-100">
-      <div className="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_20%_-10%,rgba(170,255,0,0.10),transparent_35%),radial-gradient(circle_at_100%_0%,rgba(123,47,190,0.12),transparent_30%),linear-gradient(180deg,#050507_0%,#0a0b0f_100%)]" />
+    <div className="min-h-screen text-zinc-100">
+      <IronVaultBackground />
 
       {/* Sidebar */}
-      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-64 border-r border-zinc-800/80 bg-zinc-950/80 backdrop-blur flex-col">
+      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-64 border-r border-white/10 bg-black/50 backdrop-blur-xl flex-col shadow-xl shadow-black/30">
         <div className="flex h-full w-full flex-col p-5">
           <div className="mb-8">
             <p className="text-xs uppercase tracking-[0.24em] text-lime-300">Iron Vault</p>
             <h1 className="mt-1 text-base font-semibold text-zinc-100">Member Portal</h1>
           </div>
           <NavLinks pathname={pathname} isAdmin={isAdmin} />
-          <div className="mt-auto rounded-lg border border-zinc-800 bg-zinc-900/60 p-3">
+          <div className="mt-auto rounded-lg border border-white/10 bg-black/30 p-3">
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-400 mb-1">Tier</p>
             <p className="text-sm text-zinc-100">{profile?.current_tier ?? 'MEMBER'}</p>
           </div>
@@ -110,7 +111,7 @@ export function BackofficeLayout({ children }: { children: ReactNode }) {
 
       {/* Main content */}
       <div className="lg:pl-64">
-        <header className="sticky top-0 z-30 border-b border-zinc-800/80 bg-zinc-950/70 backdrop-blur">
+        <header className="sticky top-0 z-30 border-b border-white/10 bg-black/40 backdrop-blur-xl">
           <div className="mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
             <button
               type="button"
@@ -139,7 +140,7 @@ export function BackofficeLayout({ children }: { children: ReactNode }) {
       {mobileNavOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <button type="button" className="absolute inset-0 bg-black/60" aria-label="Close navigation overlay" onClick={() => setMobileNavOpen(false)} />
-          <div className="absolute inset-y-0 left-0 w-72 max-w-[85vw] border-r border-zinc-800 bg-zinc-950 p-5">
+          <div className="absolute inset-y-0 left-0 w-72 max-w-[85vw] border-r border-white/10 bg-black/80 backdrop-blur-xl p-5">
             <div className="mb-5 flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.24em] text-lime-300">Iron Vault</p>
@@ -149,7 +150,7 @@ export function BackofficeLayout({ children }: { children: ReactNode }) {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="mb-4 rounded-lg border border-zinc-800 bg-zinc-900/60 p-3 text-sm">
+            <div className="mb-4 rounded-lg border border-white/10 bg-black/30 p-3 text-sm">
               <p className="text-zinc-100">{profile?.email ?? 'No email on file'}</p>
               <p className="mt-1 text-zinc-400">{profile?.role ?? 'MEMBER'} · {profile?.current_tier ?? 'MEMBER'}</p>
             </div>

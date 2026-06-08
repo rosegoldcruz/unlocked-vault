@@ -63,11 +63,11 @@ export function ReferralHub() {
 
   return (
     <section className="space-y-6">
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-6">
+      <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-6 transition-colors duration-200">
         <h1 className="text-2xl font-semibold text-zinc-100 mb-2">Network &amp; Referrals</h1>
         <p className="text-sm text-zinc-400 mb-5">Commission tracking pending</p>
         <div className="grid gap-4 lg:grid-cols-2">
-          <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+          <div className="rounded-lg border border-white/10 bg-black/30 backdrop-blur-sm p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-2">Referral code</p>
             <p className="text-lg font-semibold text-zinc-100">{profile?.referral_code ?? 'Unavailable'}</p>
             <p className="mt-2 text-sm text-zinc-400 break-all">{referralLink || 'Referral link available after profile sync.'}</p>
@@ -76,7 +76,7 @@ export function ReferralHub() {
               {copyState === 'copied' ? 'Copied' : copyState === 'failed' ? 'Copy failed' : 'Copy referral link'}
             </button>
           </div>
-          <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+          <div className="rounded-lg border border-white/10 bg-black/30 backdrop-blur-sm p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-2">Total referrals</p>
             <p className="text-3xl font-semibold text-lime-200">{referrals.length}</p>
             <p className="mt-2 text-sm text-zinc-400">Track your lead submissions and update outreach details from this page.</p>
@@ -89,12 +89,12 @@ export function ReferralHub() {
           {([['name', 'Referral Name'], ['phone', 'Phone'], ['relationship', 'Relationship with Referral'], ['profession', 'Profession']] as const).map(([field, label]) => (
             <div key={field}>
               <label htmlFor={`ref-${field}`} className="mb-1.5 block text-sm text-zinc-300">{label}</label>
-              <input id={`ref-${field}`} value={form[field]} onChange={(e) => setForm((prev) => ({ ...prev, [field]: e.target.value }))} className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100" required={field === 'name' || field === 'phone'} />
+              <input id={`ref-${field}`} value={form[field]} onChange={(e) => setForm((prev) => ({ ...prev, [field]: e.target.value }))} className="w-full rounded-md border border-white/10 bg-black/50 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-lime-400/30" required={field === 'name' || field === 'phone'} />
             </div>
           ))}
           <div>
             <label htmlFor="ref-best-time" className="mb-1.5 block text-sm text-zinc-300">Best Time to Call</label>
-            <select id="ref-best-time" value={form.bestTimeToCall} onChange={(e) => setForm((prev) => ({ ...prev, bestTimeToCall: e.target.value }))} className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100">
+            <select id="ref-best-time" value={form.bestTimeToCall} onChange={(e) => setForm((prev) => ({ ...prev, bestTimeToCall: e.target.value }))} className="w-full rounded-md border border-white/10 bg-black/50 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-lime-400/30">
               <option value="ANYTIME">Anytime</option>
               <option value="MORNING">Morning</option>
               <option value="AFTERNOON">Afternoon</option>
@@ -103,7 +103,7 @@ export function ReferralHub() {
           </div>
           <div>
             <label htmlFor="ref-link-sent" className="mb-1.5 block text-sm text-zinc-300">Link Sent?</label>
-            <select id="ref-link-sent" value={form.linkSent ? 'YES' : 'NO'} onChange={(e) => setForm((prev) => ({ ...prev, linkSent: e.target.value === 'YES' }))} className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100">
+            <select id="ref-link-sent" value={form.linkSent ? 'YES' : 'NO'} onChange={(e) => setForm((prev) => ({ ...prev, linkSent: e.target.value === 'YES' }))} className="w-full rounded-md border border-white/10 bg-black/50 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-lime-400/30">
               <option value="NO">No</option>
               <option value="YES">Yes</option>
             </select>
@@ -114,12 +114,12 @@ export function ReferralHub() {
             {submitting ? 'Submitting...' : 'Refer & Collect'}
           </button>
         </form>
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-6">
+        <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-6 transition-colors duration-200">
           <h2 className="text-lg font-semibold text-zinc-100 mb-4">Referral Leads</h2>
           {loading ? <p className="text-sm text-zinc-400">Loading referrals...</p> : referrals.length === 0 ? <p className="text-sm text-zinc-400">No referral leads submitted yet.</p> : (
             <div className="space-y-3">
               {referrals.map((lead) => (
-                <article key={lead.id} className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+                <article key={lead.id} className="rounded-lg border border-white/[0.07] bg-black/20 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div><p className="text-sm font-semibold text-zinc-100">{lead.name}</p><p className="text-xs text-zinc-400">{lead.phone}</p></div>
                     <span className="rounded-md border border-zinc-700 px-2 py-0.5 text-xs text-zinc-300">{lead.status}</span>

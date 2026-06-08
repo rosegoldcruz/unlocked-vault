@@ -75,7 +75,7 @@ export function VaultPage() {
 
   return (
     <section className="space-y-6">
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-6">
+      <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-6 transition-colors duration-200">
         <p className="text-xs uppercase tracking-[0.24em] text-lime-300 mb-1">Community Participation</p>
         <h1 className="text-3xl font-semibold text-zinc-100">Vault</h1>
       </div>
@@ -84,7 +84,7 @@ export function VaultPage() {
         {/* LEFT COLUMN */}
         <div className="space-y-6">
           {/* Participation Matrix */}
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-6">
+          <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-6 transition-colors duration-200">
             <h2 className="text-lg font-semibold text-zinc-100 mb-4">Vault Participation Matrix</h2>
             {posLoading ? (
               <p className="text-sm text-zinc-400">Loading position data...</p>
@@ -93,7 +93,7 @@ export function VaultPage() {
             ) : (
               <div className="space-y-2">
                 {participationRows.map((row) => (
-                  <div key={row.label} className="flex items-center justify-between rounded-lg border border-zinc-800/60 bg-zinc-900/40 px-4 py-3">
+                  <div key={row.label} className="flex items-center justify-between rounded-lg border border-white/[0.07] bg-black/20 px-4 py-3">
                     <span className="text-sm text-zinc-300">{row.label}</span>
                     <StatusBadge value={row.value} />
                   </div>
@@ -103,7 +103,7 @@ export function VaultPage() {
           </div>
 
           {/* Investment Summary */}
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-6">
+          <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-6 transition-colors duration-200">
             <h2 className="text-lg font-semibold text-zinc-100 mb-4">Investment Summary</h2>
             {posLoading ? (
               <p className="text-sm text-zinc-400">Loading...</p>
@@ -118,7 +118,7 @@ export function VaultPage() {
                   { label: 'Token Balance', value: formatNumber(position.token_balance) },
                   { label: 'Dividends Total', value: formatCurrency(position.dividends_total) },
                 ].map((item) => (
-                  <div key={item.label} className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4">
+                  <div key={item.label} className="rounded-lg border border-white/10 bg-black/30 backdrop-blur-sm p-4">
                     <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-2">{item.label}</p>
                     <p className="text-xl font-semibold text-zinc-100">{item.value}</p>
                   </div>
@@ -130,7 +130,7 @@ export function VaultPage() {
           </div>
 
           {/* Resource / Education block */}
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-6">
+          <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-6 transition-colors duration-200">
             <h2 className="text-lg font-semibold text-zinc-100 mb-3">Resources &amp; Education</h2>
             <div className="space-y-3">
               {[
@@ -138,7 +138,7 @@ export function VaultPage() {
                 { title: 'Vault Fundamentals', desc: 'Understanding royalty positions, dividends, and token mechanics.' },
                 { title: 'Referral Program', desc: 'Refer qualified members and track your network growth.' },
               ].map((item) => (
-                <div key={item.title} className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-4">
+                <div key={item.title} className="rounded-lg border border-white/[0.07] bg-black/20 p-4">
                   <p className="text-sm font-semibold text-zinc-100 mb-1">{item.title}</p>
                   <p className="text-xs text-zinc-400">{item.desc}</p>
                 </div>
@@ -147,7 +147,7 @@ export function VaultPage() {
           </div>
 
           {/* Referral Link box */}
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-6">
+          <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-6 transition-colors duration-200">
             <h2 className="text-lg font-semibold text-zinc-100 mb-3">Your Referral Link</h2>
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-2">Code: {profile?.referral_code ?? 'Unavailable'}</p>
             <p className="text-sm text-zinc-400 break-all mb-4">{referralLink || 'Referral link available after profile sync.'}</p>

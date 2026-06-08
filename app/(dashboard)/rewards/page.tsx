@@ -122,7 +122,7 @@ export default function RewardsPage() {
 
   return (
     <section className="space-y-6">
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-6">
+      <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-6 transition-colors duration-200">
         <p className="text-xs uppercase tracking-[0.24em] text-lime-300 mb-2">Rewards</p>
         <h1 className="text-3xl font-semibold text-zinc-100 mb-2">Reward Milestones</h1>
         <p className="text-zinc-400 max-w-2xl">
@@ -143,7 +143,7 @@ export default function RewardsPage() {
       {data ? (
         <>
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-5">
+            <div className="rounded-xl border border-white/10 bg-black/30 backdrop-blur-md p-5">
               <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-2">Wallet</p>
               <p className="text-sm text-zinc-100 break-all">{data.walletAddress ?? 'No wallet detected'}</p>
               {data.walletMissing ? (
@@ -151,14 +151,14 @@ export default function RewardsPage() {
               ) : null}
             </div>
 
-            <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-5">
+            <div className="rounded-xl border border-white/10 bg-black/30 backdrop-blur-md p-5">
               <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-2">Next Required Module</p>
               <p className="text-sm text-zinc-100">{isSingleModule ? `Module ${selectedModule}` : data.nextRequiredModule ?? 'All modules complete'}</p>
               <p className="mt-3 text-xs text-zinc-400">Completed: {(data.completedModules ?? []).join(', ') || 'None yet'}</p>
             </div>
           </div>
 
-          <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-5">
+          <div className="rounded-xl border border-white/10 bg-black/30 backdrop-blur-md p-5">
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-3">Modules 1-6</p>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
               {Array.from({ length: 6 }, (_, index) => {
@@ -168,12 +168,12 @@ export default function RewardsPage() {
                 return (
                   <div
                     key={moduleNumber}
-                    className={`rounded-lg border px-3 py-2 text-center text-sm ${
+                    className={`rounded-lg border px-3 py-2 text-center text-sm backdrop-blur-sm ${
                       completed
                         ? 'border-lime-400/40 bg-lime-500/10 text-lime-200'
                         : isSingleModule && moduleNumber !== selectedModule
-                        ? 'border-zinc-800 bg-zinc-950/60 text-zinc-600'
-                        : 'border-zinc-700 bg-zinc-900/40 text-zinc-400'
+                        ? 'border-white/[0.05] bg-black/20 text-zinc-600'
+                        : 'border-white/10 bg-black/25 text-zinc-400'
                     }`}
                   >
                     Module {moduleNumber}{isSingleModule && moduleNumber !== selectedModule ? ' Locked' : ''}
@@ -183,11 +183,11 @@ export default function RewardsPage() {
             </div>
           </div>
 
-          {!isSingleModule ? <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-5">
+          {!isSingleModule ? <div className="rounded-xl border border-white/10 bg-black/30 backdrop-blur-md p-5">
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-3">Milestones</p>
             <div className="space-y-3">
               {data.milestones.map((milestone) => (
-                <div key={milestone.milestoneNumber} className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+                <div key={milestone.milestoneNumber} className="rounded-lg border border-white/[0.07] bg-black/20 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-zinc-100">
@@ -206,14 +206,14 @@ export default function RewardsPage() {
             </div>
           </div> : null}
 
-          <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-5">
+          <div className="rounded-xl border border-white/10 bg-black/30 backdrop-blur-md p-5">
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-3">Payout Jobs</p>
             {data.payoutJobs.length === 0 ? (
               <p className="text-sm text-zinc-400">No payout jobs yet.</p>
             ) : (
               <div className="space-y-3">
                 {data.payoutJobs.map((job) => (
-                  <div key={`${job.milestoneNumber}-${job.status}-${job.attempts}`} className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+                  <div key={`${job.milestoneNumber}-${job.status}-${job.attempts}`} className="rounded-lg border border-white/[0.07] bg-black/20 p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-zinc-100">
@@ -234,14 +234,14 @@ export default function RewardsPage() {
             )}
           </div>
 
-          <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-5">
+          <div className="rounded-xl border border-white/10 bg-black/30 backdrop-blur-md p-5">
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-3">Transactions</p>
             {data.transactions.length === 0 ? (
               <p className="text-sm text-zinc-400">No transactions yet.</p>
             ) : (
               <div className="space-y-3">
                 {data.transactions.map((transaction) => (
-                  <div key={transaction.signature} className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+                  <div key={transaction.signature} className="rounded-lg border border-white/[0.07] bg-black/20 p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-zinc-100">Milestone {transaction.milestoneNumber}</p>

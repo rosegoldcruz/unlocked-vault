@@ -24,7 +24,7 @@ export function DashboardLanding() {
   return (
     <section className="space-y-8">
       {/* Welcome header */}
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-6">
+      <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-6 transition-colors duration-200">
         <p className="text-xs uppercase tracking-[0.24em] text-lime-300 mb-2">Iron Vault Member Portal</p>
         <h1 className="text-3xl font-semibold text-zinc-100 mb-2">
           Welcome{profile?.email ? `, ${profile.email.split('@')[0]}` : ''}.
@@ -39,7 +39,7 @@ export function DashboardLanding() {
             { label: 'Tier', value: profile?.current_tier ?? 'MEMBER' },
             { label: 'Vault XP', value: (profile?.vault_xp ?? 0).toLocaleString() },
           ].map((item) => (
-            <div key={item.label} className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4">
+            <div key={item.label} className="rounded-lg border border-white/10 bg-black/30 backdrop-blur-sm p-4">
               <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 mb-2">{item.label}</p>
               <p className="text-sm text-zinc-100 break-all">{item.value}</p>
             </div>
@@ -58,9 +58,9 @@ export function DashboardLanding() {
               <Link
                 key={card.href}
                 href={card.href}
-                className="group rounded-2xl border border-zinc-800 bg-zinc-950/50 p-5 transition hover:border-lime-300/30 hover:bg-zinc-900/70"
+                className="group rounded-2xl border border-white/10 bg-black/30 backdrop-blur-lg p-5 transition-all duration-200 hover:border-lime-400/30 hover:bg-black/50"
               >
-                <div className={`mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg border ${isLime ? 'border-lime-300/30 text-lime-300' : 'border-purple-500/30 text-purple-400'}`}>
+                <div className={`mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg border ${isLime ? 'border-lime-400/30 bg-lime-400/5 text-lime-300' : 'border-purple-500/30 bg-purple-500/5 text-purple-400'}`}>
                   <Icon className="h-5 w-5" />
                 </div>
                 <h3 className="text-base font-semibold text-zinc-100 mb-2">{card.title}</h3>
@@ -79,7 +79,7 @@ export function DashboardLanding() {
         <h2 className="text-sm uppercase tracking-[0.2em] text-zinc-500 mb-4">Iron Vault Updates</h2>
         <div className="space-y-3">
           {updates.map((update) => (
-            <div key={update.title} className="rounded-xl border border-zinc-800 bg-zinc-950/40 p-5">
+            <div key={update.title} className="rounded-xl border border-white/10 bg-black/25 backdrop-blur-sm p-5">
               <div className="flex items-start gap-3">
                 <span className="mt-0.5 h-2 w-2 flex-shrink-0 rounded-full bg-lime-400" />
                 <div>
