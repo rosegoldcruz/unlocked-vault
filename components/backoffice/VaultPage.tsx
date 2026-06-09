@@ -110,6 +110,34 @@ export function VaultPage() {
           </div>
 
           <div className="iv-panel p-6">
+            <h2 className="iv-card-title mb-4 text-3xl">Solana IVT Wallet</h2>
+            <div className="space-y-4">
+              <div>
+                <p className="iv-label-muted mb-2">Solana IVT Wallet</p>
+                <p className="text-sm text-zinc-100 break-all">{profile?.solana_ivt_wallet_address ?? 'Solana wallet not found'}</p>
+                {profile?.solana_explorer_wallet_url ? (
+                  <a className="mt-3 inline-flex text-xs font-semibold uppercase tracking-[0.12em] text-lime-300 hover:text-lime-200" href={profile.solana_explorer_wallet_url} target="_blank" rel="noreferrer">
+                    View Wallet on Solana Explorer
+                  </a>
+                ) : null}
+              </div>
+              <div>
+                <p className="iv-label-muted mb-2">IVT Token Mint</p>
+                <p className="text-sm text-zinc-100 break-all">{profile?.ivt_token_mint ?? 'Unavailable'}</p>
+                {profile?.ivt_token_mint_explorer_url ? (
+                  <a className="mt-3 inline-flex text-xs font-semibold uppercase tracking-[0.12em] text-lime-300 hover:text-lime-200" href={profile.ivt_token_mint_explorer_url} target="_blank" rel="noreferrer">
+                    View IVT Token Mint
+                  </a>
+                ) : null}
+              </div>
+              <div>
+                <p className="iv-label-muted mb-2">Live IVT Balance</p>
+                <p className="text-sm text-zinc-100">{profile?.ivt_token_balance ? profile.ivt_token_balance.uiAmount : 'Unavailable'}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="iv-panel p-6">
             <h2 className="iv-card-title mb-3 text-3xl">Resources &amp; Education</h2>
             <div className="space-y-3">
               {[

@@ -1,4 +1,5 @@
 import { Connection, Keypair, PublicKey, Transaction, clusterApiUrl } from '@solana/web3.js'
+import bs58 from 'bs58'
 import {
   createTransferCheckedInstruction,
   getAssociatedTokenAddressSync,
@@ -22,11 +23,21 @@ export type PayoutResult = {
 }
 
 function parseSecretKey(secretKeyRaw: string): Uint8Array {
+  const trimmed = secretKeyRaw.trim()
+
+  if (!trimmed.startsWith('[')) {
+    const decoded = bs58.decode(trimmed)
+    if (decoded.length !== 64) {
+      throw new Error('Invalid IVT_REWARD_WALLET_SECRET_KEY: expected 64-byte base58 secret key')
+    }
+    return decoded
+  }
+
   let parsed: unknown
   try {
-    parsed = JSON.parse(secretKeyRaw)
+    parsed = JSON.parse(trimmed)
   } catch {
-    throw new Error('Invalid IVT_REWARD_WALLET_SECRET_KEY: expected JSON array format')
+    throw new Error('Invalid IVT_REWARD_WALLET_SECRET_KEY: expected base58 or JSON array format')
   }
 
   if (!Array.isArray(parsed) || parsed.length === 0) {

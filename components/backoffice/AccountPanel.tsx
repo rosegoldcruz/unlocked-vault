@@ -30,8 +30,17 @@ export function AccountPanel() {
           <p className="text-sm text-zinc-100">{profile?.referral_code ?? 'Unavailable'}</p>
         </div>
         <div className="iv-panel p-4">
-          <p className="iv-label-muted mb-2">Wallet address</p>
-          <p className="text-sm text-zinc-100 break-all">{profile?.wallet_address ?? 'No wallet linked'}</p>
+          <p className="iv-label-muted mb-2">EVM Wallet</p>
+          <p className="text-sm text-zinc-100 break-all">{profile?.evm_wallet_address ?? 'No EVM wallet linked'}</p>
+        </div>
+        <div className="iv-panel p-4">
+          <p className="iv-label-muted mb-2">Solana IVT Wallet</p>
+          <p className="text-sm text-zinc-100 break-all">{profile?.solana_ivt_wallet_address ?? 'Solana wallet not found'}</p>
+          {profile?.solana_explorer_wallet_url ? (
+            <a className="mt-3 inline-flex text-xs font-semibold uppercase tracking-[0.12em] text-lime-300 hover:text-lime-200" href={profile.solana_explorer_wallet_url} target="_blank" rel="noreferrer">
+              View Wallet on Solana Explorer
+            </a>
+          ) : null}
         </div>
         <div className="iv-panel p-4">
           <p className="iv-label-muted mb-2">Vault XP</p>

@@ -5,6 +5,17 @@ import { usePrivy } from '@privy-io/react-auth'
 
 type RewardStatusPayload = {
   walletAddress: string | null
+  evmWalletAddress: string | null
+  solanaIvtWalletAddress: string | null
+  solanaIvtWalletSource: 'profile' | 'payout_job' | 'privy' | 'none'
+  solanaExplorerWalletUrl: string | null
+  ivtTokenMint: string
+  ivtTokenMintExplorerUrl: string
+  ivtTokenBalance: {
+    amountRaw: string
+    decimals: number
+    uiAmount: string
+  } | null
   completedModules: number[]
   accessScope: {
     accessType: 'all_modules' | 'single_module' | 'admin'
@@ -33,6 +44,7 @@ type RewardStatusPayload = {
     signature: string
     status: string
     confirmedAt: string | null
+    explorerUrl: string | null
   }>
   nextRequiredModule: number | null
   walletMissing: boolean
@@ -138,10 +150,18 @@ export default function RewardsPage() {
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="iv-panel p-5">
-          <p className="iv-label-muted mb-2">Wallet</p>
-          <p className="text-sm text-zinc-100 break-all">{data?.walletAddress ?? 'No wallet detected'}</p>
+          <p className="iv-label-muted mb-2">Solana IVT Payout Wallet</p>
+          <p className="text-sm text-zinc-100 break-all">{data?.solanaIvtWalletAddress ?? 'Solana wallet not found'}</p>
+          {data?.solanaExplorerWalletUrl ? (
+            <a className="mt-3 inline-flex text-xs font-semibold uppercase tracking-[0.12em] text-lime-300 hover:text-lime-200" href={data.solanaExplorerWalletUrl} target="_blank" rel="noreferrer">
+              View Wallet on Solana Explorer
+            </a>
+          ) : null}
+          {data?.ivtTokenBalance ? (
+            <p className="mt-3 text-xs text-zinc-400">IVT Balance: {data.ivtTokenBalance.uiAmount}</p>
+          ) : null}
           {data?.walletMissing ? (
-            <p className="mt-3 text-sm text-amber-300">Wallet required before eligible milestones can be queued.</p>
+            <p className="mt-3 text-sm text-amber-300">Solana wallet required before eligible milestones can be queued.</p>
           ) : null}
         </div>
 
@@ -245,6 +265,11 @@ export default function RewardsPage() {
                     <p className="iv-card-title text-xl">Milestone {transaction.milestoneNumber}</p>
                     <p className="text-xs text-zinc-400 mt-1 break-all">Signature: {transaction.signature}</p>
                     <p className="text-xs text-zinc-400">Confirmed At: {transaction.confirmedAt ?? 'Pending confirmation'}</p>
+                    {transaction.explorerUrl ? (
+                      <a className="mt-3 inline-flex text-xs font-semibold uppercase tracking-[0.12em] text-lime-300 hover:text-lime-200" href={transaction.explorerUrl} target="_blank" rel="noreferrer">
+                        View Transaction
+                      </a>
+                    ) : null}
                   </div>
                   <span className={`inline-flex rounded border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] ${statusClasses(transaction.status)}`}>
                     {transaction.status}

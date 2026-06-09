@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getMemberAccessScope, requireMemberAccess } from '@/lib/server/member-access'
 import { getSupabaseAdmin } from '@/lib/server/supabase-admin'
+import {
+  IVT_TOKEN_MINT,
+  getCanonicalSolanaWalletForUser,
+  getIvtTokenBalance,
+  getSolanaExplorerTokenMintUrl,
+  getSolanaExplorerTxUrl,
+  getSolanaExplorerWalletUrl,
+} from '@/lib/server/ivt-solana-wallet'
 
 function mapAccessErrorToStatus(error: unknown): number {
   const message = error instanceof Error ? error.message : ''
@@ -85,10 +93,18 @@ export async function GET(req: NextRequest) {
       .map((row) => Number((row as { module_number: number }).module_number))
       .filter((moduleNumber) => Number.isInteger(moduleNumber) && moduleNumber >= 1 && moduleNumber <= 6)
 
-    const resolvedWalletAddress = walletAddress ?? profileResult.data?.wallet_address ?? null
+    const solanaWallet = await getCanonicalSolanaWalletForUser(privyUserId)
+    const balance = await getIvtTokenBalance(solanaWallet.walletAddress)
 
     return NextResponse.json({
-      walletAddress: resolvedWalletAddress,
+      walletAddress: solanaWallet.walletAddress,
+      evmWalletAddress: walletAddress?.startsWith('0x') ? walletAddress : null,
+      solanaIvtWalletAddress: solanaWallet.walletAddress,
+      solanaIvtWalletSource: solanaWallet.source,
+      solanaExplorerWalletUrl: getSolanaExplorerWalletUrl(solanaWallet.walletAddress),
+      ivtTokenMint: IVT_TOKEN_MINT,
+      ivtTokenMintExplorerUrl: getSolanaExplorerTokenMintUrl(),
+      ivtTokenBalance: balance,
       completedModules,
       accessScope: scope,
       milestones: scope.rewardTrack === 'single_module' ? [] : (milestonesResult.data ?? []).map((row) => ({
@@ -119,9 +135,10 @@ export async function GET(req: NextRequest) {
         signature: (row as { signature: string }).signature,
         status: (row as { status: string }).status,
         confirmedAt: (row as { confirmed_at: string | null }).confirmed_at,
+        explorerUrl: getSolanaExplorerTxUrl((row as { signature: string }).signature),
       })),
       nextRequiredModule: getNextRequiredModule(completedModules),
-      walletMissing: !resolvedWalletAddress,
+      walletMissing: !solanaWallet.walletAddress,
     })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to load reward status'

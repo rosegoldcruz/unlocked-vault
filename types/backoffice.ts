@@ -8,6 +8,17 @@ export type BackofficeProfile = {
   referred_by_privy_user_id: string | null
   vault_xp: number
   wallet_address: string | null
+  evm_wallet_address?: string | null
+  solana_ivt_wallet_address?: string | null
+  solana_ivt_wallet_source?: 'profile' | 'payout_job' | 'privy' | 'none'
+  solana_explorer_wallet_url?: string | null
+  ivt_token_mint?: string
+  ivt_token_mint_explorer_url?: string
+  ivt_token_balance?: {
+    amountRaw: string
+    decimals: number
+    uiAmount: string
+  } | null
   created_at: string
   updated_at: string
 }
