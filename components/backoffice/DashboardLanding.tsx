@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { ArrowRight, GraduationCap, Vault, Users, LifeBuoy, Star } from 'lucide-react'
 import { useBackofficeAuth } from '@/hooks/useBackofficeAuth'
+import { DailyDefiNewsSection } from '@/components/backoffice/DailyDefiNewsModal'
 
 const quickLinks = [
   { href: '/academy', title: 'Continue Academy', desc: 'Resume your Iron Vault curriculum and earn XP.', icon: GraduationCap, accent: 'lime' },
@@ -10,12 +11,6 @@ const quickLinks = [
   { href: '/referrals', title: 'Refer a Friend', desc: 'Share your referral link and submit new leads.', icon: Users, accent: 'lime' },
   { href: '/status', title: 'Submit Status Request', desc: 'Open a support ticket with the Iron Vault team.', icon: LifeBuoy, accent: 'purple' },
   { href: '/vip', title: 'View VIP Access', desc: 'Check your VIP status and premium member benefits.', icon: Star, accent: 'lime' },
-]
-
-const updates = [
-  { title: 'Iron Vault Academy Live', body: 'All 6 modules are now available. Complete them in order to unlock your full token allocation.' },
-  { title: 'Referral Program Active', body: 'Submit leads through your backoffice. Commission tracking is coming soon.' },
-  { title: 'Vault Backoffice Launch', body: 'Your full member backoffice is now live. Track positions, referrals, and status from one place.' },
 ]
 
 export function DashboardLanding() {
@@ -74,22 +69,9 @@ export function DashboardLanding() {
         </div>
       </div>
 
-      {/* Iron Vault updates */}
+      {/* Daily DeFi news */}
       <div>
-        <h2 className="iv-label-muted mb-4">Iron Vault Updates</h2>
-        <div className="space-y-3">
-          {updates.map((update) => (
-            <div key={update.title} className="iv-panel p-5">
-              <div className="flex items-start gap-3">
-                <span className="mt-0.5 h-2 w-2 flex-shrink-0 rounded-full bg-lime-400" />
-                <div>
-                  <p className="iv-card-title mb-1 text-xl">{update.title}</p>
-                  <p className="iv-body text-sm">{update.body}</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <DailyDefiNewsSection />
       </div>
     </section>
   )
