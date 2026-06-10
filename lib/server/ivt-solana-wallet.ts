@@ -2,11 +2,15 @@ import { Connection, PublicKey, clusterApiUrl } from '@solana/web3.js'
 import { PrivyClient } from '@privy-io/server-auth'
 import { getSupabaseAdmin } from '@/lib/server/supabase-admin'
 
-export const IVT_TOKEN_MINT = 'DTe8U4RnErPN1CKiJ5HcyZPEAGXMg6j6ueindYuowfjV'
+export const DEFAULT_IVT_TOKEN_MINT = 'DTe8U4RnErPN1CKiJ5HcyZPEAGXMg6j6ueindYuowfjV'
+
+export function getIvtTokenMintAddress() {
+  return process.env.IVT_TOKEN_MINT_ADDRESS?.trim() || DEFAULT_IVT_TOKEN_MINT
+}
 
 export type CanonicalSolanaWallet = {
   walletAddress: string | null
-  source: 'profile' | 'payout_job' | 'privy' | 'none'
+  source: 'profile' | 'privy' | 'payout_job' | 'transaction' | 'none'
 }
 
 export type IvtTokenBalance = {
@@ -42,16 +46,30 @@ export function isValidSolanaPublicKey(value: string | null | undefined): value 
 
 export function getSolanaExplorerWalletUrl(walletAddress: string | null | undefined) {
   if (!isValidSolanaPublicKey(walletAddress)) return null
-  return `https://explorer.solana.com/address/${walletAddress}`
+  return getSolscanWalletUrl(walletAddress)
 }
 
 export function getSolanaExplorerTxUrl(signature: string | null | undefined) {
-  if (!signature) return null
-  return `https://explorer.solana.com/tx/${signature}`
+  return getSolscanTxUrl(signature)
 }
 
 export function getSolanaExplorerTokenMintUrl() {
-  return `https://explorer.solana.com/address/${IVT_TOKEN_MINT}`
+  return getSolscanTokenUrl(getIvtTokenMintAddress())
+}
+
+export function getSolscanWalletUrl(walletAddress: string | null | undefined) {
+  if (!isValidSolanaPublicKey(walletAddress)) return null
+  return `https://solscan.io/account/${walletAddress}`
+}
+
+export function getSolscanTokenUrl(tokenMint: string | null | undefined) {
+  if (!isValidSolanaPublicKey(tokenMint)) return null
+  return `https://solscan.io/token/${tokenMint}`
+}
+
+export function getSolscanTxUrl(signature: string | null | undefined) {
+  if (!signature) return null
+  return `https://solscan.io/tx/${signature}`
 }
 
 function scanForSolanaWallets(value: unknown, found: string[]) {
@@ -70,7 +88,7 @@ function scanForSolanaWallets(value: unknown, found: string[]) {
   }
 }
 
-async function getPrivySolanaWallet(privyUserId: string): Promise<string | null> {
+export async function getPrivySolanaWalletForUser(privyUserId: string): Promise<string | null> {
   const client = getPrivyClient()
   if (!client) return null
 
@@ -97,6 +115,15 @@ export async function getCanonicalSolanaWalletForUser(privyUserId: string): Prom
     return { walletAddress: profile.wallet_address, source: 'profile' }
   }
 
+  const privyWallet = await getPrivySolanaWalletForUser(privyUserId)
+  if (privyWallet) {
+    await supabase
+      .from('iv_user_profiles')
+      .update({ wallet_address: privyWallet })
+      .eq('privy_user_id', privyUserId)
+    return { walletAddress: privyWallet, source: 'privy' }
+  }
+
   const { data: payoutJobs } = await supabase
     .from('iv_payout_jobs')
     .select('wallet_address, created_at')
@@ -113,21 +140,32 @@ export async function getCanonicalSolanaWalletForUser(privyUserId: string): Prom
     return { walletAddress: payoutWallet, source: 'payout_job' }
   }
 
-  const privyWallet = await getPrivySolanaWallet(privyUserId)
-  if (privyWallet) {
-    return { walletAddress: privyWallet, source: 'privy' }
+  const { data: transactions } = await supabase
+    .from('iv_payout_transactions')
+    .select('wallet_address, created_at')
+    .eq('privy_user_id', privyUserId)
+    .order('created_at', { ascending: false })
+    .limit(10)
+
+  const transactionWallet = (transactions ?? [])
+    .map((row) => (row as { wallet_address: string | null }).wallet_address)
+    .find(isValidSolanaPublicKey)
+
+  if (transactionWallet) {
+    return { walletAddress: transactionWallet, source: 'transaction' }
   }
 
   return { walletAddress: null, source: 'none' }
 }
 
-export async function getIvtTokenBalance(walletAddress: string | null | undefined): Promise<IvtTokenBalance> {
+export async function getIvtTokenBalance(walletAddress: string | null | undefined, tokenMint = getIvtTokenMintAddress()): Promise<IvtTokenBalance> {
   if (!isValidSolanaPublicKey(walletAddress)) return null
+  if (!isValidSolanaPublicKey(tokenMint)) return null
 
   try {
     const connection = getConnection()
     const owner = new PublicKey(walletAddress)
-    const mint = new PublicKey(IVT_TOKEN_MINT)
+    const mint = new PublicKey(tokenMint)
     const accounts = await connection.getParsedTokenAccountsByOwner(owner, { mint }, 'confirmed')
 
     let totalRaw = BigInt(0)

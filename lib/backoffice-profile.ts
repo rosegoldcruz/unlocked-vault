@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import { getSupabaseAdmin } from '@/lib/server/supabase-admin'
+import { isValidSolanaPublicKey } from '@/lib/server/ivt-solana-wallet'
 
 type UserRole = 'MEMBER' | 'VIP' | 'ADMIN'
 
@@ -42,6 +43,7 @@ export async function ensureUserProfile(
   params?: { email?: string | null; walletAddress?: string | null; tier?: string | null }
 ): Promise<BackofficeProfile> {
   const supabase = getSupabaseAdmin()
+  const solanaWalletAddress = isValidSolanaPublicKey(params?.walletAddress) ? params.walletAddress : null
 
   const { data: existing, error: readError } = await supabase
     .from('iv_user_profiles')
@@ -53,7 +55,7 @@ export async function ensureUserProfile(
   if (existing?.referral_code) {
     const patch: Partial<BackofficeProfile> = {}
     if (typeof params?.email === 'string' && params.email && params.email !== existing.email) patch.email = params.email
-    if (typeof params?.walletAddress === 'string' && params.walletAddress && params.walletAddress !== existing.wallet_address) patch.wallet_address = params.walletAddress
+    if (solanaWalletAddress && solanaWalletAddress !== existing.wallet_address) patch.wallet_address = solanaWalletAddress
     if (params?.tier && params.tier !== existing.current_tier) { patch.current_tier = params.tier; patch.role = tierToRole(params.tier) }
     if (Object.keys(patch).length === 0) return existing
     const { data, error } = await supabase.from('iv_user_profiles').update(patch).eq('privy_user_id', privyUserId).select('*').single<BackofficeProfile>()
@@ -71,7 +73,7 @@ export async function ensureUserProfile(
       role,
       current_tier: params?.tier ?? existing?.current_tier ?? null,
       referral_code: referralCode,
-      wallet_address: params?.walletAddress ?? existing?.wallet_address ?? null,
+      wallet_address: solanaWalletAddress ?? existing?.wallet_address ?? null,
     }
     const { data, error } = await supabase.from('iv_user_profiles').upsert(payload, { onConflict: 'privy_user_id' }).select('*').single<BackofficeProfile>()
     if (!error && data) return data

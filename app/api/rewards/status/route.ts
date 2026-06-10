@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getMemberAccessScope, requireMemberAccess } from '@/lib/server/member-access'
 import { getSupabaseAdmin } from '@/lib/server/supabase-admin'
 import {
-  IVT_TOKEN_MINT,
   getCanonicalSolanaWalletForUser,
+  getIvtTokenMintAddress,
   getIvtTokenBalance,
   getSolanaExplorerTokenMintUrl,
   getSolanaExplorerTxUrl,
@@ -102,7 +102,7 @@ export async function GET(req: NextRequest) {
       solanaIvtWalletAddress: solanaWallet.walletAddress,
       solanaIvtWalletSource: solanaWallet.source,
       solanaExplorerWalletUrl: getSolanaExplorerWalletUrl(solanaWallet.walletAddress),
-      ivtTokenMint: IVT_TOKEN_MINT,
+      ivtTokenMint: getIvtTokenMintAddress(),
       ivtTokenMintExplorerUrl: getSolanaExplorerTokenMintUrl(),
       ivtTokenBalance: balance,
       completedModules,

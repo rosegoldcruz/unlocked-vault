@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from '@/lib/server/supabase-admin'
 import { getRewardConfig } from '@/lib/server/reward-config'
 import { sendTokenRewardPayout } from '@/lib/server/solana-payout'
+import { isValidSolanaPublicKey } from '@/lib/server/ivt-solana-wallet'
 
 export type RewardWorkerResult = {
   processedCount: number
@@ -38,6 +39,17 @@ async function processLockedJob(input: {
   max_attempts: number
   workerId: string
 }) {
+  const config = getRewardConfig()
+  if (!isValidSolanaPublicKey(input.wallet_address)) {
+    throw new Error('Invalid payout wallet_address')
+  }
+  if (!isValidSolanaPublicKey(input.token_mint)) {
+    throw new Error('Invalid payout token_mint')
+  }
+  if (input.token_mint !== config.tokenMintAddress) {
+    throw new Error('Payout token_mint does not match configured IVT token mint')
+  }
+
   const { data: existingTx, error: existingTxError } = await getSupabaseAdmin()
     .from('iv_payout_transactions')
     .select('id, signature, status')

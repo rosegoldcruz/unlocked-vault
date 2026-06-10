@@ -60,6 +60,15 @@ const STATUS_COLORS: Record<string, string> = {
   canceled: 'text-zinc-400 border-zinc-600 bg-zinc-800/60',
 }
 
+function CopyButton({ value, label }: { value: string | null | undefined; label: string }) {
+  if (!value) return null
+  return (
+    <button type="button" className="text-xs font-semibold uppercase tracking-[0.12em] text-lime-300 hover:text-lime-200" onClick={() => void navigator.clipboard.writeText(value)}>
+      {label}
+    </button>
+  )
+}
+
 function statusClasses(status: string): string {
   return STATUS_COLORS[status] ?? STATUS_COLORS.locked
 }
@@ -152,11 +161,14 @@ export default function RewardsPage() {
         <div className="iv-panel p-5">
           <p className="iv-label-muted mb-2">Solana IVT Payout Wallet</p>
           <p className="text-sm text-zinc-100 break-all">{data?.solanaIvtWalletAddress ?? 'Solana wallet not found'}</p>
-          {data?.solanaExplorerWalletUrl ? (
-            <a className="mt-3 inline-flex text-xs font-semibold uppercase tracking-[0.12em] text-lime-300 hover:text-lime-200" href={data.solanaExplorerWalletUrl} target="_blank" rel="noreferrer">
-              View Wallet on Solana Explorer
-            </a>
-          ) : null}
+          <div className="mt-3 flex flex-wrap gap-3">
+            {data?.solanaExplorerWalletUrl ? (
+              <a className="inline-flex text-xs font-semibold uppercase tracking-[0.12em] text-lime-300 hover:text-lime-200" href={data.solanaExplorerWalletUrl} target="_blank" rel="noreferrer">
+                View Wallet on Solscan
+              </a>
+            ) : null}
+            <CopyButton value={data?.solanaIvtWalletAddress} label="Copy Solana Wallet" />
+          </div>
           {data?.ivtTokenBalance ? (
             <p className="mt-3 text-xs text-zinc-400">IVT Balance: {data.ivtTokenBalance.uiAmount}</p>
           ) : null}
@@ -265,11 +277,14 @@ export default function RewardsPage() {
                     <p className="iv-card-title text-xl">Milestone {transaction.milestoneNumber}</p>
                     <p className="text-xs text-zinc-400 mt-1 break-all">Signature: {transaction.signature}</p>
                     <p className="text-xs text-zinc-400">Confirmed At: {transaction.confirmedAt ?? 'Pending confirmation'}</p>
-                    {transaction.explorerUrl ? (
-                      <a className="mt-3 inline-flex text-xs font-semibold uppercase tracking-[0.12em] text-lime-300 hover:text-lime-200" href={transaction.explorerUrl} target="_blank" rel="noreferrer">
-                        View Transaction
-                      </a>
-                    ) : null}
+                    <div className="mt-3 flex flex-wrap gap-3">
+                      {transaction.explorerUrl ? (
+                        <a className="inline-flex text-xs font-semibold uppercase tracking-[0.12em] text-lime-300 hover:text-lime-200" href={transaction.explorerUrl} target="_blank" rel="noreferrer">
+                          View Payout on Solscan
+                        </a>
+                      ) : <p className="text-xs text-zinc-400">Payout transaction pending</p>}
+                      <CopyButton value={transaction.signature} label="Copy Transaction Signature" />
+                    </div>
                   </div>
                   <span className={`inline-flex rounded border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] ${statusClasses(transaction.status)}`}>
                     {transaction.status}

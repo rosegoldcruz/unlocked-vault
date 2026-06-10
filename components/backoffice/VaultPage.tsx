@@ -24,6 +24,15 @@ function formatNumber(value: number) {
   return new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(value)
 }
 
+function CopyButton({ value, label }: { value: string | null | undefined; label: string }) {
+  if (!value) return null
+  return (
+    <button type="button" className="text-xs font-semibold uppercase tracking-[0.12em] text-lime-300 hover:text-lime-200" onClick={() => void navigator.clipboard.writeText(value)}>
+      {label}
+    </button>
+  )
+}
+
 export function VaultPage() {
   const { profile } = useBackofficeAuth()
   const { ready, authenticated, getAccessToken } = usePrivy()
@@ -53,10 +62,11 @@ export function VaultPage() {
     { label: 'Winning Portfolio', value: position.winning_portfolio_status },
     { label: '2% Dividend', value: 'NO' },
     { label: '3% Dividend', value: 'NO' },
-    { label: 'Token Balance', value: position.token_balance > 0 ? 'YES' : 'NO' },
+    { label: 'IV-SOL Balance', value: profile?.ivt_token_balance && profile.ivt_token_balance.amountRaw !== '0' ? 'YES' : 'NO' },
     { label: 'Bitcoin Mining', value: 'NO' },
     { label: 'VIP / Bonus Status', value: profile?.role === 'VIP' || profile?.role === 'ADMIN' ? 'YES' : 'NO' },
   ] : []
+  const ivtBalanceDisplay = profile?.ivt_token_balance?.uiAmount ?? (position ? formatNumber(position.token_balance) : 'Unavailable')
 
   return (
     <section className="space-y-6">
@@ -95,7 +105,7 @@ export function VaultPage() {
                   { label: 'Investment Total', value: formatCurrency(position.investment_total) },
                   { label: 'Advance Amount', value: formatCurrency(position.advance_amount) },
                   { label: 'Royalty Spent', value: formatCurrency(position.royalty_spent) },
-                  { label: 'Token Balance', value: formatNumber(position.token_balance) },
+                  { label: 'IV-SOL Balance', value: ivtBalanceDisplay },
                   { label: 'Dividends Total', value: formatCurrency(position.dividends_total) },
                 ].map((item) => (
                   <div key={item.label} className="iv-panel p-4">
@@ -110,29 +120,49 @@ export function VaultPage() {
           </div>
 
           <div className="iv-panel p-6">
-            <h2 className="iv-card-title mb-4 text-3xl">Solana IVT Wallet</h2>
+            <h2 className="iv-card-title mb-4 text-3xl">Your IV-SOL Wallet</h2>
             <div className="space-y-4">
               <div>
-                <p className="iv-label-muted mb-2">Solana IVT Wallet</p>
+                <p className="iv-label-muted mb-2">Solana Wallet Address</p>
                 <p className="text-sm text-zinc-100 break-all">{profile?.solana_ivt_wallet_address ?? 'Solana wallet not found'}</p>
-                {profile?.solana_explorer_wallet_url ? (
-                  <a className="mt-3 inline-flex text-xs font-semibold uppercase tracking-[0.12em] text-lime-300 hover:text-lime-200" href={profile.solana_explorer_wallet_url} target="_blank" rel="noreferrer">
-                    View Wallet on Solana Explorer
-                  </a>
-                ) : null}
+                {!profile?.solana_ivt_wallet_address ? <p className="mt-3 text-sm text-amber-300">Solana wallet not found. Complete wallet setup before rewards can be sent.</p> : null}
+                <div className="mt-3 flex flex-wrap gap-3">
+                  {profile?.solana_explorer_wallet_url ? (
+                    <a className="inline-flex text-xs font-semibold uppercase tracking-[0.12em] text-lime-300 hover:text-lime-200" href={profile.solana_explorer_wallet_url} target="_blank" rel="noreferrer">
+                      View Tokens on Solscan
+                    </a>
+                  ) : null}
+                  {profile?.solana_explorer_wallet_url ? (
+                    <a className="inline-flex text-xs font-semibold uppercase tracking-[0.12em] text-lime-300 hover:text-lime-200" href={profile.solana_explorer_wallet_url} target="_blank" rel="noreferrer">
+                      View Wallet on Solscan
+                    </a>
+                  ) : null}
+                  <CopyButton value={profile?.solana_ivt_wallet_address} label="Copy Solana Wallet" />
+                </div>
               </div>
               <div>
-                <p className="iv-label-muted mb-2">IVT Token Mint</p>
+                <p className="iv-label-muted mb-2">IV-SOL Token Mint</p>
                 <p className="text-sm text-zinc-100 break-all">{profile?.ivt_token_mint ?? 'Unavailable'}</p>
-                {profile?.ivt_token_mint_explorer_url ? (
-                  <a className="mt-3 inline-flex text-xs font-semibold uppercase tracking-[0.12em] text-lime-300 hover:text-lime-200" href={profile.ivt_token_mint_explorer_url} target="_blank" rel="noreferrer">
-                    View IVT Token Mint
-                  </a>
-                ) : null}
+                <div className="mt-3 flex flex-wrap gap-3">
+                  {profile?.ivt_token_mint_explorer_url ? (
+                    <a className="inline-flex text-xs font-semibold uppercase tracking-[0.12em] text-lime-300 hover:text-lime-200" href={profile.ivt_token_mint_explorer_url} target="_blank" rel="noreferrer">
+                      View IV-SOL Token Mint
+                    </a>
+                  ) : null}
+                  <CopyButton value={profile?.ivt_token_mint} label="Copy Token Mint" />
+                </div>
               </div>
               <div>
-                <p className="iv-label-muted mb-2">Live IVT Balance</p>
-                <p className="text-sm text-zinc-100">{profile?.ivt_token_balance ? profile.ivt_token_balance.uiAmount : 'Unavailable'}</p>
+                <p className="iv-label-muted mb-2">Live IV-SOL Balance</p>
+                <p className="text-sm text-zinc-100">{ivtBalanceDisplay}</p>
+              </div>
+              <div className="rounded border border-[#1a1a1a] bg-[#080808] p-4">
+                <p className="iv-body text-xs">
+                  Your IV-SOL tokens are held in your Solana wallet. Solscan is the fastest way to independently verify your wallet, token balance, and payout transactions.
+                </p>
+                <p className="iv-body mt-3 text-xs">
+                  To move tokens later, your wallet will need a small SOL balance for network fees. Selling or swapping IV-SOL depends on future liquidity, exchange, or DEX support.
+                </p>
               </div>
             </div>
           </div>

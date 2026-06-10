@@ -1,64 +1,10 @@
-import { PrivyClient } from '@privy-io/server-auth'
 import { getSupabaseAdmin } from '@/lib/server/supabase-admin'
 import { getRewardAmountRawForMilestone, getRewardConfig, getSingleModuleRewardAmountRaw } from '@/lib/server/reward-config'
+import { getCanonicalSolanaWalletForUser, isValidSolanaPublicKey } from '@/lib/server/ivt-solana-wallet'
 
-function requireEnv(name: string): string {
-  const value = process.env[name]
-  if (!value) throw new Error(`Missing required env var: ${name}`)
-  return value
-}
-
-function extractWalletAddress(user: unknown): string | null {
-  if (!user || typeof user !== 'object') return null
-
-  const maybeUser = user as {
-    wallet?: { address?: string }
-    linkedAccounts?: Array<{ type?: string; address?: string }>
-    linked_accounts?: Array<{ type?: string; address?: string }>
-  }
-
-  if (typeof maybeUser.wallet?.address === 'string' && maybeUser.wallet.address.trim().length > 0) {
-    return maybeUser.wallet.address
-  }
-
-  const linked = maybeUser.linkedAccounts ?? maybeUser.linked_accounts ?? []
-  for (const account of linked) {
-    if ((account?.type === 'wallet' || account?.type === 'smart_wallet') && typeof account.address === 'string' && account.address.trim().length > 0) {
-      return account.address
-    }
-  }
-
-  return null
-}
-
-async function getPrivyWalletAddress(privyUserId: string): Promise<string | null> {
-  const client = new PrivyClient(requireEnv('NEXT_PUBLIC_PRIVY_APP_ID'), requireEnv('PRIVY_APP_SECRET'))
-  const user = await client.getUser(privyUserId)
-  return extractWalletAddress(user)
-}
-
-async function getProfileWalletAddress(privyUserId: string): Promise<string | null> {
-  const { data, error } = await getSupabaseAdmin()
-    .from('iv_user_profiles')
-    .select('wallet_address')
-    .eq('privy_user_id', privyUserId)
-    .maybeSingle<{ wallet_address: string | null }>()
-
-  if (error) {
-    throw new Error(error.message)
-  }
-
-  return data?.wallet_address ?? null
-}
-
-async function resolveWalletAddress(privyUserId: string): Promise<string | null> {
-  const privyWallet = await getPrivyWalletAddress(privyUserId)
-  if (privyWallet) return privyWallet
-
-  const profileWallet = await getProfileWalletAddress(privyUserId)
-  if (profileWallet && profileWallet.trim().length > 0) return profileWallet
-
-  return null
+async function resolvePayoutWallet(privyUserId: string) {
+  const wallet = await getCanonicalSolanaWalletForUser(privyUserId)
+  return isValidSolanaPublicKey(wallet.walletAddress) ? wallet : { walletAddress: null, source: 'none' as const }
 }
 
 export async function queuePayoutForEligibleMilestone(input: {
@@ -85,8 +31,8 @@ export async function queuePayoutForEligibleMilestone(input: {
     return { queued: false, walletMissing: false }
   }
 
-  const walletAddress = await resolveWalletAddress(input.privyUserId)
-  if (!walletAddress) {
+  const wallet = await resolvePayoutWallet(input.privyUserId)
+  if (!wallet.walletAddress) {
     return { queued: false, walletMissing: true }
   }
 
@@ -107,6 +53,7 @@ export async function queuePayoutForEligibleMilestone(input: {
 
   const config = getRewardConfig()
   const amountRaw = getRewardAmountRawForMilestone(milestoneNumber)
+  if (!isValidSolanaPublicKey(config.tokenMintAddress)) throw new Error('Invalid IVT token mint address')
 
   const { error: insertJobError } = await getSupabaseAdmin().from('iv_payout_jobs').insert({
     privy_user_id: input.privyUserId,
@@ -115,13 +62,13 @@ export async function queuePayoutForEligibleMilestone(input: {
     access_type: 'all_modules',
     module_number: null,
     entitlement_id: null,
-    wallet_address: walletAddress,
+    wallet_address: wallet.walletAddress,
     token_mint: config.tokenMintAddress,
     amount_raw: amountRaw,
     status: 'queued',
     metadata: {
       source: 'reward-milestone',
-      wallet_source: 'privy_or_profile',
+      wallet_source: wallet.source,
     },
   })
 
@@ -151,8 +98,8 @@ export async function queuePayoutForSingleModule(input: {
     throw new Error('Invalid moduleNumber: expected integer between 1 and 6')
   }
 
-  const walletAddress = await resolveWalletAddress(input.privyUserId)
-  if (!walletAddress) {
+  const wallet = await resolvePayoutWallet(input.privyUserId)
+  if (!wallet.walletAddress) {
     return { queued: false, walletMissing: true }
   }
 
@@ -173,6 +120,7 @@ export async function queuePayoutForSingleModule(input: {
 
   const config = getRewardConfig()
   const amountRaw = getSingleModuleRewardAmountRaw()
+  if (!isValidSolanaPublicKey(config.tokenMintAddress)) throw new Error('Invalid IVT token mint address')
 
   const { error } = await getSupabaseAdmin().from('iv_payout_jobs').insert({
     privy_user_id: input.privyUserId,
@@ -181,7 +129,7 @@ export async function queuePayoutForSingleModule(input: {
     access_type: 'single_module',
     module_number: input.moduleNumber,
     entitlement_id: input.entitlementId ?? null,
-    wallet_address: walletAddress,
+    wallet_address: wallet.walletAddress,
     token_mint: config.tokenMintAddress,
     amount_raw: amountRaw,
     status: 'queued',
@@ -191,7 +139,7 @@ export async function queuePayoutForSingleModule(input: {
       access_type: 'single_module',
       module_number: input.moduleNumber,
       entitlement_id: input.entitlementId ?? null,
-      wallet_source: 'privy_or_profile',
+      wallet_source: wallet.source,
     },
   })
 

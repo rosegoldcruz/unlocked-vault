@@ -11,7 +11,11 @@
     "members:grandfather:apply": "tsx scripts/grandfather-existing-privy-users.ts --apply",
     "rewards:payout:dry-run": "tsx scripts/rewards-payout-dry-run.ts",
     "rewards:worker:once": "tsx scripts/reward-payout-worker.ts once",
-    "rewards:worker": "tsx scripts/reward-payout-worker.ts loop"
+    "rewards:worker": "tsx scripts/reward-payout-worker.ts loop",
+    "verify:payment-chain": "tsx scripts/verify-payment-chain.ts",
+    "repair:stripe-session": "tsx scripts/repair-stripe-session-fulfillment.ts",
+    "repair:payout-wallet": "tsx scripts/repair-payout-wallet-from-privy.ts",
+    "rewards:dry-run": "tsx scripts/run-payout-dry-run.ts"
   },
   "dependencies": {
     "@privy-io/react-auth": "^3.22.1",

@@ -2,6 +2,15 @@
 
 import { useBackofficeAuth } from '@/hooks/useBackofficeAuth'
 
+function CopyButton({ value, label }: { value: string | null | undefined; label: string }) {
+  if (!value) return null
+  return (
+    <button type="button" className="text-xs font-semibold uppercase tracking-[0.12em] text-lime-300 hover:text-lime-200" onClick={() => void navigator.clipboard.writeText(value)}>
+      {label}
+    </button>
+  )
+}
+
 export function AccountPanel() {
   const { profile } = useBackofficeAuth()
 
@@ -36,11 +45,15 @@ export function AccountPanel() {
         <div className="iv-panel p-4">
           <p className="iv-label-muted mb-2">Solana IVT Wallet</p>
           <p className="text-sm text-zinc-100 break-all">{profile?.solana_ivt_wallet_address ?? 'Solana wallet not found'}</p>
-          {profile?.solana_explorer_wallet_url ? (
-            <a className="mt-3 inline-flex text-xs font-semibold uppercase tracking-[0.12em] text-lime-300 hover:text-lime-200" href={profile.solana_explorer_wallet_url} target="_blank" rel="noreferrer">
-              View Wallet on Solana Explorer
-            </a>
-          ) : null}
+          {!profile?.solana_ivt_wallet_address ? <p className="mt-3 text-sm text-amber-300">Solana wallet not found. Complete wallet setup before rewards can be sent.</p> : null}
+          <div className="mt-3 flex flex-wrap gap-3">
+            {profile?.solana_explorer_wallet_url ? (
+              <a className="inline-flex text-xs font-semibold uppercase tracking-[0.12em] text-lime-300 hover:text-lime-200" href={profile.solana_explorer_wallet_url} target="_blank" rel="noreferrer">
+                View Wallet on Solscan
+              </a>
+            ) : null}
+            <CopyButton value={profile?.solana_ivt_wallet_address} label="Copy Solana Wallet" />
+          </div>
         </div>
         <div className="iv-panel p-4">
           <p className="iv-label-muted mb-2">Vault XP</p>

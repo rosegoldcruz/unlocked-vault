@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requirePrivyUser } from '@/lib/server/privy-auth'
 import { ensureUserProfile } from '@/lib/backoffice-profile'
 import {
-  IVT_TOKEN_MINT,
   getCanonicalSolanaWalletForUser,
+  getIvtTokenMintAddress,
   getIvtTokenBalance,
   getSolanaExplorerTokenMintUrl,
   getSolanaExplorerWalletUrl,
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
         solana_ivt_wallet_address: solanaWallet.walletAddress,
         solana_ivt_wallet_source: solanaWallet.source,
         solana_explorer_wallet_url: getSolanaExplorerWalletUrl(solanaWallet.walletAddress),
-        ivt_token_mint: IVT_TOKEN_MINT,
+        ivt_token_mint: getIvtTokenMintAddress(),
         ivt_token_mint_explorer_url: getSolanaExplorerTokenMintUrl(),
         ivt_token_balance: balance,
       },
