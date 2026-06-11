@@ -28,3 +28,5 @@ yarn-error.log*
 .vercel
 .env*
 .deepcode/
+
+/for the user needs it cause memory bad
