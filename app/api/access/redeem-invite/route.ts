@@ -22,10 +22,17 @@ type MemberEntitlement = {
   status: 'active' | 'revoked' | 'expired'
 }
 
+const MASTER_INVITE_CODE = (process.env.IRON_VAULT_MASTER_INVITE_CODE ?? '').trim().toUpperCase()
+
 function normalizeInviteCode(value: unknown): string | null {
   if (typeof value !== 'string') return null
   const normalized = value.trim().toUpperCase()
   return normalized.length > 0 ? normalized : null
+}
+
+function isMasterInviteCode(code: string): boolean {
+  if (!MASTER_INVITE_CODE) return false
+  return code === MASTER_INVITE_CODE
 }
 
 function isUnauthorized(message: string): boolean {
@@ -166,6 +173,38 @@ export async function POST(req: NextRequest) {
           message: 'This invite has already been redeemed for your account.',
         },
         { status: 200 },
+      )
+    }
+
+    // Master invite code: reusable admin-controlled code that always works.
+    // Enabled only when IRON_VAULT_MASTER_INVITE_CODE is set in the environment.
+    if (isMasterInviteCode(inviteCode)) {
+      const { data: masterEntitlement, error: masterEntitlementError } = await getSupabaseAdmin()
+        .from('iv_member_entitlements')
+        .insert({
+          privy_user_id: auth.privyUserId,
+          email: auth.email,
+          wallet_address: auth.walletAddress,
+          source: 'admin',
+          status: 'active',
+          invite_code: inviteCode,
+          granted_by: 'master_invite_code',
+          metadata: {
+            redeemed_via: 'member_portal',
+            master_invite: true,
+          },
+        })
+        .select('id')
+        .single<{ id: string }>()
+
+      if (masterEntitlementError) throw masterEntitlementError
+
+      return NextResponse.json(
+        {
+          status: 'redeemed',
+          message: 'Invite redeemed successfully. Redirecting to your dashboard.',
+        },
+        { status: 201 },
       )
     }
 
