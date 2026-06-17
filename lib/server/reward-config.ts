@@ -6,6 +6,7 @@ type RewardConfig = {
   network: string
   payoutWorkerEnabled: boolean
   payoutDryRun: boolean
+  payoutSafeTestOnly: boolean
   maxPayoutsPerRun: number
   tokenMintAddress: string
   rewardWalletPublicKey: string
@@ -109,6 +110,7 @@ export function getRewardConfig(): RewardConfig {
     network: readOptionalEnv('IVT_REWARD_NETWORK', 'mainnet-beta').trim(),
     payoutWorkerEnabled: parseBoolean(readOptionalEnv('IVT_PAYOUT_WORKER_ENABLED', 'false')),
     payoutDryRun: parseBoolean(readOptionalEnv('IVT_PAYOUT_DRY_RUN', 'true')),
+    payoutSafeTestOnly: parseBoolean(readOptionalEnv('IVT_PAYOUT_SAFE_TEST_ONLY', 'false')),
     maxPayoutsPerRun,
     tokenMintAddress,
     rewardWalletPublicKey,
@@ -139,6 +141,7 @@ export function getRedactedRewardConfig() {
     network: config.network,
     payoutWorkerEnabled: config.payoutWorkerEnabled,
     payoutDryRun: config.payoutDryRun,
+    payoutSafeTestOnly: config.payoutSafeTestOnly,
     maxPayoutsPerRun: config.maxPayoutsPerRun,
     tokenMintAddress: config.tokenMintAddress,
     rewardWalletPublicKey: config.rewardWalletPublicKey,

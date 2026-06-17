@@ -5,12 +5,60 @@ import { isValidSolanaPublicKey } from '@/lib/server/ivt-solana-wallet'
 
 export type RewardWorkerResult = {
   processedCount: number
-  processed: Array<{ jobId: string; status: string }>
+  processed: Array<{ jobId: string; status: string; signature?: string }>
+}
+
+type PayoutCandidate = {
+  id: string
+  privy_user_id: string
+  milestone_number: number | null
+  reward_track: string
+  access_type: string
+  module_number: number | null
+  entitlement_id: string | null
+  wallet_address: string
+  token_mint: string
+  amount_raw: string
+  attempts: number
+  max_attempts: number
+  next_attempt_at: string | null
 }
 
 function computeNextAttemptAt(attempt: number): string {
   const backoffMinutes = Math.min(60, Math.max(1, attempt) * 5)
   return new Date(Date.now() + backoffMinutes * 60 * 1000).toISOString()
+}
+
+function isEligibleByNextAttemptAt(nextAttemptAt: string | null, nowTime: number): boolean {
+  if (!nextAttemptAt) return true
+  const parsed = Date.parse(nextAttemptAt)
+  if (Number.isNaN(parsed)) return true
+  return parsed <= nowTime
+}
+
+function isSafeTestPayoutJob(row: PayoutCandidate): boolean {
+  return row.reward_track === 'single_module'
+    && row.module_number === 1
+    && row.amount_raw === '1'
+    && isValidSolanaPublicKey(row.wallet_address)
+}
+
+async function countSkippedHighAmountQueuedJobs(): Promise<number | null> {
+  const { data, error } = await getSupabaseAdmin()
+    .from('iv_payout_jobs')
+    .select('id, reward_track, module_number, amount_raw')
+    .eq('status', 'queued')
+    .limit(1000)
+
+  if (error) {
+    console.warn('[rewards:worker] safe_test_only skipped_high_amount_count unavailable:', error.message)
+    return null
+  }
+
+  return (data ?? []).filter((row) => {
+    const job = row as { reward_track: string; module_number: number | null; amount_raw: string }
+    return !(job.reward_track === 'single_module' && job.module_number === 1 && job.amount_raw === '1')
+  }).length
 }
 
 async function markMilestonePaid(privyUserId: string, milestoneNumber: number | null) {
@@ -68,7 +116,8 @@ async function processLockedJob(input: {
     if (paidUpdateError) throw new Error(paidUpdateError.message)
 
     await markMilestonePaid(input.privy_user_id, input.milestone_number)
-    return { status: 'paid-existing' as const }
+    console.log('[rewards:worker] paid-existing transaction signature=', existingTx.signature)
+    return { status: 'paid-existing' as const, signature: existingTx.signature }
   }
 
   const payout = await sendTokenRewardPayout({
@@ -77,12 +126,13 @@ async function processLockedJob(input: {
   })
 
   if (payout.dryRun || !payout.signature) {
+    const nextAttempts = input.attempts + 1
     const { error: dryRunUpdateError } = await getSupabaseAdmin()
       .from('iv_payout_jobs')
       .update({
         status: 'queued',
-        attempts: input.attempts + 1,
-        next_attempt_at: null,
+        attempts: nextAttempts,
+        next_attempt_at: computeNextAttemptAt(nextAttempts),
         last_error: 'Dry run mode enabled; no on-chain transfer executed',
         locked_at: null,
         locked_by: null,
@@ -127,7 +177,8 @@ async function processLockedJob(input: {
   if (paidUpdateError) throw new Error(paidUpdateError.message)
 
   await markMilestonePaid(input.privy_user_id, input.milestone_number)
-  return { status: 'paid' as const }
+  console.log('[rewards:worker] paid transaction signature=', payout.signature)
+  return { status: 'paid' as const, signature: payout.signature }
 }
 
 async function handleLockedJobError(input: {
@@ -179,9 +230,16 @@ export async function runRewardPayoutWorker(input?: { payoutJobId?: string }): P
   const nowIso = new Date().toISOString()
   const nowTime = Date.now()
   const workerId = `payout-worker-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-  const processed: Array<{ jobId: string; status: string }> = []
+  const processed: Array<{ jobId: string; status: string; signature?: string }> = []
 
   const maxPayouts = input?.payoutJobId ? 1 : config.maxPayoutsPerRun
+  if (config.payoutSafeTestOnly) {
+    const skippedHighAmountCount = await countSkippedHighAmountQueuedJobs()
+    console.log('[rewards:worker] safe_test_only enabled')
+    if (skippedHighAmountCount !== null) {
+      console.log('[rewards:worker] safe_test_only skipped_high_amount_count=', skippedHighAmountCount)
+    }
+  }
 
   for (let index = 0; index < maxPayouts; index += 1) {
     let candidateQuery = getSupabaseAdmin()
@@ -191,6 +249,13 @@ export async function runRewardPayoutWorker(input?: { payoutJobId?: string }): P
       .order('created_at', { ascending: true })
       .limit(input?.payoutJobId ? 1 : Math.max(5, config.maxPayoutsPerRun))
 
+    if (config.payoutSafeTestOnly) {
+      candidateQuery = candidateQuery
+        .eq('reward_track', 'single_module')
+        .eq('module_number', 1)
+        .eq('amount_raw', '1')
+    }
+
     if (input?.payoutJobId) {
       candidateQuery = candidateQuery.eq('id', input.payoutJobId)
     }
@@ -199,28 +264,14 @@ export async function runRewardPayoutWorker(input?: { payoutJobId?: string }): P
 
     if (candidateError) throw new Error(candidateError.message)
 
-    const candidate = (candidateRows ?? []).find((row) => {
-      const nextAttemptAt = (row as { next_attempt_at: string | null }).next_attempt_at
-      if (!nextAttemptAt) return true
-      const parsed = Date.parse(nextAttemptAt)
-      if (Number.isNaN(parsed)) return true
-      return parsed <= nowTime
-    }) as {
-      id: string
-      privy_user_id: string
-      milestone_number: number | null
-      reward_track: string
-      access_type: string
-      module_number: number | null
-      entitlement_id: string | null
-      wallet_address: string
-      token_mint: string
-      amount_raw: string
-      attempts: number
-      max_attempts: number
-    } | undefined
+    const candidate = ((candidateRows ?? []) as PayoutCandidate[]).find((row) => {
+      if (!isEligibleByNextAttemptAt(row.next_attempt_at, nowTime)) return false
+      if (!config.payoutSafeTestOnly) return true
+      return isSafeTestPayoutJob(row)
+    })
 
     if (!candidate) break
+    console.log('[rewards:worker] selected payout job id=', candidate.id)
 
     const { data: lockedRows, error: lockError } = await getSupabaseAdmin()
       .from('iv_payout_jobs')
@@ -245,6 +296,7 @@ export async function runRewardPayoutWorker(input?: { payoutJobId?: string }): P
       processed.push({
         jobId: candidate.id,
         status: outcome.status,
+        ...(outcome.signature ? { signature: outcome.signature } : {}),
       })
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Failed to process payout job'
