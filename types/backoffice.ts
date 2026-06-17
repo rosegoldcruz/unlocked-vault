@@ -10,7 +10,7 @@ export type BackofficeProfile = {
   wallet_address: string | null
   evm_wallet_address?: string | null
   solana_ivt_wallet_address?: string | null
-  solana_ivt_wallet_source?: 'profile' | 'privy' | 'payout_job' | 'transaction' | 'none'
+  solana_ivt_wallet_source?: 'profile' | 'privy' | 'none'
   solana_explorer_wallet_url?: string | null
   ivt_token_mint?: string
   ivt_token_mint_explorer_url?: string

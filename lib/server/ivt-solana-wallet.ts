@@ -10,7 +10,7 @@ export function getIvtTokenMintAddress() {
 
 export type CanonicalSolanaWallet = {
   walletAddress: string | null
-  source: 'profile' | 'privy' | 'payout_job' | 'transaction' | 'none'
+  source: 'profile' | 'privy' | 'none'
 }
 
 export type IvtTokenBalance = {
@@ -72,19 +72,95 @@ export function getSolscanTxUrl(signature: string | null | undefined) {
   return `https://solscan.io/tx/${signature}`
 }
 
-function scanForSolanaWallets(value: unknown, found: string[]) {
+type PrivyWalletAccount = {
+  type?: string
+  walletClientType?: string
+  wallet_client_type?: string
+  chainType?: string
+  chain_type?: string
+  chain?: string
+  address?: string
+  wallet?: {
+    address?: string
+    chainType?: string
+    chain_type?: string
+    chain?: string
+  }
+}
+
+function normalizeChainName(value: unknown): string {
+  return typeof value === 'string' ? value.trim().toLowerCase() : ''
+}
+
+function isWalletAccount(value: unknown): value is PrivyWalletAccount {
+  if (!value || typeof value !== 'object') return false
+  const account = value as PrivyWalletAccount
+  return account.type === 'wallet'
+    || account.type === 'smart_wallet'
+    || typeof account.address === 'string'
+    || typeof account.wallet?.address === 'string'
+}
+
+function isExplicitSolanaAccount(account: PrivyWalletAccount): boolean {
+  const chainHints = [
+    account.chainType,
+    account.chain_type,
+    account.chain,
+    account.wallet?.chainType,
+    account.wallet?.chain_type,
+    account.wallet?.chain,
+    account.walletClientType,
+    account.wallet_client_type,
+  ].map(normalizeChainName)
+
+  return chainHints.some((hint) => hint.includes('solana') || hint === 'phantom' || hint === 'solflare')
+}
+
+function getExplicitPrivyLinkedAccounts(user: unknown): PrivyWalletAccount[] {
+  if (!user || typeof user !== 'object') return []
+  const record = user as {
+    linkedAccounts?: unknown
+    linked_accounts?: unknown
+    wallet?: unknown
+  }
+
+  const accounts: PrivyWalletAccount[] = []
+  const linkedAccounts = Array.isArray(record.linkedAccounts)
+    ? record.linkedAccounts
+    : Array.isArray(record.linked_accounts)
+      ? record.linked_accounts
+      : []
+
+  for (const account of linkedAccounts) {
+    if (isWalletAccount(account)) accounts.push(account)
+  }
+
+  if (isWalletAccount(record.wallet)) {
+    accounts.push(record.wallet)
+  }
+
+  return accounts
+}
+
+function getAccountAddress(account: PrivyWalletAccount): string | null {
+  if (typeof account.address === 'string') return account.address
+  if (typeof account.wallet?.address === 'string') return account.wallet.address
+  return null
+}
+
+function scanForFallbackSolanaWallets(value: unknown, found: string[]) {
   if (typeof value === 'string') {
     if (isValidSolanaPublicKey(value)) found.push(value)
     return
   }
 
   if (Array.isArray(value)) {
-    for (const item of value) scanForSolanaWallets(item, found)
+    for (const item of value) scanForFallbackSolanaWallets(item, found)
     return
   }
 
   if (value && typeof value === 'object') {
-    for (const nested of Object.values(value)) scanForSolanaWallets(nested, found)
+    for (const nested of Object.values(value)) scanForFallbackSolanaWallets(nested, found)
   }
 }
 
@@ -94,9 +170,30 @@ export async function getPrivySolanaWalletForUser(privyUserId: string): Promise<
 
   try {
     const user = await client.getUser(privyUserId)
-    const found: string[] = []
-    scanForSolanaWallets(user, found)
-    return Array.from(new Set(found))[0] ?? null
+    const linkedAccounts = getExplicitPrivyLinkedAccounts(user)
+
+    for (const account of linkedAccounts) {
+      const address = getAccountAddress(account)
+      if (isExplicitSolanaAccount(account) && isValidSolanaPublicKey(address)) {
+        return address
+      }
+    }
+
+    for (const account of linkedAccounts) {
+      const address = getAccountAddress(account)
+      if (isValidSolanaPublicKey(address)) {
+        console.warn('[ivt-wallet] using linked wallet without explicit Solana chain hint as fallback')
+        return address
+      }
+    }
+
+    const fallbackFound: string[] = []
+    scanForFallbackSolanaWallets(user, fallbackFound)
+    const fallbackWallet = Array.from(new Set(fallbackFound))[0] ?? null
+    if (fallbackWallet) {
+      console.warn('[ivt-wallet] using recursive Privy Solana-shaped fallback; no explicit Solana linked wallet field found')
+    }
+    return fallbackWallet
   } catch {
     return null
   }
@@ -122,37 +219,6 @@ export async function getCanonicalSolanaWalletForUser(privyUserId: string): Prom
       .update({ wallet_address: privyWallet })
       .eq('privy_user_id', privyUserId)
     return { walletAddress: privyWallet, source: 'privy' }
-  }
-
-  const { data: payoutJobs } = await supabase
-    .from('iv_payout_jobs')
-    .select('wallet_address, created_at')
-    .eq('privy_user_id', privyUserId)
-    .in('status', ['paid', 'queued'])
-    .order('created_at', { ascending: false })
-    .limit(10)
-
-  const payoutWallet = (payoutJobs ?? [])
-    .map((row) => (row as { wallet_address: string | null }).wallet_address)
-    .find(isValidSolanaPublicKey)
-
-  if (payoutWallet) {
-    return { walletAddress: payoutWallet, source: 'payout_job' }
-  }
-
-  const { data: transactions } = await supabase
-    .from('iv_payout_transactions')
-    .select('wallet_address, created_at')
-    .eq('privy_user_id', privyUserId)
-    .order('created_at', { ascending: false })
-    .limit(10)
-
-  const transactionWallet = (transactions ?? [])
-    .map((row) => (row as { wallet_address: string | null }).wallet_address)
-    .find(isValidSolanaPublicKey)
-
-  if (transactionWallet) {
-    return { walletAddress: transactionWallet, source: 'transaction' }
   }
 
   return { walletAddress: null, source: 'none' }

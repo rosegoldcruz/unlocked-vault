@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getProgress, markLessonComplete, saveQuizResult } from "@/lib/education-actions"
+import { ensureUserProfile } from "@/lib/backoffice-profile"
 import { canAccessModule, requireMemberAccess, requireModuleAccess, type MemberAccessScope } from "@/lib/server/member-access"
 import { getUserModuleCompletionStatus } from "@/lib/server/module-completion"
 import { recordVerifiedModuleCompletion } from "@/lib/server/reward-milestones"
@@ -13,6 +14,11 @@ function mapAccessErrorToStatus(error: unknown): number {
   if (message.startsWith("Unauthorized:")) return 401
   if (message.startsWith("Forbidden:")) return 403
   return 500
+}
+
+function getMetadataString(metadata: Record<string, unknown> | undefined, key: string): string | undefined {
+  const value = metadata?.[key]
+  return typeof value === "string" ? value : undefined
 }
 
 async function syncRewardsForUser(privyUserId: string, scope: MemberAccessScope) {
@@ -86,6 +92,11 @@ export async function POST(req: NextRequest) {
     try {
       const access = await requireMemberAccess(req)
       privyUserId = access.auth.privyUserId
+      await ensureUserProfile(access.auth.privyUserId, {
+        email: access.auth.email,
+        walletAddress: access.auth.walletAddress,
+        tier: getMetadataString(access.entitlement?.metadata, "tier"),
+      })
       accessScope = {
         hasAccess: true,
         accessType: access.isAdmin ? "admin" : access.entitlement?.metadata?.access_type === "single_module" ? "single_module" : "all_modules",

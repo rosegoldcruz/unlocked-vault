@@ -7,7 +7,7 @@ type RewardStatusPayload = {
   walletAddress: string | null
   evmWalletAddress: string | null
   solanaIvtWalletAddress: string | null
-  solanaIvtWalletSource: 'profile' | 'payout_job' | 'privy' | 'none'
+  solanaIvtWalletSource: 'profile' | 'privy' | 'none'
   solanaExplorerWalletUrl: string | null
   ivtTokenMint: string
   ivtTokenMintExplorerUrl: string

@@ -6,6 +6,8 @@ type MilestoneNumber = 1 | 2 | 3
 
 type MilestoneStatus = 'locked' | 'eligible' | 'queued' | 'processing' | 'paid' | 'failed' | 'canceled'
 
+const XP_PER_COMPLETED_MODULE = 500
+
 type RecordVerifiedModuleCompletionInput = {
   privyUserId: string
   moduleNumber: number
@@ -81,6 +83,38 @@ async function ensureMilestoneRows(privyUserId: string): Promise<void> {
     if (error) {
       throw new Error(error.message)
     }
+  }
+}
+
+export async function syncVaultXpForUser(privyUserId: string): Promise<{ completedModuleCount: number; vaultXp: number }> {
+  const { data, error } = await getSupabaseAdmin()
+    .from('iv_module_completions')
+    .select('module_number')
+    .eq('privy_user_id', privyUserId)
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  const completedModules = new Set(
+    (data ?? [])
+      .map((row) => Number((row as { module_number: number }).module_number))
+      .filter((moduleNumber) => Number.isInteger(moduleNumber) && moduleNumber >= 1 && moduleNumber <= 6),
+  )
+  const vaultXp = completedModules.size * XP_PER_COMPLETED_MODULE
+
+  const { error: profileError } = await getSupabaseAdmin()
+    .from('iv_user_profiles')
+    .update({ vault_xp: vaultXp })
+    .eq('privy_user_id', privyUserId)
+
+  if (profileError) {
+    throw new Error(profileError.message)
+  }
+
+  return {
+    completedModuleCount: completedModules.size,
+    vaultXp,
   }
 }
 
@@ -169,6 +203,8 @@ export async function recordVerifiedModuleCompletion(
   if (error) {
     throw new Error(error.message)
   }
+
+  await syncVaultXpForUser(input.privyUserId)
 
   if (input.rewardTrack === 'single_module') {
     const result = await queuePayoutForSingleModule({
