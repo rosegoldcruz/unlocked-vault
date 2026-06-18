@@ -4,7 +4,6 @@ import { ensureUserProfile } from "@/lib/backoffice-profile"
 import { canAccessModule, requireMemberAccess, requireModuleAccess, type MemberAccessScope } from "@/lib/server/member-access"
 import { getUserModuleCompletionStatus } from "@/lib/server/module-completion"
 import { recordVerifiedModuleCompletion } from "@/lib/server/reward-milestones"
-import { runRewardPayoutWorker } from "@/lib/server/reward-payout-worker"
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0
@@ -148,13 +147,6 @@ export async function POST(req: NextRequest) {
       accessScope = await requireModuleAccess(req, moduleNumber)
       await saveQuizResult(privyUserId, moduleIndex, score, passed)
       const rewardSummary = await syncRewardsForUser(privyUserId, accessScope)
-
-      // Immediately trigger payout worker for safe single-module completions (fire-and-forget)
-      if (passed && accessScope.rewardTrack === 'single_module') {
-        void runRewardPayoutWorker().catch((err: unknown) => {
-          console.warn('[education-progress] instant payout worker error:', err instanceof Error ? err.message : 'unknown')
-        })
-      }
 
       return NextResponse.json({ success: true, ...rewardSummary })
     }

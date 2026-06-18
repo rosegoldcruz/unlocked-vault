@@ -8,6 +8,12 @@ export type RewardWorkerResult = {
   processed: Array<{ jobId: string; status: string; signature?: string }>
 }
 
+export type InstantPayoutResult = {
+  status: 'paid' | 'already_paid' | 'dry_run' | 'skipped' | 'failed'
+  signature?: string
+  error?: string
+}
+
 type PayoutCandidate = {
   id: string
   privy_user_id: string
@@ -318,5 +324,125 @@ export async function runRewardPayoutWorker(input?: { payoutJobId?: string }): P
   return {
     processedCount: processed.length,
     processed,
+  }
+}
+
+/**
+ * Instantly processes a single payout job tied to a verified completion event.
+ * Bypasses payoutWorkerEnabled — this is triggered by a user earning a reward, not the cron.
+ * All safety guards still apply (wallet validation, idempotency, amount check, user match).
+ */
+export async function processPayoutJobNow(input: {
+  jobId: string
+  privyUserId: string
+  rewardTrack: string
+  moduleNumber?: number | null
+  milestoneNumber?: number | null
+  amountRaw?: string
+}): Promise<InstantPayoutResult> {
+  const config = getRewardConfig()
+
+  const { data: job, error: jobError } = await getSupabaseAdmin()
+    .from('iv_payout_jobs')
+    .select('id, privy_user_id, milestone_number, reward_track, access_type, module_number, entitlement_id, wallet_address, token_mint, amount_raw, attempts, max_attempts, status')
+    .eq('id', input.jobId)
+    .maybeSingle<PayoutCandidate & { status: string }>()
+
+  if (jobError) return { status: 'failed', error: jobError.message }
+  if (!job) return { status: 'skipped', error: 'Job not found' }
+
+  if (job.privy_user_id !== input.privyUserId) {
+    return { status: 'skipped', error: 'Job does not belong to the requesting user' }
+  }
+
+  if (job.reward_track !== input.rewardTrack) {
+    return { status: 'skipped', error: 'Job reward_track does not match expected value' }
+  }
+
+  if (input.moduleNumber !== undefined && input.moduleNumber !== null && job.module_number !== input.moduleNumber) {
+    return { status: 'skipped', error: 'Job module_number does not match expected value' }
+  }
+
+  if (input.milestoneNumber !== undefined && input.milestoneNumber !== null && job.milestone_number !== input.milestoneNumber) {
+    return { status: 'skipped', error: 'Job milestone_number does not match expected value' }
+  }
+
+  if (input.amountRaw !== undefined && job.amount_raw !== input.amountRaw) {
+    return { status: 'skipped', error: 'Job amount_raw does not match expected value' }
+  }
+
+  if (!isValidSolanaPublicKey(job.wallet_address)) {
+    return { status: 'failed', error: 'Invalid payout wallet_address (not a valid Solana address)' }
+  }
+
+  if (job.wallet_address.startsWith('0x')) {
+    return { status: 'failed', error: 'Payout wallet is an EVM address, not Solana' }
+  }
+
+  if (!isValidSolanaPublicKey(job.token_mint)) {
+    return { status: 'failed', error: 'Invalid payout token_mint' }
+  }
+
+  if (job.token_mint !== config.tokenMintAddress) {
+    return { status: 'failed', error: 'Payout token_mint does not match configured IVT token mint' }
+  }
+
+  if (job.status === 'paid') {
+    return { status: 'already_paid' }
+  }
+
+  if (job.status !== 'queued') {
+    return { status: 'skipped', error: `Job is not in queued state (current: ${job.status})` }
+  }
+
+  const { data: existingTx } = await getSupabaseAdmin()
+    .from('iv_payout_transactions')
+    .select('id, signature')
+    .eq('payout_job_id', input.jobId)
+    .maybeSingle<{ id: string; signature: string }>()
+
+  if (existingTx?.id) {
+    await getSupabaseAdmin()
+      .from('iv_payout_jobs')
+      .update({ status: 'paid', locked_at: null, locked_by: null, last_error: null })
+      .eq('id', input.jobId)
+    await markMilestonePaid(job.privy_user_id, job.milestone_number)
+    return { status: 'already_paid', signature: existingTx.signature }
+  }
+
+  const nowIso = new Date().toISOString()
+  const workerId = `instant-payout-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+
+  const { data: lockedRows, error: lockError } = await getSupabaseAdmin()
+    .from('iv_payout_jobs')
+    .update({ status: 'processing', locked_at: nowIso, locked_by: workerId })
+    .eq('id', input.jobId)
+    .eq('status', 'queued')
+    .select('id')
+
+  if (lockError) return { status: 'failed', error: lockError.message }
+  if (!lockedRows || lockedRows.length === 0) {
+    return { status: 'skipped', error: 'Could not acquire lock on job (already being processed)' }
+  }
+
+  try {
+    const outcome = await processLockedJob({ ...job, workerId })
+    if (outcome.status === 'paid' || outcome.status === 'paid-existing') {
+      return { status: 'paid', signature: outcome.signature ?? undefined }
+    }
+    if (outcome.status === 'dry-run') {
+      return { status: 'dry_run', error: 'Dry run mode enabled; no on-chain transfer executed' }
+    }
+    return { status: 'skipped' }
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to process payout job'
+    await handleLockedJobError({
+      id: input.jobId,
+      attempts: job.attempts,
+      max_attempts: job.max_attempts,
+      workerId,
+      errorMessage: message,
+    })
+    return { status: 'failed', error: message }
   }
 }

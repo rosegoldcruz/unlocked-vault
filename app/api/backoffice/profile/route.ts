@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requirePrivyUser } from '@/lib/server/privy-auth'
 import { ensureUserProfile } from '@/lib/backoffice-profile'
+import { syncVaultXpForUser } from '@/lib/server/reward-milestones'
 import {
   getCanonicalSolanaWalletForUser,
   getIvtTokenMintAddress,
@@ -32,10 +33,18 @@ export async function GET(req: NextRequest) {
   try {
     const auth = await requirePrivyUser(req)
     const evmWalletAddress = isEvmWallet(auth.walletAddress) ? auth.walletAddress : null
-    const profile = await ensureUserProfile(auth.privyUserId, {
+    let profile = await ensureUserProfile(auth.privyUserId, {
       email: auth.email,
       walletAddress: evmWalletAddress ? null : auth.walletAddress,
     })
+
+    // If vault_xp is null the completion sync hasn't run yet for this profile row.
+    // Re-derive it from iv_module_completions so all displays stay consistent.
+    if (profile.vault_xp === null || profile.vault_xp === undefined) {
+      const { vaultXp } = await syncVaultXpForUser(auth.privyUserId).catch(() => ({ vaultXp: 0 }))
+      profile = { ...profile, vault_xp: vaultXp }
+    }
+
     const solanaWallet = await getCanonicalSolanaWalletForUser(auth.privyUserId)
     const balance = await getIvtTokenBalance(solanaWallet.walletAddress)
 

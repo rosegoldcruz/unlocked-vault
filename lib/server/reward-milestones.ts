@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from '@/lib/server/supabase-admin'
 import { isModuleComplete } from '@/lib/server/module-completion'
 import { queuePayoutForSingleModule, syncPayoutJobsForUser } from '@/lib/server/reward-payout-queue'
+import { processPayoutJobNow, type InstantPayoutResult } from '@/lib/server/reward-payout-worker'
 
 type MilestoneNumber = 1 | 2 | 3
 
@@ -168,7 +169,7 @@ export async function syncRewardMilestonesForUser(privyUserId: string): Promise<
 
 export async function recordVerifiedModuleCompletion(
   input: RecordVerifiedModuleCompletionInput,
-): Promise<{ recorded: boolean; eligibleMilestones: number[]; queuedMilestones: number[]; walletMissing: boolean; reason?: string }> {
+): Promise<{ recorded: boolean; eligibleMilestones: number[]; queuedMilestones: number[]; walletMissing: boolean; reason?: string; instantPayout?: InstantPayoutResult }> {
   const moduleNumber = normalizeModuleNumber(input.moduleNumber)
 
   const completionConfirmed = await isModuleComplete(input.privyUserId, moduleNumber)
@@ -213,21 +214,52 @@ export async function recordVerifiedModuleCompletion(
       entitlementId: input.entitlementId,
     })
 
+    let instantPayout: InstantPayoutResult | undefined
+    if (result.jobId) {
+      instantPayout = await processPayoutJobNow({
+        jobId: result.jobId,
+        privyUserId: input.privyUserId,
+        rewardTrack: 'single_module',
+        moduleNumber,
+      }).catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : 'Instant payout failed'
+        console.warn('[rewards:instant] single_module payout error:', message)
+        return { status: 'failed' as const, error: message }
+      })
+    }
+
     return {
       recorded: true,
       eligibleMilestones: [],
       queuedMilestones: [],
       walletMissing: result.walletMissing,
+      instantPayout,
     }
   }
 
   const { eligibleMilestones } = await syncRewardMilestonesForUser(input.privyUserId)
-  const { queuedMilestones, walletMissing } = await syncPayoutJobsForUser(input.privyUserId)
+  const { queuedMilestones, walletMissing, milestoneJobIds } = await syncPayoutJobsForUser(input.privyUserId)
+
+  let lastInstantPayout: InstantPayoutResult | undefined
+  for (const [milestoneStr, jobId] of Object.entries(milestoneJobIds)) {
+    const milestoneNumber = Number(milestoneStr)
+    lastInstantPayout = await processPayoutJobNow({
+      jobId,
+      privyUserId: input.privyUserId,
+      rewardTrack: 'full_academy',
+      milestoneNumber,
+    }).catch((err: unknown) => {
+      const message = err instanceof Error ? err.message : 'Instant payout failed'
+      console.warn('[rewards:instant] milestone', milestoneNumber, 'payout error:', message)
+      return { status: 'failed' as const, error: message }
+    })
+  }
 
   return {
     recorded: true,
     eligibleMilestones,
     queuedMilestones,
     walletMissing,
+    instantPayout: lastInstantPayout,
   }
 }

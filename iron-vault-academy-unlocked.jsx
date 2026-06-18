@@ -733,9 +733,9 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [1, 2, 3, 4,
         <div className="iv-member-banner">
           <span>🔐 MEMBER</span>
           <span style={{color:"#555",fontSize:8,letterSpacing:1}}>·</span>
-          <span>{isSingleModuleAccess ? "MODULE 1 ACCESS" : "ALL 6 MODULES UNLOCKED"}</span>
+          <span>{isSingleModuleAccess ? `MODULE ${allowedModules[0] ?? 1} ACCESS` : "ALL 6 MODULES UNLOCKED"}</span>
           <span style={{color:"#555",fontSize:8,letterSpacing:1}}>·</span>
-          <span>{isSingleModuleAccess ? "COMPLETE MODULE 1 TO EARN XP" : "COMPLETE IN SEQUENCE TO EARN XP"}</span>
+          <span>{isSingleModuleAccess ? `COMPLETE MODULE ${allowedModules[0] ?? 1} TO EARN XP` : "COMPLETE IN SEQUENCE TO EARN XP"}</span>
         </div>
         <header className="iv-header">
           <div className="iv-logo"><div className="iv-dot"/>IRON VAULT</div>
@@ -752,14 +752,14 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [1, 2, 3, 4,
           <div className="iv-wrap">
             <div className="iv-eyebrow">▸ MEMBER — {isSingleModuleAccess ? "SINGLE MODULE ACCESS" : "FULL CURRICULUM ACCESS"}</div>
             <h1 className="iv-h1">Your Vault<br/>Dashboard</h1>
-            <p className="iv-sub">{isSingleModuleAccess ? "Module 1 is unlocked as part of your member position. Complete the module and pass the quiz at 8/10 to earn XP and your reward." : "All 6 modules are unlocked as part of your member position. Complete each module and pass the quiz at 8/10 to earn XP and unlock the next level."}</p>
+            <p className="iv-sub">{isSingleModuleAccess ? `Module ${allowedModules[0] ?? 1} is unlocked as part of your member position. Complete the module and pass the quiz at 8/10 to earn XP and your reward.` : "All 6 modules are unlocked as part of your member position. Complete each module and pass the quiz at 8/10 to earn XP and unlock the next level."}</p>
             <div className="iv-stats">
               <div className="iv-stat"><div className="iv-stat-l">VAULT XP</div><div className="iv-stat-v">{totalXP.toLocaleString()}</div><div className="iv-stat-u">of {TOTAL_XP.toLocaleString()} total</div></div>
               <div className="iv-stat"><div className="iv-stat-l">MODULES PASSED</div><div className="iv-stat-v">{modsDone}</div><div className="iv-stat-u">of {MODULES.length}</div></div>
               <div className="iv-stat"><div className="iv-stat-l">LESSONS DONE</div><div className="iv-stat-v">{lessonsDone}</div><div className="iv-stat-u">of {totalLessons}</div></div>
               <div className="iv-stat"><div className="iv-stat-l">PASS THRESHOLD</div><div className="iv-stat-v">80<span style={{fontSize:16}}>%</span></div><div className="iv-stat-u">8 of 10 correct</div></div>
             </div>
-            <div className="iv-eyebrow" style={{marginBottom:14}}>▸ CURRICULUM — {isSingleModuleAccess ? "MODULE 1 UNLOCKED" : "ALL MODULES UNLOCKED"}</div>
+            <div className="iv-eyebrow" style={{marginBottom:14}}>▸ CURRICULUM — {isSingleModuleAccess ? `MODULE ${allowedModules[0] ?? 1} UNLOCKED` : "ALL MODULES UNLOCKED"}</div>
             <div className="iv-grid">
               {MODULES.map((mod,i)=>{
                 const st=modStatus(i);
