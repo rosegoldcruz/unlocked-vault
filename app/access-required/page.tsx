@@ -1,6 +1,42 @@
+'use client'
+
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { usePrivy } from '@privy-io/react-auth'
 
 export default function AccessRequiredPage() {
+  const router = useRouter()
+  const { logout } = usePrivy()
+  const [resetting, setResetting] = useState(false)
+
+  async function handleLoginReset() {
+    if (resetting) return
+
+    setResetting(true)
+
+    try {
+      await fetch('/api/auth/privy-session', {
+        method: 'DELETE',
+        credentials: 'include',
+        cache: 'no-store',
+      }).catch(() => null)
+
+      if (typeof logout === 'function') {
+        await logout()
+      }
+    } catch {
+      await fetch('/api/auth/privy-session', {
+        method: 'DELETE',
+        credentials: 'include',
+        cache: 'no-store',
+      }).catch(() => null)
+    } finally {
+      router.replace('/')
+      router.refresh()
+    }
+  }
+
   return (
     <main className="min-h-screen bg-[#080808] text-zinc-100 grid place-items-center px-6">
       <div className="iv-panel w-full max-w-2xl p-8 sm:p-10">
@@ -21,12 +57,14 @@ export default function AccessRequiredPage() {
           >
             Go to Learn Page
           </Link>
-          <Link
-            href="/"
-            className="iv-button-ghost inline-flex items-center justify-center px-5 py-2.5 text-xs"
+          <button
+            type="button"
+            onClick={handleLoginReset}
+            disabled={resetting}
+            className="iv-button-ghost inline-flex items-center justify-center px-5 py-2.5 text-xs disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Back to Login
-          </Link>
+            {resetting ? 'Signing Out...' : 'Back to Login'}
+          </button>
         </div>
       </div>
     </main>
