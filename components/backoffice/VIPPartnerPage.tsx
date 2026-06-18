@@ -122,9 +122,9 @@ export function VIPPartnerPage({ videoSrc }: { videoSrc?: string }) {
   return (
     <section className="space-y-6">
       <div className="iv-panel iv-panel-lime p-4 sm:p-6 lg:p-8">
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.18fr)_minmax(340px,0.82fr)]">
-          <div>
-            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="grid items-stretch gap-6 xl:grid-cols-[minmax(0,1.38fr)_minmax(380px,0.92fr)]">
+          <div className="flex min-w-0 flex-col">
+            <div className="mb-5 flex min-h-[72px] flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="iv-label mb-3">VIP Partner Opportunities</p>
                 <h1 className="iv-title text-5xl sm:text-6xl lg:text-7xl">VIP PARTNER ACCESS</h1>
@@ -134,7 +134,28 @@ export function VIPPartnerPage({ videoSrc }: { videoSrc?: string }) {
                 Private Portal
               </div>
             </div>
-            <div className="overflow-hidden border border-[#242424] bg-white">
+
+            <section className="border border-[#242424] bg-[#080808] p-5 sm:p-6">
+              <p className="iv-label-muted mb-5 text-[#aaff00]">Why VIP Exists</p>
+              <p className="text-sm leading-7 text-zinc-200">
+                Iron Vault is currently focused on two initiatives:
+              </p>
+              <ul className="mt-5 grid gap-4 text-sm text-zinc-100 sm:grid-cols-2">
+                <li className="flex gap-3">
+                  <BadgeCheck aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-[#aaff00]" />
+                  Private Partner Appreciation Agreements
+                </li>
+                <li className="flex gap-3">
+                  <BadgeCheck aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-[#aaff00]" />
+                  PumpCoin Launch Partnerships
+                </li>
+              </ul>
+              <p className="mt-6 max-w-3xl text-sm leading-7 text-zinc-300">
+                Qualified members can review opportunities, schedule consultations, and begin the application process directly from this portal.
+              </p>
+            </section>
+
+            <div className="mt-5 flex-1 overflow-hidden border border-[#242424] bg-white">
               <Image
                 src="/PARTNER.jpg"
                 alt="VIP Partner Appreciation Schedule"
@@ -146,45 +167,25 @@ export function VIPPartnerPage({ videoSrc }: { videoSrc?: string }) {
             </div>
           </div>
 
-          <aside className="flex flex-col gap-4">
-            <section className="border border-[#242424] bg-[#080808] p-5">
-              <p className="iv-label-muted mb-3 text-[#aaff00]">Why VIP Exists</p>
-              <p className="text-sm leading-7 text-zinc-200">
-                Iron Vault is currently focused on two initiatives:
-              </p>
-              <ul className="mt-4 space-y-3 text-sm text-zinc-100">
-                <li className="flex gap-3">
-                  <BadgeCheck aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-[#aaff00]" />
-                  Private Partner Appreciation Agreements
-                </li>
-                <li className="flex gap-3">
-                  <BadgeCheck aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-[#aaff00]" />
-                  PumpCoin Launch Partnerships
-                </li>
-              </ul>
-              <p className="mt-5 text-sm leading-7 text-zinc-300">
-                Qualified members can review opportunities, schedule consultations, and begin the application process directly from this portal.
-              </p>
-            </section>
-
-            <section className="border border-[#242424] bg-[#080808] p-4">
-              <div className="mb-3 flex items-center justify-between gap-3">
+          <aside className="flex min-w-0 flex-col border border-[#242424] bg-[#080808] p-4 sm:p-5">
+            <section className="flex min-h-full flex-col">
+              <div className="mb-5 flex min-h-[72px] items-center justify-between gap-3 border-b border-[#1f1f1f] pb-4">
                 <div>
                   <p className="iv-label-muted mb-2">VIP Video</p>
-                  <h2 className="iv-card-title text-3xl">Briefing</h2>
+                  <h2 className="iv-card-title text-5xl sm:text-6xl">Briefing</h2>
                 </div>
                 <Play aria-hidden="true" className="h-5 w-5 text-[#aaff00]" />
               </div>
               {videoSrc ? (
                 <video
-                  className="mx-auto aspect-[9/16] w-full max-w-[430px] border border-[#1f1f1f] bg-black object-cover"
+                  className="mx-auto aspect-[9/16] w-full max-w-[390px] border border-[#1f1f1f] bg-black object-cover"
                   src={videoSrc}
                   controls
                   playsInline
                   preload="metadata"
                 />
               ) : (
-                <div className="mx-auto grid aspect-[9/16] w-full max-w-[430px] place-items-center border border-dashed border-[#2a2a2a] bg-black/70 px-6 text-center">
+                <div className="mx-auto grid aspect-[9/16] w-full max-w-[390px] place-items-center border border-dashed border-[#2a2a2a] bg-black/70 px-6 text-center">
                   <p className="font-mono text-xs uppercase tracking-[0.18em] text-zinc-500">
                     Set NEXT_PUBLIC_IRON_VAULT_VIP_VIDEO_SRC to show your VIP video here.
                   </p>
@@ -205,36 +206,45 @@ export function VIPPartnerPage({ videoSrc }: { videoSrc?: string }) {
               </div>
 
               <div className="mt-5 border-t border-[#1f1f1f] pt-5">
-                <p className="iv-label mb-4">Choose Your Path</p>
+                <p className="iv-title mb-4 text-center text-4xl tracking-[0.18em] text-[#aaff00]">Choose Your Path</p>
                 <div className="space-y-4">
-                  {offers.map((offer) => {
+                  {offers.map((offer, index) => {
                     const Icon = offer.icon
                     return (
-                      <article key={offer.id} className="border border-[#242424] bg-[#0f0f0f] p-4">
-                        <div className="mb-3 flex items-start justify-between gap-3">
-                          <div>
-                            <p className="iv-label-muted mb-2">{offer.label}</p>
-                            <h3 className="iv-card-title text-2xl">{offer.pathTitle}</h3>
+                      <div key={offer.id}>
+                        {index > 0 ? (
+                          <div className="my-4 flex items-center gap-4">
+                            <span className="h-px flex-1 bg-[#242424]" />
+                            <span className="iv-title text-4xl tracking-[0.18em] text-[#aaff00]">Or</span>
+                            <span className="h-px flex-1 bg-[#242424]" />
                           </div>
-                          <div className="grid h-9 w-9 shrink-0 place-items-center border border-[#aaff00]/25 bg-[#aaff00]/10 text-[#aaff00]">
-                            <Icon aria-hidden="true" className="h-4 w-4" />
+                        ) : null}
+                        <article className="border border-[#242424] bg-[#0f0f0f] p-4">
+                          <div className="mb-3 flex items-start justify-between gap-3">
+                            <div>
+                              <p className="iv-label-muted mb-2">{offer.label}</p>
+                              <h3 className="iv-card-title text-2xl">{offer.pathTitle}</h3>
+                            </div>
+                            <div className="grid h-9 w-9 shrink-0 place-items-center border border-[#aaff00]/25 bg-[#aaff00]/10 text-[#aaff00]">
+                              <Icon aria-hidden="true" className="h-4 w-4" />
+                            </div>
                           </div>
-                        </div>
-                        <p className="text-sm leading-6 text-zinc-300">{offer.description}</p>
-                        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                          <a href={offer.href} className="iv-button-ghost inline-flex min-h-11 items-center justify-center px-4 py-2 text-xs">
-                            Learn More
-                          </a>
-                          <a
-                            href="#vip-request"
-                            onClick={() => setSelectedOffer(offer.id)}
-                            className="iv-button inline-flex min-h-11 items-center justify-center gap-2 px-4 py-2 text-sm"
-                          >
-                            {offer.formCta}
-                            <ArrowRight aria-hidden="true" className="h-4 w-4" />
-                          </a>
-                        </div>
-                      </article>
+                          <p className="text-sm leading-6 text-zinc-300">{offer.description}</p>
+                          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                            <a href={offer.href} className="iv-button-ghost inline-flex min-h-11 items-center justify-center px-4 py-2 text-xs">
+                              Learn More
+                            </a>
+                            <a
+                              href="#vip-request"
+                              onClick={() => setSelectedOffer(offer.id)}
+                              className="iv-button inline-flex min-h-11 items-center justify-center gap-2 px-4 py-2 text-sm"
+                            >
+                              {offer.formCta}
+                              <ArrowRight aria-hidden="true" className="h-4 w-4" />
+                            </a>
+                          </div>
+                        </article>
+                      </div>
                     )
                   })}
                 </div>
