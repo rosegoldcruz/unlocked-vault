@@ -487,7 +487,7 @@ function ContentBlock({b}){
 }
 
 // ─── MAIN ─────────────────────────────────────────────────────────────────
-export default function IronVaultAcademyUnlocked({ allowedModules = [1, 2, 3, 4, 5, 6], accessType = "all_modules" }){
+export default function IronVaultAcademyUnlocked({ allowedModules = [1, 2, 3, 4, 5, 6], accessType = "all_modules", onModuleComplete }){
   const { ready, authenticated, user, login, logout, getAccessToken } = usePrivy();
   const displayName = user?.email?.address || user?.phone?.number || "Member";
 
@@ -649,15 +649,17 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [1, 2, 3, 4,
         getAccessToken()
           .then((token) => {
             if (!token) return;
-
-            fetch("/api/education-progress", {
+            return fetch("/api/education-progress", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${token}`,
               },
               body: JSON.stringify({ action: "quiz", moduleIndex: modIdx, score, passed }),
-            }).catch(() => {});
+            });
+          })
+          .then(() => {
+            if (passed && onModuleComplete) onModuleComplete();
           })
           .catch(() => {});
       }
@@ -708,7 +710,7 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [1, 2, 3, 4,
               MEMBER<br/><span style={{color:"#AAFF00"}}>ACCESS VAULT</span>
             </div>
             <p style={{fontSize:14,color:"#555",lineHeight:1.7,marginBottom:28}}>
-              All 6 modules unlocked for members. Sign in to access the full curriculum.
+              Member access vault. Sign in to access your curriculum.
             </p>
             <button
               style={{width:"100%",background:"#AAFF00",border:"none",borderRadius:3,padding:16,color:"#080808",fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:2,cursor:"pointer"}}
@@ -731,9 +733,9 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [1, 2, 3, 4,
         <div className="iv-member-banner">
           <span>🔐 MEMBER</span>
           <span style={{color:"#555",fontSize:8,letterSpacing:1}}>·</span>
-          <span>ALL 6 MODULES UNLOCKED</span>
+          <span>{isSingleModuleAccess ? "MODULE 1 ACCESS" : "ALL 6 MODULES UNLOCKED"}</span>
           <span style={{color:"#555",fontSize:8,letterSpacing:1}}>·</span>
-          <span>COMPLETE IN SEQUENCE TO EARN XP</span>
+          <span>{isSingleModuleAccess ? "COMPLETE MODULE 1 TO EARN XP" : "COMPLETE IN SEQUENCE TO EARN XP"}</span>
         </div>
         <header className="iv-header">
           <div className="iv-logo"><div className="iv-dot"/>IRON VAULT</div>
@@ -748,16 +750,16 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [1, 2, 3, 4,
         </header>
         <div className="iv-hub">
           <div className="iv-wrap">
-            <div className="iv-eyebrow">▸ MEMBER — FULL CURRICULUM ACCESS</div>
+            <div className="iv-eyebrow">▸ MEMBER — {isSingleModuleAccess ? "SINGLE MODULE ACCESS" : "FULL CURRICULUM ACCESS"}</div>
             <h1 className="iv-h1">Your Vault<br/>Dashboard</h1>
-            <p className="iv-sub">All 6 modules are unlocked as part of your member position. Complete each module and pass the quiz at 8/10 to earn XP and unlock the next level.</p>
+            <p className="iv-sub">{isSingleModuleAccess ? "Module 1 is unlocked as part of your member position. Complete the module and pass the quiz at 8/10 to earn XP and your reward." : "All 6 modules are unlocked as part of your member position. Complete each module and pass the quiz at 8/10 to earn XP and unlock the next level."}</p>
             <div className="iv-stats">
               <div className="iv-stat"><div className="iv-stat-l">VAULT XP</div><div className="iv-stat-v">{totalXP.toLocaleString()}</div><div className="iv-stat-u">of {TOTAL_XP.toLocaleString()} total</div></div>
               <div className="iv-stat"><div className="iv-stat-l">MODULES PASSED</div><div className="iv-stat-v">{modsDone}</div><div className="iv-stat-u">of {MODULES.length}</div></div>
               <div className="iv-stat"><div className="iv-stat-l">LESSONS DONE</div><div className="iv-stat-v">{lessonsDone}</div><div className="iv-stat-u">of {totalLessons}</div></div>
               <div className="iv-stat"><div className="iv-stat-l">PASS THRESHOLD</div><div className="iv-stat-v">80<span style={{fontSize:16}}>%</span></div><div className="iv-stat-u">8 of 10 correct</div></div>
             </div>
-            <div className="iv-eyebrow" style={{marginBottom:14}}>▸ CURRICULUM — ALL MODULES UNLOCKED</div>
+            <div className="iv-eyebrow" style={{marginBottom:14}}>▸ CURRICULUM — {isSingleModuleAccess ? "MODULE 1 UNLOCKED" : "ALL MODULES UNLOCKED"}</div>
             <div className="iv-grid">
               {MODULES.map((mod,i)=>{
                 const st=modStatus(i);
@@ -804,7 +806,7 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [1, 2, 3, 4,
         <div className="iv-member-banner">
           <span>🔐 MEMBER</span>
           <span style={{color:"#555",fontSize:8}}>·</span>
-          <span>ALL 6 MODULES UNLOCKED</span>
+          <span>{isSingleModuleAccess ? "MODULE 1 ACCESS" : "ALL 6 MODULES UNLOCKED"}</span>
         </div>
         <header className="iv-header">
           <div className="iv-logo"><div className="iv-dot"/>IRON VAULT</div>
