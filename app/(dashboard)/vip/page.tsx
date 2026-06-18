@@ -4,7 +4,7 @@ import { VIPPartnerPage } from '@/components/backoffice/VIPPartnerPage'
 export const dynamic = 'force-dynamic'
 
 export default function VIPPage() {
-  const videoSrc = process.env.NEXT_PUBLIC_IRON_VAULT_VIP_VIDEO_SRC?.trim()
+  const videoSrc = process.env.NEXT_PUBLIC_IRON_VAULT_VIP_VIDEO_SRC?.trim() || '/videos/IMG_5066.MOV'
 
   return (
     <section className="space-y-6">
