@@ -959,7 +959,8 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [1, 2, 3, 4,
     const score=progress[modIdx].score;
     const passed=progress[modIdx].passed;
     const mod=MODULES[modIdx];
-    const hasNext=modIdx+1<MODULES.length;
+    // hasNext requires both a next module in the array AND that module being in the user's allowedModuleSet
+    const hasNext=modIdx+1<MODULES.length && allowedModuleSet.has(modIdx+2);
     return(
       <div className="iv">
         <style>{CSS}</style>
@@ -985,8 +986,10 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [1, 2, 3, 4,
           {passed&&<div className="iv-results-xp">⚡ +{mod.xpReward} XP EARNED</div>}
           <div className="iv-results-btns">
             <button className="iv-btn-ghost" onClick={startQuiz}>{passed?"RETAKE":"TRY AGAIN →"}</button>
+            {passed&&!hasNext&&<button className="iv-btn-ghost" onClick={()=>setView("hub")}>VIEW REWARDS →</button>}
             <button className="iv-btn-lime" onClick={()=>{
-              if(passed&&hasNext){setModIdx(m=>m+1);setView("module");}
+              // Guard: only advance to next module if it is explicitly in allowedModuleSet
+              if(passed&&hasNext&&allowedModuleSet.has(modIdx+2)){setModIdx(m=>m+1);setView("module");}
               else setView("hub");
             }}>
               {passed&&hasNext?`NEXT: ${MODULES[modIdx+1].tag} →`:"BACK TO DASHBOARD"}
