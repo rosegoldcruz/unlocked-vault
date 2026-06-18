@@ -1,7 +1,8 @@
 "use client"
 
 import { type FormEvent, useState } from 'react'
-import { BellRing, Building2, CheckCircle2, Compass, Layers3, Megaphone, Rocket, ShieldCheck } from 'lucide-react'
+import Image from 'next/image'
+import { BellRing, Building2, CheckCircle2, Compass, Layers3, Megaphone, Play, Rocket, ShieldCheck } from 'lucide-react'
 
 const projectTypes = ['Real Estate', 'Business Acquisition', 'Digital Asset Launch', 'Strategic Partnership', 'Other']
 const projectValues = ['$50K–$100K', '$100K–$250K', '$250K–$500K', '$500K+']
@@ -25,7 +26,7 @@ const activityFeed = [
   'Ecosystem access unlocked',
 ]
 
-export function VIPPartnerPage() {
+export function VIPPartnerPage({ videoSrc }: { videoSrc?: string }) {
   const [submitted, setSubmitted] = useState(false)
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -36,21 +37,63 @@ export function VIPPartnerPage() {
 
   return (
     <section className="space-y-6">
-      <div className="iv-panel p-6 sm:p-8">
-        <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
+      <div className="iv-panel iv-panel-lime p-4 sm:p-6 lg:p-8">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(340px,0.75fr)]">
           <div>
-            <p className="iv-label mb-3 text-purple-400">VIP Access. Strategic Partnership.</p>
-            <h1 className="iv-title text-5xl sm:text-6xl lg:text-7xl">VIP PARTNER ACCESS</h1>
-            <p className="iv-body mt-5 max-w-3xl text-base text-zinc-300">
-              Strategic ecosystem access for qualified members, contributors, and project partners.
-            </p>
+            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="iv-label mb-3">VIP Partner Appreciation</p>
+                <h1 className="iv-title text-5xl sm:text-6xl lg:text-7xl">VIP PARTNER ACCESS</h1>
+              </div>
+              <div className="iv-chip-lime inline-flex w-fit items-center gap-2 px-3 py-2 text-xs">
+                <ShieldCheck aria-hidden="true" className="h-4 w-4" />
+                Private Portal
+              </div>
+            </div>
+            <div className="overflow-hidden border border-[#242424] bg-white">
+              <Image
+                src="/PARTNER.jpg"
+                alt="VIP Partner Appreciation Schedule"
+                width={990}
+                height={1280}
+                priority
+                className="h-auto w-full"
+              />
+            </div>
           </div>
 
-          <aside className="border border-purple-500/30 bg-[#080808] p-5 shadow-[0_0_34px_rgba(123,47,190,0.12)]">
-            <p className="iv-label-muted mb-3 text-purple-300">PARTNER SIGNAL</p>
-            <p className="text-sm leading-7 text-zinc-200">
-              Qualified members can request review for high-value project opportunities, real-world assets, and ecosystem collaborations.
-            </p>
+          <aside className="flex flex-col gap-4">
+            <div className="border border-[#242424] bg-[#080808] p-5">
+              <p className="iv-label-muted mb-3 text-[#aaff00]">Partner Briefing</p>
+              <p className="text-sm leading-7 text-zinc-200">
+                Qualified members can review the private appreciation schedule, partner context, and intake path from this VIP vault.
+              </p>
+            </div>
+
+            <div className="border border-[#242424] bg-[#080808] p-4">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <p className="iv-label-muted mb-2">VIP Video</p>
+                  <h2 className="iv-card-title text-3xl">Partner Orientation</h2>
+                </div>
+                <Play aria-hidden="true" className="h-5 w-5 text-[#aaff00]" />
+              </div>
+              {videoSrc ? (
+                <video
+                  className="aspect-video w-full border border-[#1f1f1f] bg-black object-cover"
+                  src={videoSrc}
+                  controls
+                  playsInline
+                  preload="metadata"
+                />
+              ) : (
+                <div className="grid aspect-video place-items-center border border-dashed border-[#2a2a2a] bg-black/70 px-6 text-center">
+                  <p className="font-mono text-xs uppercase tracking-[0.18em] text-zinc-500">
+                    Set NEXT_PUBLIC_IRON_VAULT_VIP_VIDEO_SRC to show your VIP video here.
+                  </p>
+                </div>
+              )}
+            </div>
           </aside>
         </div>
       </div>
