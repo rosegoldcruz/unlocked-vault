@@ -1,7 +1,6 @@
 "use client"
 
 import { type FormEvent, useState } from 'react'
-import Image from 'next/image'
 import { usePrivy } from '@privy-io/react-auth'
 import {
   ArrowRight,
@@ -25,6 +24,28 @@ const nextSteps = [
   'Submit an application.',
   'Schedule a consultation.',
   'Receive a strategy review.',
+]
+
+const appreciationSchedule = [
+  ['$10,000', '$50,000'],
+  ['$20,000', '$100,000'],
+  ['$30,000', '$150,000'],
+  ['$40,000', '$200,000'],
+  ['$50,000', '$250,000'],
+  ['$60,000', '$300,000'],
+  ['$70,000', '$350,000'],
+  ['$80,000', '$400,000'],
+  ['$90,000', '$450,000'],
+  ['$100,000', '$500,000'],
+  ['$200,000', '$1,000,000'],
+  ['$300,000', '$1,500,000'],
+  ['$400,000', '$2,000,000'],
+  ['$500,000', '$2,500,000'],
+  ['$600,000', '$3,000,000'],
+  ['$700,000', '$3,500,000'],
+  ['$800,000', '$4,000,000'],
+  ['$900,000', '$4,500,000'],
+  ['$1,000,000', '$5,000,000'],
 ]
 
 const offers = [
@@ -155,15 +176,8 @@ export function VIPPartnerPage({ videoSrc }: { videoSrc?: string }) {
               </p>
             </section>
 
-            <div className="mt-5 flex-1 overflow-hidden border border-[#242424] bg-white">
-              <Image
-                src="/PARTNER.jpg"
-                alt="VIP Partner Appreciation Schedule"
-                width={990}
-                height={1280}
-                priority
-                className="h-auto w-full"
-              />
+            <div className="mt-5 flex-1">
+              <PrivateAppreciationSchedule />
             </div>
           </div>
 
@@ -381,6 +395,62 @@ export function VIPPartnerPage({ videoSrc }: { videoSrc?: string }) {
           <div className="font-mono text-xs uppercase tracking-[0.18em] text-[#aaff00]">Two Offers</div>
         </div>
       </section>
+    </section>
+  )
+}
+
+function PrivateAppreciationSchedule() {
+  return (
+    <section className="h-full border border-[#242424] bg-[#080808] p-5 sm:p-6">
+      <div className="mb-6 flex flex-col gap-3 border-b border-[#1f1f1f] pb-5 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="iv-label-muted mb-2 text-[#aaff00]">Iron Vault</p>
+          <h2 className="iv-card-title text-4xl sm:text-5xl">VIP Partner Appreciation Schedule</h2>
+          <p className="mt-2 text-sm text-zinc-400">
+            Private Partner Appreciation Agreement • Illustrative payout targets based on contribution level
+          </p>
+        </div>
+        <div className="iv-chip-lime inline-flex w-fit px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em]">
+          Limited Slots
+        </div>
+      </div>
+
+      <div className="overflow-hidden border border-[#242424]">
+        <table className="w-full border-collapse text-left">
+          <thead>
+            <tr className="bg-[#aaff00] text-[#080808]">
+              <th scope="col" className="px-4 py-3 font-mono text-[10px] uppercase tracking-[0.16em] sm:px-5">
+                Partner Contribution
+              </th>
+              <th scope="col" className="border-l border-[#080808]/20 px-4 py-3 font-mono text-[10px] uppercase tracking-[0.16em] sm:px-5">
+                Appreciation Payout Target
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {appreciationSchedule.map(([contribution, target], index) => (
+              <tr key={contribution} className={index % 2 === 0 ? 'bg-[#101010]' : 'bg-[#0b0b0b]'}>
+                <td className="border-t border-[#1f1f1f] px-4 py-3 text-sm font-semibold text-zinc-100 sm:px-5">
+                  {contribution}
+                </td>
+                <td className="border-l border-t border-[#1f1f1f] px-4 py-3 text-sm font-semibold text-[#aaff00] sm:px-5">
+                  {target}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mt-5 border border-[#242424] bg-[#0f0f0f] p-4">
+        <p className="iv-label-muted mb-2 text-[#aaff00]">Limited Private Partner Appreciation Agreement</p>
+        <p className="text-xs leading-6 text-zinc-400">
+          Iron Vault is opening a limited number of private partner positions for qualified supporters who believe in the company&apos;s education platform, lead generation model, and ecosystem expansion. Contributions are intended to support marketing, advertising, infrastructure, and member acquisition growth over the next 12 months.
+        </p>
+        <p className="mt-3 text-xs leading-6 text-zinc-500">
+          Figures are illustrative targets only and are subject to written agreement terms, company performance, available revenue, and applicable law. No payout is guaranteed.
+        </p>
+      </div>
     </section>
   )
 }
