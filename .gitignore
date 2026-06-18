@@ -30,3 +30,5 @@ yarn-error.log*
 .deepcode/
 
 /for the user needs it cause memory bad
+
+/site-and-portal.code-workspace
