@@ -18,6 +18,15 @@ export type BackofficeProfile = {
     amountRaw: string
     decimals: number
     uiAmount: string
+    balanceSource: 'rpc'
+    tokenMint: string
+    walletAddress: string
+  } | null
+  ivt_token_balance_meta?: {
+    balance_source: string
+    token_mint: string
+    wallet_address_shape: string
+    wallet_source: string
   } | null
   created_at: string
   updated_at: string

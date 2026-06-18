@@ -17,6 +17,9 @@ export type IvtTokenBalance = {
   amountRaw: string
   decimals: number
   uiAmount: string
+  balanceSource: 'rpc'
+  tokenMint: string
+  walletAddress: string
 } | null
 
 function getPrivyClient(): PrivyClient | null {
@@ -254,8 +257,13 @@ export async function getIvtTokenBalance(walletAddress: string | null | undefine
       amountRaw: totalRaw.toString(),
       decimals,
       uiAmount: fractionText ? `${whole.toString()}.${fractionText}` : whole.toString(),
+      balanceSource: 'rpc',
+      tokenMint,
+      walletAddress,
     }
-  } catch {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Unknown RPC error'
+    console.error('[ivt-wallet] getIvtTokenBalance failed', { walletAddress, tokenMint, message })
     return null
   }
 }

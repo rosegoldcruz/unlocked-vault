@@ -1,5 +1,5 @@
 import { getSupabaseAdmin } from '@/lib/server/supabase-admin'
-import { getRewardConfig } from '@/lib/server/reward-config'
+import { getRewardConfig, getSingleModuleRewardAmountRaw } from '@/lib/server/reward-config'
 import { sendTokenRewardPayout } from '@/lib/server/solana-payout'
 import { isValidSolanaPublicKey } from '@/lib/server/ivt-solana-wallet'
 
@@ -42,14 +42,14 @@ function isEligibleByNextAttemptAt(nextAttemptAt: string | null, nowTime: number
   return parsed <= nowTime
 }
 
-function isSafeTestPayoutJob(row: PayoutCandidate): boolean {
+function isSafeTestPayoutJob(row: PayoutCandidate, safeTestAmountRaw: string): boolean {
   return row.reward_track === 'single_module'
     && row.module_number === 1
-    && row.amount_raw === '1'
+    && row.amount_raw === safeTestAmountRaw
     && isValidSolanaPublicKey(row.wallet_address)
 }
 
-async function countSkippedHighAmountQueuedJobs(): Promise<number | null> {
+async function countSkippedHighAmountQueuedJobs(safeTestAmountRaw: string): Promise<number | null> {
   const { data, error } = await getSupabaseAdmin()
     .from('iv_payout_jobs')
     .select('id, reward_track, module_number, amount_raw')
@@ -63,7 +63,7 @@ async function countSkippedHighAmountQueuedJobs(): Promise<number | null> {
 
   return (data ?? []).filter((row) => {
     const job = row as { reward_track: string; module_number: number | null; amount_raw: string }
-    return !(job.reward_track === 'single_module' && job.module_number === 1 && job.amount_raw === '1')
+    return !(job.reward_track === 'single_module' && job.module_number === 1 && job.amount_raw === safeTestAmountRaw)
   }).length
 }
 
@@ -238,10 +238,11 @@ export async function runRewardPayoutWorker(input?: { payoutJobId?: string }): P
   const workerId = `payout-worker-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
   const processed: Array<{ jobId: string; status: string; signature?: string }> = []
 
+  const safeTestAmountRaw = getSingleModuleRewardAmountRaw()
   const maxPayouts = input?.payoutJobId ? 1 : config.maxPayoutsPerRun
   if (config.payoutSafeTestOnly) {
-    const skippedHighAmountCount = await countSkippedHighAmountQueuedJobs()
-    console.log('[rewards:worker] safe_test_only enabled')
+    const skippedHighAmountCount = await countSkippedHighAmountQueuedJobs(safeTestAmountRaw)
+    console.log('[rewards:worker] safe_test_only enabled safeTestAmountRaw=', safeTestAmountRaw)
     if (skippedHighAmountCount !== null) {
       console.log('[rewards:worker] safe_test_only skipped_high_amount_count=', skippedHighAmountCount)
     }
@@ -259,7 +260,7 @@ export async function runRewardPayoutWorker(input?: { payoutJobId?: string }): P
       candidateQuery = candidateQuery
         .eq('reward_track', 'single_module')
         .eq('module_number', 1)
-        .eq('amount_raw', '1')
+        .eq('amount_raw', safeTestAmountRaw)
     }
 
     if (input?.payoutJobId) {
@@ -273,7 +274,7 @@ export async function runRewardPayoutWorker(input?: { payoutJobId?: string }): P
     const candidate = ((candidateRows ?? []) as PayoutCandidate[]).find((row) => {
       if (!isEligibleByNextAttemptAt(row.next_attempt_at, nowTime)) return false
       if (!config.payoutSafeTestOnly) return true
-      return isSafeTestPayoutJob(row)
+      return isSafeTestPayoutJob(row, safeTestAmountRaw)
     })
 
     if (!candidate) break

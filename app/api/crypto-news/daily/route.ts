@@ -182,19 +182,24 @@ function parseFeed(xml: string, source: NewsSource): FeedItem[] {
 }
 
 async function fetchSource(source: NewsSource): Promise<FeedItem[]> {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 4000)
   try {
     const response = await fetch(source.url, {
+      signal: controller.signal,
       headers: {
         Accept: 'application/rss+xml, application/xml, text/xml',
         'User-Agent': 'IronVaultMemberPortal/1.0',
       },
       next: { revalidate: 900 },
     })
+    clearTimeout(timeout)
 
     if (!response.ok) return []
 
     return parseFeed(await response.text(), source)
   } catch {
+    clearTimeout(timeout)
     return []
   }
 }

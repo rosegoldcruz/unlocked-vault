@@ -46,7 +46,8 @@ export async function GET(req: NextRequest) {
     }
 
     const solanaWallet = await getCanonicalSolanaWalletForUser(auth.privyUserId)
-    const balance = await getIvtTokenBalance(solanaWallet.walletAddress)
+    const tokenMint = getIvtTokenMintAddress()
+    const balance = await getIvtTokenBalance(solanaWallet.walletAddress, tokenMint)
 
     return NextResponse.json({
       profile: {
@@ -55,9 +56,15 @@ export async function GET(req: NextRequest) {
         solana_ivt_wallet_address: solanaWallet.walletAddress,
         solana_ivt_wallet_source: solanaWallet.source,
         solana_explorer_wallet_url: getSolanaExplorerWalletUrl(solanaWallet.walletAddress),
-        ivt_token_mint: getIvtTokenMintAddress(),
+        ivt_token_mint: tokenMint,
         ivt_token_mint_explorer_url: getSolanaExplorerTokenMintUrl(),
         ivt_token_balance: balance,
+        ivt_token_balance_meta: balance === null ? {
+          balance_source: 'rpc_failed',
+          token_mint: tokenMint,
+          wallet_address_shape: solanaWallet.walletAddress ? 'present' : 'missing',
+          wallet_source: solanaWallet.source,
+        } : null,
       },
     })
   } catch (error: unknown) {
