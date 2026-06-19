@@ -238,7 +238,9 @@ export async function recordVerifiedModuleCompletion(
   }
 
   const { eligibleMilestones } = await syncRewardMilestonesForUser(input.privyUserId)
-  const { queuedMilestones, walletMissing, milestoneJobIds } = await syncPayoutJobsForUser(input.privyUserId)
+  const { queuedMilestones, walletMissing, milestoneJobIds } = await syncPayoutJobsForUser(input.privyUserId, {
+    entitlementId: input.entitlementId,
+  })
 
   let lastInstantPayout: InstantPayoutResult | undefined
   for (const [milestoneStr, jobId] of Object.entries(milestoneJobIds)) {

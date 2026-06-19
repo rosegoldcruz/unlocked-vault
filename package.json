@@ -13,6 +13,7 @@
     "rewards:worker:once": "tsx scripts/reward-payout-worker.ts once",
     "rewards:worker": "tsx scripts/reward-payout-worker.ts loop",
     "verify:payment-chain": "tsx scripts/verify-payment-chain.ts",
+    "verify:tier-reward-amounts": "tsx scripts/verify-tier-reward-amounts.ts",
     "repair:stripe-session": "tsx scripts/repair-stripe-session-fulfillment.ts",
     "repair:payout-wallet": "tsx scripts/repair-payout-wallet-from-privy.ts",
     "rewards:dry-run": "tsx scripts/run-payout-dry-run.ts"

@@ -1,5 +1,11 @@
 import { getSupabaseAdmin } from '@/lib/server/supabase-admin'
-import { getRewardAmountRawForMilestone, getRewardConfig, getSingleModuleRewardAmountRaw } from '@/lib/server/reward-config'
+import {
+  buildRewardTierJobMetadata,
+  getRewardAmountRawForMilestone,
+  getRewardConfig,
+  getSingleModuleRewardAmountRaw,
+  type RewardTierMetadata,
+} from '@/lib/server/reward-config'
 import { getCanonicalSolanaWalletForUser, isValidSolanaPublicKey } from '@/lib/server/ivt-solana-wallet'
 
 async function resolvePayoutWallet(privyUserId: string) {
@@ -7,9 +13,23 @@ async function resolvePayoutWallet(privyUserId: string) {
   return isValidSolanaPublicKey(wallet.walletAddress) ? wallet : { walletAddress: null, source: 'none' as const }
 }
 
+async function getEntitlementMetadata(entitlementId?: string | null): Promise<RewardTierMetadata | null> {
+  if (!entitlementId) return null
+
+  const { data, error } = await getSupabaseAdmin()
+    .from('iv_member_entitlements')
+    .select('metadata')
+    .eq('id', entitlementId)
+    .maybeSingle<{ metadata: RewardTierMetadata | null }>()
+
+  if (error) throw new Error(error.message)
+  return data?.metadata ?? null
+}
+
 export async function queuePayoutForEligibleMilestone(input: {
   privyUserId: string
   milestoneNumber: number
+  entitlementId?: string
 }): Promise<{ queued: boolean; walletMissing: boolean; jobId: string | null }> {
   const milestoneNumber = Number(input.milestoneNumber)
   if (!Number.isInteger(milestoneNumber) || milestoneNumber < 1 || milestoneNumber > 3) {
@@ -52,7 +72,9 @@ export async function queuePayoutForEligibleMilestone(input: {
   }
 
   const config = getRewardConfig()
-  const amountRaw = getRewardAmountRawForMilestone(milestoneNumber)
+  const entitlementMetadata = await getEntitlementMetadata(input.entitlementId)
+  const amountRaw = getRewardAmountRawForMilestone(milestoneNumber, entitlementMetadata)
+  const tierMetadata = buildRewardTierJobMetadata(entitlementMetadata)
   if (!isValidSolanaPublicKey(config.tokenMintAddress)) throw new Error('Invalid IVT token mint address')
 
   const { data: insertedJob, error: insertJobError } = await getSupabaseAdmin().from('iv_payout_jobs').insert({
@@ -61,13 +83,14 @@ export async function queuePayoutForEligibleMilestone(input: {
     reward_track: 'full_academy',
     access_type: 'all_modules',
     module_number: null,
-    entitlement_id: null,
+    entitlement_id: input.entitlementId ?? null,
     wallet_address: wallet.walletAddress,
     token_mint: config.tokenMintAddress,
     amount_raw: amountRaw,
     status: 'queued',
     metadata: {
       source: 'reward-milestone',
+      ...tierMetadata,
       wallet_source: wallet.source,
     },
   }).select('id').maybeSingle<{ id: string }>()
@@ -119,7 +142,9 @@ export async function queuePayoutForSingleModule(input: {
   if (existingJob?.id) return { queued: false, walletMissing: false, jobId: existingJob.id }
 
   const config = getRewardConfig()
-  const amountRaw = getSingleModuleRewardAmountRaw()
+  const entitlementMetadata = await getEntitlementMetadata(input.entitlementId)
+  const amountRaw = getSingleModuleRewardAmountRaw(entitlementMetadata)
+  const tierMetadata = buildRewardTierJobMetadata(entitlementMetadata)
   if (!isValidSolanaPublicKey(config.tokenMintAddress)) throw new Error('Invalid IVT token mint address')
 
   const { data: insertedJob, error } = await getSupabaseAdmin().from('iv_payout_jobs').insert({
@@ -139,6 +164,7 @@ export async function queuePayoutForSingleModule(input: {
       access_type: 'single_module',
       module_number: input.moduleNumber,
       entitlement_id: input.entitlementId ?? null,
+      ...tierMetadata,
       wallet_source: wallet.source,
     },
   }).select('id').maybeSingle<{ id: string }>()
@@ -147,7 +173,10 @@ export async function queuePayoutForSingleModule(input: {
   return { queued: true, walletMissing: false, jobId: insertedJob?.id ?? null }
 }
 
-export async function syncPayoutJobsForUser(privyUserId: string): Promise<{ queuedMilestones: number[]; walletMissing: boolean; milestoneJobIds: Record<number, string> }> {
+export async function syncPayoutJobsForUser(
+  privyUserId: string,
+  options?: { entitlementId?: string },
+): Promise<{ queuedMilestones: number[]; walletMissing: boolean; milestoneJobIds: Record<number, string> }> {
   const { data: milestones, error } = await getSupabaseAdmin()
     .from('iv_reward_milestones')
     .select('milestone_number, status')
@@ -167,7 +196,11 @@ export async function syncPayoutJobsForUser(privyUserId: string): Promise<{ queu
   let walletMissing = false
 
   for (const milestoneNumber of eligibleMilestones) {
-    const result = await queuePayoutForEligibleMilestone({ privyUserId, milestoneNumber })
+    const result = await queuePayoutForEligibleMilestone({
+      privyUserId,
+      milestoneNumber,
+      entitlementId: options?.entitlementId,
+    })
     if (result.queued) queuedMilestones.push(milestoneNumber)
     if (result.jobId) milestoneJobIds[milestoneNumber] = result.jobId
     if (result.walletMissing) walletMissing = true
