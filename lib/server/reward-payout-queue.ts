@@ -73,7 +73,11 @@ export async function queuePayoutForEligibleMilestone(input: {
 
   const config = getRewardConfig()
   const entitlementMetadata = await getEntitlementMetadata(input.entitlementId)
-  const amountRaw = getRewardAmountRawForMilestone(milestoneNumber, entitlementMetadata)
+  const amountRaw = getRewardAmountRawForMilestone(milestoneNumber, entitlementMetadata, {
+    rewardTrack: 'full_academy',
+    accessType: 'all_modules',
+    milestoneNumber,
+  })
   const tierMetadata = buildRewardTierJobMetadata(entitlementMetadata)
   if (!isValidSolanaPublicKey(config.tokenMintAddress)) throw new Error('Invalid IVT token mint address')
 
@@ -143,7 +147,11 @@ export async function queuePayoutForSingleModule(input: {
 
   const config = getRewardConfig()
   const entitlementMetadata = await getEntitlementMetadata(input.entitlementId)
-  const amountRaw = getSingleModuleRewardAmountRaw(entitlementMetadata)
+  const amountRaw = getSingleModuleRewardAmountRaw(entitlementMetadata, {
+    rewardTrack: 'single_module',
+    accessType: 'single_module',
+    moduleNumber: input.moduleNumber,
+  })
   const tierMetadata = buildRewardTierJobMetadata(entitlementMetadata)
   if (!isValidSolanaPublicKey(config.tokenMintAddress)) throw new Error('Invalid IVT token mint address')
 

@@ -14,6 +14,13 @@ export type RewardTierMetadata = {
   internal_test?: unknown
 }
 
+export type RewardResolutionContext = {
+  rewardTrack: 'full_academy' | 'single_module'
+  accessType: 'all_modules' | 'single_module'
+  milestoneNumber?: number
+  moduleNumber?: number
+}
+
 type RewardConfig = {
   modulePairSize: number
   totalModules: number
@@ -90,6 +97,27 @@ function normalizeTierToken(value: unknown): string | null {
   return normalized ? normalized.toUpperCase().replace(/[\s-]+/g, '_') : null
 }
 
+function getNormalizedTierKey(metadata?: RewardTierMetadata | null): string | null {
+  if (!metadata) return null
+
+  const candidates = [
+    metadata.product_key,
+    metadata.productKey,
+    metadata.legacyTier,
+    metadata.legacy_tier,
+    metadata.paymentTier,
+    metadata.payment_tier,
+    metadata.tier,
+  ]
+
+  for (const candidate of candidates) {
+    const normalized = normalizeTierToken(candidate)
+    if (normalized) return normalized
+  }
+
+  return null
+}
+
 function mapTierTokenToProductTier(value: unknown): RewardProductTier | null {
   const token = normalizeTierToken(value)
   if (!token) return null
@@ -101,6 +129,40 @@ function mapTierTokenToProductTier(value: unknown): RewardProductTier | null {
   if (token === 'FOUNDER_ELITE' || token === 'FOUNDER' || token === 'ELITE') return 'FOUNDER_ELITE'
 
   return null
+}
+
+function getMetadataAccessType(metadata?: RewardTierMetadata | null): string | null {
+  return normalizeMetadataString(metadata?.access_type)
+}
+
+function getMetadataRewardTrack(metadata?: RewardTierMetadata | null): string | null {
+  return normalizeMetadataString(metadata?.reward_track)
+}
+
+function hasRewardShape(
+  metadata: RewardTierMetadata | null | undefined,
+  context: RewardResolutionContext,
+): boolean {
+  return getMetadataAccessType(metadata) === context.accessType
+    && getMetadataRewardTrack(metadata) === context.rewardTrack
+}
+
+function buildResolutionError(
+  scope: 'full_academy' | 'single_module',
+  metadata: RewardTierMetadata | null | undefined,
+  context: RewardResolutionContext,
+): Error {
+  const details = [
+    `reward_track=${context.rewardTrack}`,
+    `access_type=${context.accessType}`,
+    context.milestoneNumber === undefined ? null : `milestone_number=${context.milestoneNumber}`,
+    context.moduleNumber === undefined ? null : `module_number=${context.moduleNumber}`,
+    `normalized_tier_key=${getNormalizedTierKey(metadata) ?? 'missing'}`,
+  ].filter(Boolean).join(' ')
+
+  return new Error(
+    `Missing or unsupported product tier for ${scope} reward amount resolution. Refusing payout job creation. ${details}`,
+  )
 }
 
 export function resolveRewardProductTier(metadata?: RewardTierMetadata | null): RewardProductTier | null {
@@ -161,49 +223,57 @@ const tierMilestoneEnvNames: Record<Exclude<RewardProductTier, 'INTERNAL_TEST' |
   },
 }
 
-function getLegacyMilestoneAmountRaw(milestoneNumber: RewardMilestoneNumber): string {
-  const envNameByMilestone: Record<RewardMilestoneNumber, string> = {
-    1: 'IVT_REWARD_MILESTONE_1_AMOUNT_RAW',
-    2: 'IVT_REWARD_MILESTONE_2_AMOUNT_RAW',
-    3: 'IVT_REWARD_MILESTONE_3_AMOUNT_RAW',
-  }
-  const envName = envNameByMilestone[milestoneNumber]
-  console.warn(`[rewards:config] using legacy shared milestone env ${envName}; entitlement tier identity was missing or unsupported`)
-  return assertRawAmount(envName, readEnv(envName))
-}
-
-export function getRewardAmountRawForMilestone(milestoneNumber: number, metadata?: RewardTierMetadata | null): string {
+export function getRewardAmountRawForMilestone(
+  milestoneNumber: number,
+  metadata?: RewardTierMetadata | null,
+  context?: RewardResolutionContext,
+): string {
   if (!Number.isInteger(milestoneNumber) || milestoneNumber < 1 || milestoneNumber > 3) {
     throw new Error('Invalid milestoneNumber: expected integer between 1 and 3')
   }
 
   const normalizedMilestone = milestoneNumber as RewardMilestoneNumber
   const productTier = resolveRewardProductTier(metadata)
+  const resolutionContext = context ?? {
+    rewardTrack: 'full_academy' as const,
+    accessType: 'all_modules' as const,
+    milestoneNumber,
+  }
 
-  if (productTier === 'FOUNDATION' || productTier === 'BUILDER_ACCELERATOR' || productTier === 'FOUNDER_ELITE') {
+  if (
+    (productTier === 'FOUNDATION' || productTier === 'BUILDER_ACCELERATOR' || productTier === 'FOUNDER_ELITE')
+    && hasRewardShape(metadata, resolutionContext)
+  ) {
     const envName = tierMilestoneEnvNames[productTier][normalizedMilestone]
     return assertRawAmount(envName, readEnv(envName))
   }
 
-  if (productTier === 'ENTRY' || productTier === 'INTERNAL_TEST') {
-    throw new Error(`${productTier} does not use full-academy milestone rewards`)
-  }
-
-  return getLegacyMilestoneAmountRaw(normalizedMilestone)
+  throw buildResolutionError('full_academy', metadata, resolutionContext)
 }
 
-export function getSingleModuleRewardAmountRaw(metadata?: RewardTierMetadata | null): string {
+export function getSingleModuleRewardAmountRaw(
+  metadata?: RewardTierMetadata | null,
+  context?: RewardResolutionContext,
+): string {
   const productTier = resolveRewardProductTier(metadata)
+  const resolutionContext = context ?? {
+    rewardTrack: 'single_module' as const,
+    accessType: 'single_module' as const,
+  }
 
-  if (productTier === 'ENTRY') {
+  if (productTier === 'ENTRY' && hasRewardShape(metadata, resolutionContext)) {
     return assertRawAmount('IVT_REWARD_ENTRY_SINGLE_MODULE_AMOUNT_RAW', readEnv('IVT_REWARD_ENTRY_SINGLE_MODULE_AMOUNT_RAW'))
   }
 
-  if (productTier && productTier !== 'INTERNAL_TEST') {
-    throw new Error(`${productTier} does not use single-module rewards`)
+  if (productTier === 'INTERNAL_TEST' && hasRewardShape(metadata, resolutionContext)) {
+    return assertRawAmount('IVT_REWARD_SINGLE_MODULE_AMOUNT_RAW', readEnv('IVT_REWARD_SINGLE_MODULE_AMOUNT_RAW'))
   }
 
-  return assertRawAmount('IVT_REWARD_SINGLE_MODULE_AMOUNT_RAW', readEnv('IVT_REWARD_SINGLE_MODULE_AMOUNT_RAW'))
+  if (!context && !metadata) {
+    return assertRawAmount('IVT_REWARD_SINGLE_MODULE_AMOUNT_RAW', readEnv('IVT_REWARD_SINGLE_MODULE_AMOUNT_RAW'))
+  }
+
+  throw buildResolutionError('single_module', metadata, resolutionContext)
 }
 
 export function getRewardConfig(): RewardConfig {
