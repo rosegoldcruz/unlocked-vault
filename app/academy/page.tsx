@@ -3,16 +3,20 @@
 import { useEffect, useState } from 'react'
 import { usePrivy } from '@privy-io/react-auth'
 import IronVaultAcademyUnlocked from '@/iron-vault-academy-unlocked'
-import { useBackofficeAuth } from '@/hooks/useBackofficeAuth'
 
 export default function AcademyPage() {
   const { ready, authenticated, getAccessToken } = usePrivy()
-  const { refreshProfile } = useBackofficeAuth()
-  const [scope, setScope] = useState<{ allowedModules: number[]; accessType: string } | null>(null)
+  const [scope, setScope] = useState<{ allowedModules: number[]; accessType: 'free' | 'single_module' | 'all_modules' | 'admin' } | null>(null)
   const [scopeLoaded, setScopeLoaded] = useState(false)
 
   useEffect(() => {
-    if (!ready || !authenticated) return
+    if (!ready) return
+    if (!authenticated) {
+      setScope({ allowedModules: [], accessType: 'free' })
+      setScopeLoaded(true)
+      return
+    }
+
     let cancelled = false
     getAccessToken()
       .then((token) => token
@@ -36,19 +40,16 @@ export default function AcademyPage() {
 
   if (!scopeLoaded) {
     return (
-      <div className="-mx-4 -my-6 sm:-mx-6 lg:-mx-8 grid place-items-center" style={{ minHeight: '60vh' }}>
-        <p className="font-mono text-xs text-zinc-500 tracking-widest animate-pulse">LOADING MEMBER ACCESS...</p>
+      <div className="grid place-items-center bg-[#080808]" style={{ minHeight: '100vh' }}>
+        <p className="font-mono text-xs text-zinc-500 tracking-widest animate-pulse">LOADING ACADEMY ACCESS...</p>
       </div>
     )
   }
 
   return (
-    <div className="-mx-4 -my-6 sm:-mx-6 lg:-mx-8">
-      <IronVaultAcademyUnlocked
-        allowedModules={scope?.allowedModules ?? [1, 2, 3, 4, 5, 6]}
-        accessType={scope?.accessType ?? 'all_modules'}
-        onModuleComplete={() => { void refreshProfile() }}
-      />
-    </div>
+    <IronVaultAcademyUnlocked
+      allowedModules={scope?.allowedModules ?? []}
+      accessType={scope?.accessType ?? 'free'}
+    />
   )
 }

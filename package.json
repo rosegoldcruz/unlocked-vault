@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
     "members:grandfather:dry-run": "tsx scripts/grandfather-existing-privy-users.ts --dry-run",
     "members:grandfather:apply": "tsx scripts/grandfather-existing-privy-users.ts --apply",
     "rewards:payout:dry-run": "tsx scripts/rewards-payout-dry-run.ts",
@@ -41,6 +42,7 @@
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "eslint-config-next": "^15.5.15",
     "supabase": "^2.106.0",
     "tsx": "^4.22.4",
     "typescript": "^5"

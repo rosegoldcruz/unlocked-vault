@@ -3,12 +3,10 @@
 /**
  * iron-vault-academy-unlocked.jsx
  *
- * UNLOCKED VARIANT — for existing investors / members.
- * - No payment check. No redirect to /learn/pay.
- * - All 6 modules accessible immediately after Privy login.
- * - Module sequencing still enforced (must pass quiz to unlock next module).
- * - Usage: drop this file at the root, then update app/learn/page.tsx to import
- *   IronVaultAcademyUnlocked from "@/iron-vault-academy-unlocked"
+ * Academy module source of truth.
+ * - Module 0 is free and visible without paid/member entitlement.
+ * - Paid academy modules are IDs 1-12 and remain entitlement-gated.
+ * - Module sequencing is enforced for paid full-curriculum access.
  */
 
 import { useEffect, useMemo, useState } from "react";
@@ -17,39 +15,41 @@ import { usePrivy } from "@privy-io/react-auth";
 
 const FONTS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Space+Mono:wght@400;700&display=swap');`;
 
+const ORIENTATION_PASS_MESSAGE = "You've qualified for your Iron Vault Token presale allocation. A rep will reach out to confirm your position.";
+
 const FREE_MODULE_0 = {
   id: 0,
   free: true,
   title: "Iron Vault Orientation",
-  subtitle: "Complete this free lesson to qualify for a presale follow-up",
+  subtitle: "Complete this free lesson to qualify for your presale token allocation",
   icon: "🔓",
   tag: "FREE ACCESS",
-  duration: "10-15 min",
+  duration: "10–15 min",
   xpReward: 250,
   lessons: [
     {
-      title: "Why We Teach First - And What That Gets You",
+      title: "Why We Teach First — And What That Gets You",
       content: [
         { type: "quote", text: "An investment in knowledge pays the best interest.", author: "Benjamin Franklin" },
         { type: "heading", text: "This is not a typical crypto presale" },
-        { type: "body", text: "Most presale projects ask you to send money first and understand later. Iron Vault inverts that. We believe the people who understand what they are participating in make better long-term community members than those who buy on hype and panic-sell at the first dip. So we built the education first. Complete it, pass the quiz, and your orientation submission is recorded before you spend a dollar." },
-        { type: "callout", text: "Completing this orientation and passing the quiz with 8/10 or higher qualifies you for a presale follow-up at $0.001 per token. A representative from IVT MEDIA GROUP may follow up to confirm next steps. This is not a guarantee of returns - it is education-first access to discuss participation at the earliest available price." },
+        { type: "body", text: "Most presale projects ask you to send money first and understand later. Iron Vault inverts that. We believe the people who understand what they're participating in make better long-term community members than those who buy on hype and panic-sell at the first dip. So we built the education first. Complete it, pass the quiz, and you've qualified for your presale token allocation — before spending a dollar." },
+        { type: "callout", text: "Completing this orientation and passing the quiz with 8/10 or higher qualifies you for the Iron Vault Token presale at $0.001 per token. A representative from Common Wealth Ventures will follow up to confirm your position. This is not a guarantee of returns — it is access to participate in the presale at the earliest available price." },
         { type: "heading", text: "What is Iron Vault Token (IVT)?" },
-        { type: "body", text: "Iron Vault Token is a Solana-based digital asset created by IVT MEDIA GROUP. It is designed as the transactional and community utility layer of a broader ecosystem that aims to acquire income-producing real-world assets, starting with commercial real estate, and connect that economic activity to token holders through a royalty structure tied to transaction volume." },
-        { type: "list", items: ["Built on Solana - fast transactions, ultra-low fees, sub-second settlement", "Presale price: $0.001 per token", "Total supply at launch: 1,000,000,000 tokens", "Launch date: November 1, 2026 on multiple exchanges", "6% transaction fee - 3% to company operations, 3% to royalty holders", "Royalty positions available: 1% and 2% tiers"] },
+        { type: "body", text: "Iron Vault Token is a Solana-based digital asset created by Common Wealth Ventures LLC. It is designed as the transactional and community utility layer of a broader ecosystem that aims to acquire income-producing real-world assets — starting with commercial real estate — and connect that economic activity to token holders through a royalty structure tied to transaction volume." },
+        { type: "list", items: ["Built on Solana — fast transactions, ultra-low fees, sub-second settlement", "Presale price: $0.001 per token", "Total supply at launch: 1,000,000,000 tokens", "Launch date: November 1, 2026 on multiple exchanges", "6% transaction fee — 3% to company operations, 3% to royalty holders", "Royalty positions available: 1% and 2% tiers"] },
         { type: "heading", text: "The 3-Phase Roadmap" },
-        { type: "body", text: "Iron Vault operates on a disciplined three-phase model. Each phase must be earned before the next begins, not promised in advance." },
-        { type: "list", items: ["Phase 1 - Community & Education: Build 10,000 informed early members. Distribute presale tokens through approved business processes. Establish liquidity and market presence. This is where you are right now.", "Phase 2 - Royalty Ecosystem & Asset Acquisition: Transaction volume generates ecosystem revenue. Funds are deployed to acquire commercial real estate assets such as shopping centers, gas stations, and franchise locations. Optional royalty positions allow holders to participate in transaction fees.", "Phase 3 - Stablecoin Launch: A sister stablecoin backed by accumulated commercial real estate assets. Early presale positions are intended to carry forward according to final business, legal, and technical requirements."] },
-        { type: "vault", title: "VAULT SECRET: Why the Stablecoin Phase Changes Everything", text: "At a designed $1.00 target value backed by real assets, the stablecoin phase is the part of the roadmap that requires the most discipline. Real estate acquisition, reserve design, audits, and compliance cannot be rushed responsibly. The people who understand the full timeline are better positioned to evaluate whether the opportunity fits their own risk tolerance." },
+        { type: "body", text: "Iron Vault operates on a disciplined three-phase model. Each phase must be earned before the next begins — not promised in advance." },
+        { type: "list", items: ["Phase 1 — Community & Education: Build 10,000 informed early members. Distribute presale tokens. Establish liquidity and market presence. This is where you are right now.", "Phase 2 — Royalty Ecosystem & Asset Acquisition: Transaction volume generates ecosystem revenue. Funds are deployed to acquire commercial real estate assets — shopping centers, gas stations, franchise locations. Optional royalty positions allow holders to participate in transaction fees permanently.", "Phase 3 — Stablecoin Launch: A sister stablecoin backed by accumulated commercial real estate assets. Every IVT holder automatically receives equivalent participation. Early presale positions carry forward at full value."] },
+        { type: "vault", title: "VAULT SECRET: Why the Stablecoin Phase Changes Everything", text: "At $1.00 per stablecoin — which is its designed target value backed by real assets — a $250 presale investment at $0.001 represents 250,000 tokens. If those tokens convert at equivalent participation into a $1.00-backed stablecoin, the math is not subtle. The 5-year maximum timeline exists because real estate acquisition and stablecoin infrastructure take time to build responsibly. The people who hold through Phase 3 are the ones positioned for the full outcome. Early exits sacrifice the compounding effect of staying in all three phases." },
         { type: "heading", text: "How Smart Contracts Make This Transparent" },
-        { type: "body", text: "Iron Vault Token's distribution mechanism is designed around smart contracts on the Solana blockchain. When royalty-eligible transaction fees are collected, the smart contract can read token holder balances and distribute proportional shares automatically according to the final approved contract design. Every distribution should be publicly verifiable on-chain." },
-        { type: "callout", text: "On-chain transparency means participants do not have to rely only on a company's word about whether blockchain activity happened. They can verify transactions on a Solana blockchain explorer. This is one of the core advantages of building financial infrastructure on a public blockchain rather than a private internal ledger." },
+        { type: "body", text: "Iron Vault Token's distribution mechanism operates through smart contracts on the Solana blockchain. When royalty-eligible transaction fees are collected, the smart contract reads token holder balances and distributes proportional shares automatically — no manual processing, no bank transfer delays, no human intermediary taking a cut. Every distribution is publicly verifiable on-chain. The contract executes the same way every time, for every holder, regardless of account size." },
+        { type: "callout", text: "On-chain transparency means you never have to trust a company's word about whether distributions happened. You can verify every transaction on the Solana blockchain explorer at any time. This is one of the core advantages of building financial infrastructure on a public blockchain versus a private company's internal ledger." },
         { type: "heading", text: "What Royalty Participation Actually Means" },
-        { type: "body", text: "Every time an Iron Vault Token transaction occurs on any exchange, the model assesses a 6% fee. 3% funds company operations such as marketing, legal, asset acquisition, and infrastructure. The other 3% flows to royalty position holders proportionally based on their tier, subject to the final business terms." },
-        { type: "list", items: ["1% Royalty Position - participates in 1% of royalty distributions", "2% Royalty Position - participates in 2% of royalty distributions", "Royalty models depend on real transaction activity, execution quality, compliance, and liquidity", "Royalty positions are intended to carry forward into the stablecoin phase under final approved terms"] },
-        { type: "heading", text: "Risk Disclosure - Read This" },
+        { type: "body", text: "Every time an Iron Vault Token transaction occurs on any exchange, a 6% fee is assessed. 3% funds company operations — marketing, legal, asset acquisition, infrastructure. The other 3% flows to royalty position holders proportionally based on their tier. A 1% royalty position holder receives 1% of every royalty distribution pool, every transaction, indefinitely — as long as they hold their position." },
+        { type: "list", items: ["1% Royalty Position — participates in 1% of all royalty distributions", "2% Royalty Position — participates in 2% of all royalty distributions", "If the stablecoin achieves $1 billion in daily transaction volume — a 1% position generates $2,000/day, a 2% position generates $10,000/day", "Royalty positions carry forward automatically into the stablecoin phase"] },
+        { type: "heading", text: "Risk Disclosure — Read This" },
         { type: "body", text: "This is a speculative early-stage digital asset. The roadmap is a plan, not a guarantee. Real estate acquisition depends on market conditions, execution quality, regulatory compliance, and capital raised. Token values can go to zero. Stablecoin launch depends on successful Phase 2 completion. There are no guaranteed returns, no guaranteed appreciation, and no government insurance on digital assets. Participate only with capital you can afford to lose entirely. This is not financial advice. Consult a qualified financial professional before making any investment decision." },
-        { type: "action", text: "You now understand what Iron Vault Token is, how the royalty structure works, what the 3-phase roadmap requires, and what the risks are. Pass the quiz below with 8/10 or higher to record your orientation completion. An IVT MEDIA GROUP representative may contact you about next steps." }
+        { type: "action", text: "You now understand what Iron Vault Token is, how the royalty structure works, what the 3-phase roadmap requires, and what the risks are. Pass the quiz below with 8/10 or higher to qualify for your presale allocation. A Common Wealth Ventures representative will contact you to confirm your position." }
       ]
     }
   ],
@@ -57,17 +57,17 @@ const FREE_MODULE_0 = {
     { q: "Iron Vault Token (IVT) is built on which blockchain?", options: ["Ethereum", "Bitcoin", "Solana", "Cardano"], correct: 2 },
     { q: "What is the Iron Vault Token presale price per token?", options: ["$0.01", "$0.001", "$1.00", "$0.0001"], correct: 1 },
     { q: "In Phase 3 of the Iron Vault roadmap, the goal is to:", options: ["Launch a new NFT collection", "List IVT on Coinbase", "Launch a stablecoin backed by acquired commercial real estate assets", "Distribute all funds to early holders and close the project"], correct: 2 },
-    { q: "Of the 6% transaction fee on IVT trades, what percentage goes to royalty position holders?", options: ["6% - the entire fee", "1%", "3%", "2%"], correct: 2 },
+    { q: "Of the 6% transaction fee on IVT trades, what percentage goes to royalty position holders?", options: ["6% — the entire fee", "1%", "3%", "2%"], correct: 2 },
     { q: "What is the total token supply of Iron Vault Token at launch?", options: ["100,000,000", "21,000,000", "10,000,000,000", "1,000,000,000"], correct: 3 },
     { q: "A smart contract is best described as:", options: ["A legal contract stored with a government agency", "Self-executing code on a blockchain that runs automatically when conditions are met", "An agreement between two banks to exchange digital assets", "A type of hardware wallet for storing private keys"], correct: 1 },
-    { q: "DeFi stands for:", options: ["Digital Finance Initiative", "Decentralized Financial Index", "Decentralized Finance - financial services operating without traditional intermediaries", "Defined Funding Instrument"], correct: 2 },
+    { q: "DeFi stands for:", options: ["Digital Finance Initiative", "Decentralized Financial Index", "Decentralized Finance — financial services operating without traditional intermediaries", "Defined Funding Instrument"], correct: 2 },
     { q: "A token's market capitalization is calculated by:", options: ["Total tokens created divided by current price", "Current token price multiplied by circulating supply", "The amount of money raised in the presale", "Total trading volume over the last 24 hours"], correct: 1 },
-    { q: "What does DYOR mean in crypto culture?", options: ["Deposit Your Own Reserves", "Do Your Own Research - verify information independently before investing", "Distribute Yield On Returns", "Dynamic Yield Optimization Ratio"], correct: 1 },
+    { q: "What does 'DYOR' mean in crypto culture?", options: ["Deposit Your Own Reserves", "Do Your Own Research — verify information independently before investing", "Distribute Yield On Returns", "Dynamic Yield Optimization Ratio"], correct: 1 },
     { q: "On-chain transparency in a blockchain project means:", options: ["The company publishes quarterly reports like a public stock", "All transactions and smart contract activity are publicly verifiable on the blockchain by anyone", "Only token holders can see financial data", "Government regulators have access to all transaction records"], correct: 1 }
   ]
 };
 
-const EDUCATION_ONLY_MODULES = [
+const NEW_SIX_MODULES = [
   {
     "id": 7,
     "title": "The Debt Economy",
@@ -1719,8 +1719,7 @@ const EDUCATION_ONLY_MODULES = [
   }
 ];
 
-const MODULES = [
-  FREE_MODULE_0,
+const ORIGINAL_SIX_MODULES = [
   {
     id: 1, title: "Money & Wealth Basics", subtitle: "Unlearn everything you were taught",
     icon: "₿", tag: "FOUNDATION", duration: "45–60 min", xpReward: 500,
@@ -1812,16 +1811,107 @@ const MODULES = [
     id: 2, title: "How the Economy Actually Works", subtitle: "The 10 concepts they never taught you in school",
     icon: "⚙️", tag: "ECONOMICS", duration: "50–65 min", xpReward: 500,
     lessons: [
-      { title: "The Velocity of Money", content: [{ type: "heading", text: "The same dollar can create vastly different economic impact depending on how fast it moves" }, { type: "body", text: "A dollar spent at a local business circulates more times than a dollar spent at a large corporation. Economic energy is not just about amount — it's about speed. This is why communities with high local spending build wealth faster than those that export every dollar to distant corporations." }, { type: "callout", text: "When the Fed injects money into the economy through large banks, velocity drops — because institutions hold capital rather than circulate it. When money reaches individuals who spend locally, velocity spikes. Same dollar. Completely different economic outcome." }, { type: "vault", title: "VAULT SECRET: Why Local Business Ownership Compounds", text: "A business owner who spends locally, hires locally, and reinvests locally creates a multiplier effect on their own community. Every dollar they circulate comes back to them in some form — through customers, partnerships, and property values. This is not charity. This is systems thinking." }, { type: "action", text: "Track where your last 10 purchases went. Local business or national chain? Calculate how much of your spending stays in your community versus leaves it." }] },
-      { title: "Asymmetric Information", content: [{ type: "heading", text: "One party knows more than the other — and the side with less information always pays the tax" }, { type: "body", text: "Insurance companies know more about risk than you do. Car dealerships know more about vehicle value than you do. Lenders know more about loan terms than most borrowers. This information gap is not accidental — it is the structural advantage that allows these industries to extract value from every transaction." }, { type: "callout", text: "This is the root of 'the house always wins.' The house does not win because of luck. It wins because it has more information, better models, and longer time horizons than the average participant." }, { type: "vault", title: "VAULT SECRET: How to Close the Gap", text: "Every hour you spend learning an industry's mechanics reduces the tax you pay to participate in it. The investor who understands cap rates, NOI, and debt coverage ratios negotiates better deals than one who doesn't. Education is not self-improvement. It is arbitrage against the information gap." }, { type: "action", text: "Pick one financial product you currently use — insurance, mortgage, credit card. Spend one hour learning exactly how the provider makes money from you. Write what you find." }] },
-      { title: "Arbitrage", content: [{ type: "heading", text: "Buy where it's cheap, sell where it's expensive — but the deeper lesson goes further" }, { type: "body", text: "Markets are never perfectly efficient. Gaps always exist — in price, in information, in timing, in geography. The people who spot those gaps and act on them extract the value that others leave behind." }, { type: "callout", text: "Geographic arbitrage: earning income from a high-cost market while living in a low-cost one. Labor arbitrage: hiring skilled workers in markets where compensation is lower. Time arbitrage: building assets today that pay in a future where your time is more scarce." }, { type: "vault", title: "VAULT SECRET: Attention Arbitrage", text: "Right now, certain platforms and asset classes are underpriced in terms of attention. The people who build audiences, brands, and positions on these platforms before they become crowded will extract the same value early internet adopters did." }, { type: "action", text: "Identify one market, skill, or platform where you have more knowledge than average. Write how you could monetize that gap in the next 90 days." }] },
-      { title: "Opportunity Cost", content: [{ type: "heading", text: "Every choice has a hidden price — the value of the next best alternative" }, { type: "body", text: "Most people only calculate the cost of action. Almost nobody calculates the cost of inaction. Keeping money in a savings account earning 0.5% when inflation runs 4% has a real cost — you are losing 3.5% of purchasing power annually." }, { type: "callout", text: "This is why procrastination is the most expensive habit on earth. Not because of the time lost — because of the compounding returns never started." }, { type: "vault", title: "VAULT SECRET: The Opportunity Cost of Employment", text: "A $75,000 salary feels different when you calculate its opportunity cost. The same 40 hours per week directed toward building a scalable asset has a fundamentally different ceiling. Employment trades time for money linearly. Ownership compounds." }, { type: "action", text: "Calculate the opportunity cost of your current largest financial decision. What is the next best use of that money or time?" }] },
-      { title: "Elasticity of Demand", content: [{ type: "heading", text: "Some prices can rise without killing demand. Some collapse instantly." }, { type: "body", text: "Gas, rent, and medication are inelastic — demand holds even as price rises because people have no immediate alternative. Luxury goods and discretionary spending are elastic — demand drops quickly when price moves." }, { type: "callout", text: "The most durable businesses in history sell inelastic products or services. Landlords hold pricing power because people cannot opt out of shelter." }, { type: "vault", title: "VAULT SECRET: Build Inelastic Income", text: "The goal of any sophisticated wealth strategy is to build income streams that are inelastic — where your customers have no easy alternative to paying you. Rental income, proprietary software, essential services, specialized expertise." }, { type: "action", text: "List your current income sources. For each one, ask: how easy is it for the payer to replace me?" }] },
-      { title: "The Principal-Agent Problem", content: [{ type: "heading", text: "The person making decisions is not the person who bears the consequences" }, { type: "body", text: "Employees versus owners. Politicians versus citizens. Financial advisors versus clients. In every case, the agent makes decisions with other people's money, time, or outcomes — and their incentives are rarely perfectly aligned." }, { type: "callout", text: "A financial advisor paid on commission recommends products that pay the highest commission. A fund manager paid on assets under management grows the fund even when returns are poor." }, { type: "vault", title: "VAULT SECRET: Align Incentives or Exit", text: "The solution to the principal-agent problem is either aligning incentives — equity, performance-based compensation, skin in the game — or removing the agent entirely. Self-directed investing removes the advisor. Business ownership removes the employer." }, { type: "action", text: "Identify every agent currently making decisions that affect your financial life. For each one, write their actual incentive. Is it aligned with yours?" }] },
-      { title: "Animal Spirits", content: [{ type: "quote", text: "The market can remain irrational longer than you can remain solvent.", author: "John Maynard Keynes" }, { type: "heading", text: "Human emotion drives markets more than math" }, { type: "body", text: "Keynes called it animal spirits — the idea that confidence, fear, and euphoria move capital faster and further than any spreadsheet. Fear and euphoria move trillions of dollars — often faster than fundamentals justify in either direction." }, { type: "callout", text: "Bitcoin did not rise to $60,000 because of a discounted cash flow model. It rose because millions of people believed it would. That belief — collective animal spirit — was itself the fundamental." }, { type: "vault", title: "VAULT SECRET: Use Sentiment as a Signal", text: "When everyone is euphoric, risk is highest. When everyone is panicking, opportunity is greatest. The investors who built generational wealth in 2008, in March 2020, and in crypto winters did so by moving opposite to the dominant emotional current." }, { type: "action", text: "Find an asset class currently experiencing extreme fear or extreme euphoria. Write the rational case for why the emotional extreme may be creating a mispricing." }] },
-      { title: "Marginal Analysis", content: [{ type: "heading", text: "The next unit of effort, cost, or output matters more than the total" }, { type: "body", text: "Businesses live or die on the margin — not the average. The question is never 'what did this cost in total?' The question is 'what does one more unit cost, and what does it produce?'" }, { type: "callout", text: "A rental property generating $500 per month net is attractive. The question marginal analysis asks: what does acquiring one more property cost — in time, capital, and management burden?" }, { type: "vault", title: "VAULT SECRET: Your Marginal Hour", text: "The marginal value of your time changes as your income grows. The first hour of work pays one rate. The hour spent building a system that runs without you pays compounding returns indefinitely." }, { type: "action", text: "Calculate the marginal return on your last three major decisions. Was the margin improving or declining?" }] },
-      { title: "The Accelerator Effect", content: [{ type: "heading", text: "When the economy grows, investment accelerates — not linearly, but exponentially" }, { type: "body", text: "Small increases in consumer demand trigger disproportionately large increases in business investment. A 10% increase in demand might trigger a 30% increase in capital expenditure as businesses race to capture the growing market." }, { type: "callout", text: "This same principle applies to your personal financial trajectory. Small improvements in income, savings rate, and investment return compound into exponentially different outcomes over a decade." }, { type: "vault", title: "VAULT SECRET: Position Before the Acceleration", text: "Every major technology cycle — internet, mobile, social, crypto, AI — has an acceleration phase where early participants benefit disproportionately. The window to position before acceleration is always shorter than it looks in hindsight." }, { type: "action", text: "Identify one technology or market currently in early adoption. Write the case for why acceleration may be coming." }] },
-      { title: "The Circular Flow of Money", content: [{ type: "heading", text: "Households → businesses → government → banks → back to households" }, { type: "body", text: "This loop is the blueprint of the entire economy. Understanding it shows where value leaks, where it accumulates, and where power concentrates. Every dollar you earn enters this loop." }, { type: "callout", text: "Banks sit at the center of this loop by design. Every transaction, every loan, every investment passes through the banking system — which extracts a fee at each point." }, { type: "vault", title: "VAULT SECRET: Position Yourself in the Flow", text: "The goal of sophisticated wealth building is to insert yourself into the circular flow as a recipient rather than just a participant. Rental income. Royalties. Interest. Dividends. Token distributions from real asset revenue." }, { type: "action", text: "Draw your personal circular flow. Where does money enter your life? Where does it exit? Where are you losing it to intermediaries?" }] }
+      {
+        title: "The Velocity of Money",
+        content: [
+          { type: "heading", text: "The same dollar can create vastly different economic impact depending on how fast it moves" },
+          { type: "body", text: "A dollar spent at a local business circulates more times than a dollar spent at a large corporation. Economic energy is not just about amount — it's about speed. This is why communities with high local spending build wealth faster than those that export every dollar to distant corporations." },
+          { type: "callout", text: "When the Fed injects money into the economy through large banks, velocity drops — because institutions hold capital rather than circulate it. When money reaches individuals who spend locally, velocity spikes. Same dollar. Completely different economic outcome." },
+          { type: "vault", title: "VAULT SECRET: Why Local Business Ownership Compounds", text: "A business owner who spends locally, hires locally, and reinvests locally creates a multiplier effect on their own community. Every dollar they circulate comes back to them in some form — through customers, partnerships, and property values. This is not charity. This is systems thinking." },
+          { type: "action", text: "Track where your last 10 purchases went. Local business or national chain? Calculate how much of your spending stays in your community versus leaves it." }
+        ]
+      },
+      {
+        title: "Asymmetric Information",
+        content: [
+          { type: "heading", text: "One party knows more than the other — and the side with less information always pays the tax" },
+          { type: "body", text: "Insurance companies know more about risk than you do. Car dealerships know more about vehicle value than you do. Lenders know more about loan terms than most borrowers. This information gap is not accidental — it is the structural advantage that allows these industries to extract value from every transaction." },
+          { type: "callout", text: "This is the root of 'the house always wins.' The house does not win because of luck. It wins because it has more information, better models, and longer time horizons than the average participant." },
+          { type: "vault", title: "VAULT SECRET: How to Close the Gap", text: "Every hour you spend learning an industry's mechanics reduces the tax you pay to participate in it. The investor who understands cap rates, NOI, and debt coverage ratios negotiates better deals than one who doesn't. Education is not self-improvement. It is arbitrage against the information gap." },
+          { type: "action", text: "Pick one financial product you currently use — insurance, mortgage, credit card. Spend one hour learning exactly how the provider makes money from you. Write what you find." }
+        ]
+      },
+      {
+        title: "Arbitrage",
+        content: [
+          { type: "heading", text: "Buy where it's cheap, sell where it's expensive — but the deeper lesson goes further" },
+          { type: "body", text: "Markets are never perfectly efficient. Gaps always exist — in price, in information, in timing, in geography. The people who spot those gaps and act on them extract the value that others leave behind. This applies to money, attention, real estate, talent, and time." },
+          { type: "callout", text: "Geographic arbitrage: earning income from a high-cost market while living in a low-cost one. Labor arbitrage: hiring skilled workers in markets where compensation is lower. Time arbitrage: building assets today that pay in a future where your time is more scarce. All of these are arbitrage. None require being the smartest person in the room." },
+          { type: "vault", title: "VAULT SECRET: Attention Arbitrage", text: "Right now, certain platforms and asset classes are underpriced in terms of attention. The people who build audiences, brands, and positions on these platforms before they become crowded will extract the same value early internet adopters did. Information asymmetry plus early positioning equals outsized returns." },
+          { type: "action", text: "Identify one market, skill, or platform where you have more knowledge than average. Write how you could monetize that gap in the next 90 days." }
+        ]
+      },
+      {
+        title: "Opportunity Cost",
+        content: [
+          { type: "heading", text: "Every choice has a hidden price — the value of the next best alternative" },
+          { type: "body", text: "Most people only calculate the cost of action. Almost nobody calculates the cost of inaction. Keeping money in a savings account earning 0.5% when inflation runs 4% has a real cost — you are losing 3.5% of purchasing power annually. That cost is invisible because nothing appears to happen. But the compounding loss is as real as any fee." },
+          { type: "callout", text: "This is why procrastination is the most expensive habit on earth. Not because of the time lost — because of the compounding returns never started. Every year you delay building an income-producing asset is a year of compounding that never happens." },
+          { type: "vault", title: "VAULT SECRET: The Opportunity Cost of Employment", text: "A $75,000 salary feels different when you calculate its opportunity cost. The same 40 hours per week directed toward building a scalable asset — a business, a real estate portfolio, a digital product — has a fundamentally different ceiling. Employment trades time for money linearly. Ownership compounds." },
+          { type: "action", text: "Calculate the opportunity cost of your current largest financial decision. What is the next best use of that money or time? What are you giving up by not doing that instead?" }
+        ]
+      },
+      {
+        title: "Elasticity of Demand",
+        content: [
+          { type: "heading", text: "Some prices can rise without killing demand. Some collapse instantly." },
+          { type: "body", text: "Gas, rent, and medication are inelastic — demand holds even as price rises because people have no immediate alternative. Luxury goods, entertainment, and discretionary spending are elastic — demand drops quickly when price moves. Understanding this determines where pricing power lives." },
+          { type: "callout", text: "The most durable businesses in history sell inelastic products or services. Landlords hold pricing power because people cannot opt out of shelter. Pharmaceutical companies hold pricing power because patients cannot opt out of treatment. This is not a moral observation. It is a structural one." },
+          { type: "vault", title: "VAULT SECRET: Build Inelastic Income", text: "The goal of any sophisticated wealth strategy is to build income streams that are inelastic — where your customers have no easy alternative to paying you. Rental income, proprietary software, essential services, specialized expertise. If your income depends on people choosing you over an easy substitute, it is always at risk." },
+          { type: "action", text: "List your current income sources. For each one, ask: how easy is it for the payer to replace me? The harder the answer, the more inelastic your position." }
+        ]
+      },
+      {
+        title: "The Principal-Agent Problem",
+        content: [
+          { type: "heading", text: "The person making decisions is not the person who bears the consequences" },
+          { type: "body", text: "Employees versus owners. Politicians versus citizens. Financial advisors versus clients. Fund managers versus investors. In every case, the agent makes decisions with other people's money, time, or outcomes — and their incentives are rarely perfectly aligned with the principal they serve." },
+          { type: "callout", text: "A financial advisor paid on commission recommends products that pay the highest commission. A fund manager paid on assets under management grows the fund even when returns are poor. A politician seeking reelection makes decisions on a 2-4 year horizon regardless of the 20-year consequences. Misaligned incentives explain 90% of organizational dysfunction." },
+          { type: "vault", title: "VAULT SECRET: Align Incentives or Exit", text: "The solution to the principal-agent problem is either aligning incentives — equity, performance-based compensation, skin in the game — or removing the agent entirely. Self-directed investing removes the advisor. Business ownership removes the employer. Blockchain smart contracts remove the intermediary. Every time you eliminate a misaligned agent, you capture more of your own upside." },
+          { type: "action", text: "Identify every agent currently making decisions that affect your financial life. For each one, write their actual incentive. Is it aligned with yours?" }
+        ]
+      },
+      {
+        title: "Animal Spirits",
+        content: [
+          { type: "quote", text: "The market can remain irrational longer than you can remain solvent.", author: "John Maynard Keynes" },
+          { type: "heading", text: "Human emotion drives markets more than math" },
+          { type: "body", text: "Keynes called it animal spirits — the idea that confidence, fear, and euphoria move capital faster and further than any spreadsheet. This is not a flaw in markets. It is the defining characteristic of them. Fear and euphoria move trillions of dollars — often faster than fundamentals justify in either direction." },
+          { type: "callout", text: "This is why narratives matter more than spreadsheets. Bitcoin did not rise to $60,000 because of a discounted cash flow model. It rose because millions of people believed it would. That belief — collective animal spirit — was itself the fundamental. Understanding this protects you from being swept up in it." },
+          { type: "vault", title: "VAULT SECRET: Use Sentiment as a Signal", text: "When everyone is euphoric, risk is highest. When everyone is panicking, opportunity is greatest. The investors who built generational wealth in 2008, in March 2020, and in crypto winters did so by moving opposite to the dominant emotional current. Not because they were braver — because they understood that price and value diverge most at emotional extremes." },
+          { type: "action", text: "Find an asset class currently experiencing extreme fear or extreme euphoria. Write the rational case for why the emotional extreme may be creating a mispricing." }
+        ]
+      },
+      {
+        title: "Marginal Analysis",
+        content: [
+          { type: "heading", text: "The next unit of effort, cost, or output matters more than the total" },
+          { type: "body", text: "Businesses live or die on the margin — not the average. The question is never 'what did this cost in total?' The question is 'what does one more unit cost, and what does it produce?' This is the backbone of pricing, scaling, and resource allocation." },
+          { type: "callout", text: "A rental property generating $500 per month net is attractive. The question marginal analysis asks: what does acquiring one more property cost — in time, capital, and management burden — and does that next property generate more or less than the last? The answer determines whether to scale or consolidate." },
+          { type: "vault", title: "VAULT SECRET: Your Marginal Hour", text: "The marginal value of your time changes as your income grows. The first hour of work pays one rate. The hour that pushes you into a higher tax bracket pays significantly less after taxes. The hour spent building a system that runs without you pays compounding returns indefinitely. Think in marginal hours, not average hours." },
+          { type: "action", text: "Calculate the marginal return on your last three major decisions — the next dollar invested, the next hour worked, the next employee hired. Was the margin improving or declining?" }
+        ]
+      },
+      {
+        title: "The Accelerator Effect",
+        content: [
+          { type: "heading", text: "When the economy grows, investment accelerates — not linearly, but exponentially" },
+          { type: "body", text: "Small increases in consumer demand trigger disproportionately large increases in business investment. This is why booms feel like rocket fuel and recessions feel like gravity. A 10% increase in demand might trigger a 30% increase in capital expenditure as businesses race to capture the growing market." },
+          { type: "callout", text: "This same principle applies to your personal financial trajectory. Small improvements in income, savings rate, and investment return compound into exponentially different outcomes over a decade. The accelerator effect works for individuals just as it does for economies — but only if you are already in motion." },
+          { type: "vault", title: "VAULT SECRET: Position Before the Acceleration", text: "Every major technology cycle — internet, mobile, social, crypto, AI — has an acceleration phase where early participants benefit disproportionately. The window to position before acceleration is always shorter than it looks in hindsight and longer than it feels in the moment. The people who built wealth in each cycle did not time the top — they positioned early and held through the volatility." },
+          { type: "action", text: "Identify one technology or market currently in early adoption. Write the case for why acceleration may be coming — and what a rational early position would look like." }
+        ]
+      },
+      {
+        title: "The Circular Flow of Money",
+        content: [
+          { type: "heading", text: "Households → businesses → government → banks → back to households" },
+          { type: "body", text: "This loop is the blueprint of the entire economy. Understanding it shows where value leaks, where it accumulates, and where power concentrates. Every dollar you earn enters this loop. The question is how many times it circulates before leaving your control — and whether you have positioned yourself at a point in the loop where money flows toward you." },
+          { type: "callout", text: "Banks sit at the center of this loop by design. Every transaction, every loan, every investment passes through the banking system — which extracts a fee at each point. The entities that have replicated bank-like positioning — holding assets that others pay to use — are the ones that accumulate wealth across every economic cycle." },
+          { type: "vault", title: "VAULT SECRET: Position Yourself in the Flow", text: "The goal of sophisticated wealth building is to insert yourself into the circular flow as a recipient rather than just a participant. Rental income. Royalties. Interest. Dividends. Token distributions from real asset revenue. Each of these is a position inside the flow that pays you while money moves through the system. Build enough of these positions and the economy works for you regardless of where you sit in it." },
+          { type: "action", text: "Draw your personal circular flow. Where does money enter your life? Where does it exit? Where are you losing it to intermediaries? Where could you insert an income position?" }
+        ]
+      }
     ],
     quiz: [
       { q: "The velocity of money refers to:", options: ["How fast you can withdraw from a bank", "How many times a dollar circulates through the economy", "The speed of wire transfers", "How quickly prices rise"], correct: 1 },
@@ -1840,12 +1930,70 @@ const MODULES = [
     id: 3, title: "Traditional Finance Systems", subtitle: "Know the game before you play it",
     icon: "🏦", tag: "SYSTEMS", duration: "50–65 min", xpReward: 500,
     lessons: [
-      { title: "How Banks Really Work — Follow the Money", content: [{ type: "quote", text: "Banking was conceived in iniquity and born in sin.", author: "Josiah Stamp, Former President of the Bank of England" }, { type: "heading", text: "Fractional Reserve Banking" }, { type: "body", text: "Here is what your bank does with your deposit: it keeps a fraction as reserves and loans out the rest — often 10x what it actually holds. When you deposit $1,000, the bank may loan out $10,000 created from your deposit." }, { type: "callout", text: "Banks earn the spread: they pay you 0.5% on your savings and charge borrowers 7-25% on loans. The difference — your money, their profit. You are the product. Your deposits are their inventory." }, { type: "vault", title: "VAULT SECRET: Business Banking Strategy", text: "Never mix personal and business finances. Open a dedicated business checking account the moment you form an LLC. This creates legal separation, makes accounting cleaner, builds a banking relationship for future credit, and allows you to show business revenue history for loans." }, { type: "action", text: "Check your bank accounts: what interest are you earning? What fees are you paying? Calculate how much you've paid your bank in fees over the last 12 months." }] },
-      { title: "Stocks, Bonds & Index Funds — The Honest Truth", content: [{ type: "quote", text: "The stock market is a device for transferring money from the impatient to the patient.", author: "Warren Buffett" }, { type: "heading", text: "Three categories — and what the wealthy actually do" }, { type: "body", text: "Stocks: fractional ownership of a company. Bonds: lending money to governments or corporations in exchange for interest. Index funds: diversified exposure to a market segment without picking individual stocks." }, { type: "callout", text: "Buffett publicly recommends low-cost S&P 500 index funds for most Americans. Yet the financial advisory industry makes billions selling actively managed funds that underperform the index 85% of the time — while charging 1-2% annual fees." }, { type: "vault", title: "VAULT SECRET: What the Wealthy Actually Hold", text: "The ultra-wealthy don't primarily build wealth through the stock market. They build it through ownership — of businesses, real estate, and intellectual property that generates cash flow. Stock market investments are often where they park excess capital." }, { type: "action", text: "Research: compare a target-date retirement fund's fees vs a Vanguard S&P 500 index fund over 30 years on $100,000. The difference will shock you." }] },
-      { title: "Real Estate — The Wealth Machine They Can't Print More Of", content: [{ type: "quote", text: "Real estate cannot be lost or stolen, nor can it be carried away.", author: "Franklin D. Roosevelt" }, { type: "heading", text: "Four ways real estate builds wealth simultaneously" }, { type: "list", items: ["Cash Flow — rental income above all expenses", "Appreciation — values historically rise over time", "Loan Paydown — tenants effectively pay your mortgage", "Tax Advantages — depreciation, deductions, and deferrals"] }, { type: "callout", text: "The government incentivizes real estate ownership more than any other asset class. Knowing these incentives and using them is not cheating — it's what every wealthy real estate investor does by default." }, { type: "vault", title: "VAULT SECRET: 1031 Exchange & Cost Segregation", text: "A 1031 Exchange allows you to sell investment real estate and roll ALL proceeds into a new property — deferring capital gains taxes indefinitely. Cost segregation creates massive paper losses that offset real income. A $1M property might generate $150K+ in paper losses in year one. Legal. Used by every sophisticated real estate investor." }, { type: "action", text: "Research median rent prices in your city and compare to median mortgage payments on similar properties. Is there cash flow potential in your market?" }] },
-      { title: "Retirement Accounts — The Hidden Power Most People Ignore", content: [{ type: "heading", text: "The government is actually on your side here" }, { type: "body", text: "This is one area where the system legitimately offers the average person a real advantage. 401(k), Traditional IRA, and Roth IRA accounts provide tax advantages that compound significantly over decades. Employer 401(k) matching is literally free money." }, { type: "callout", text: "The Roth IRA is arguably the most powerful wealth-building vehicle available to people under a certain income threshold. Money grows completely tax-free. Withdrawals in retirement are tax-free. No required minimum distributions." }, { type: "vault", title: "VAULT SECRET: Backdoor Roth & Roth Conversion Ladder", text: "High earners use the 'Backdoor Roth' — contributing to a Traditional IRA and immediately converting it. Completely legal. The Roth Conversion Ladder is used by early retirees to create a tax-free income stream in retirement." }, { type: "action", text: "Find out: does your employer offer a 401(k) match? Are you contributing enough to capture the full match? Calculate the exact dollar amount you are leaving on the table." }] },
-      { title: "Credit — The Score That Controls Your Access to Capital", content: [{ type: "heading", text: "Credit is not debt. It's leverage." }, { type: "body", text: "Most people are taught to fear credit. The wealthy use it as a tool. A strong credit profile gives you access to capital at low interest rates — which means you can borrow money cheaply and deploy it into assets that return more than the cost of borrowing." }, { type: "callout", text: "Poor credit doesn't just cost you on loans. It costs you on car insurance, rental applications, security deposits, business partnerships. A low score is a tax on everything." }, { type: "vault", title: "VAULT SECRET: Business Credit is a Separate System", text: "Your personal credit and your business credit are two entirely separate profiles. A new LLC can begin building business credit through a DUNS number, net-30 vendor accounts, and a business credit card. Within 12-24 months, a properly structured business can access credit lines that have nothing to do with your personal SSN." }, { type: "action", text: "Pull your free credit report at AnnualCreditReport.com. Identify every negative item and look up the statute of limitations for removal in your state." }] },
-      { title: "Comparing Wealth Paths — Employee vs Owner", content: [{ type: "quote", text: "The problem with the rat race is that even if you win, you're still a rat.", author: "Lily Tomlin" }, { type: "heading", text: "The system taxes labor. It subsidizes ownership." }, { type: "body", text: "W-2 employees pay income tax, Social Security tax, and Medicare tax — all before they spend a dollar. Business owners pay themselves after deducting legitimate business expenses and can access retirement contribution strategies unavailable to employees." }, { type: "callout", text: "An S-Corp owner can pay themselves a reasonable salary and take additional profit as distributions, which are not subject to self-employment tax. On $150,000 in business income, the difference vs W-2 can be $10,000-$20,000 annually." }, { type: "vault", title: "VAULT SECRET: The Solo 401(k) for Self-Employed", text: "A self-employed individual or LLC owner can contribute to a Solo 401(k) as BOTH employer and employee — up to $66,000+ annually (2024 limits). A W-2 employee is limited to $23,000 in contributions. Same income. Completely different outcome." }, { type: "action", text: "Calculate the difference in take-home pay between earning $100,000 as a W-2 employee vs a properly structured S-Corp owner in your state." }] }
+      {
+        title: "How Banks Really Work — Follow the Money",
+        content: [
+          { type: "quote", text: "Banking was conceived in iniquity and born in sin. Bankers own the earth. Take it away from them, but leave them the power to create money, and with the flick of the pen, they will create enough money to buy it back again.", author: "Josiah Stamp, Former President of the Bank of England" },
+          { type: "heading", text: "Fractional Reserve Banking" },
+          { type: "body", text: "Here is what your bank does with your deposit: it keeps a fraction as reserves and loans out the rest — often 10x what it actually holds. When you deposit $1,000, the bank may loan out $10,000 created from your deposit. They charge interest on money that didn't exist before you walked in. This is called fractional reserve banking, and it is the foundation of the modern financial system." },
+          { type: "callout", text: "Banks earn the spread: they pay you 0.5% on your savings and charge borrowers 7-25% on loans. The difference — your money, their profit. You are the product. Your deposits are their inventory." },
+          { type: "vault", title: "VAULT SECRET: Business Banking Strategy", text: "Never mix personal and business finances. Open a dedicated business checking account the moment you form an LLC. This creates legal separation (protecting personal assets from business liability), makes accounting cleaner, builds a banking relationship for future credit, and allows you to show business revenue history for loans and lines of credit. Most people skip this step and lose the legal protection entirely." },
+          { type: "action", text: "Check your bank accounts: what interest are you earning? What fees are you paying? Calculate how much you've paid your bank in fees over the last 12 months." }
+        ]
+      },
+      {
+        title: "Stocks, Bonds & Index Funds — The Honest Truth",
+        content: [
+          { type: "quote", text: "The stock market is a device for transferring money from the impatient to the patient.", author: "Warren Buffett" },
+          { type: "heading", text: "Three categories — and what the wealthy actually do" },
+          { type: "body", text: "Stocks: fractional ownership of a company. Bonds: lending money to governments or corporations in exchange for interest. Index funds: diversified exposure to a market segment without picking individual stocks." },
+          { type: "callout", text: "Buffett publicly recommends low-cost S&P 500 index funds for most Americans. He has said this repeatedly in shareholder letters. Yet the financial advisory industry makes billions selling actively managed funds that underperform the index 85% of the time — while charging 1-2% annual fees. Follow the incentives." },
+          { type: "vault", title: "VAULT SECRET: What the Wealthy Actually Hold", text: "The ultra-wealthy don't primarily build wealth through the stock market. They build it through ownership — of businesses, real estate, and intellectual property that generates cash flow. Stock market investments are often where they park excess capital. The stock market is a tool. Ownership of productive assets is the actual engine. The financial industry doesn't profit from teaching you to own businesses — they profit from managing your portfolio." },
+          { type: "action", text: "Research: compare a target-date retirement fund's fees vs a Vanguard S&P 500 index fund over 30 years on $100,000. The difference will shock you." }
+        ]
+      },
+      {
+        title: "Real Estate — The Wealth Machine They Can't Print More Of",
+        content: [
+          { type: "quote", text: "Real estate cannot be lost or stolen, nor can it be carried away. Purchased with common sense, paid for in full, and managed with reasonable care, it is about the safest investment in the world.", author: "Franklin D. Roosevelt" },
+          { type: "heading", text: "Four ways real estate builds wealth simultaneously" },
+          { type: "list", items: ["Cash Flow — rental income above all expenses", "Appreciation — values historically rise over time", "Loan Paydown — tenants effectively pay your mortgage", "Tax Advantages — depreciation, deductions, and deferrals"] },
+          { type: "callout", text: "The government incentivizes real estate ownership more than any other asset class. Why? Because real estate develops communities, houses workers, and stimulates economies. Knowing these incentives and using them is not cheating — it's what every wealthy real estate investor does by default." },
+          { type: "vault", title: "VAULT SECRET: 1031 Exchange & Cost Segregation", text: "A 1031 Exchange allows you to sell investment real estate and roll ALL proceeds into a new property — deferring capital gains taxes indefinitely. Do this enough times and the gain never gets taxed in your lifetime. At death, heirs receive stepped-up basis and the gain evaporates. Cost segregation is an accounting strategy where an engineer breaks down a property's components — appliances, flooring, landscaping — and depreciates them faster. This creates massive paper losses that offset real income. A $1M property might generate $150K+ in paper losses in year one through cost segregation. Legal. Used by every sophisticated real estate investor." },
+          { type: "action", text: "Research median rent prices in your city and compare to median mortgage payments on similar properties. Is there cash flow potential in your market?" }
+        ]
+      },
+      {
+        title: "Retirement Accounts — The Hidden Power Most People Ignore",
+        content: [
+          { type: "heading", text: "The government is actually on your side here" },
+          { type: "body", text: "This is one area where the system legitimately offers the average person a real advantage. 401(k), Traditional IRA, and Roth IRA accounts provide tax advantages that compound significantly over decades. Employer 401(k) matching is literally free money — yet millions of Americans leave it unclaimed." },
+          { type: "callout", text: "The Roth IRA is arguably the most powerful wealth-building vehicle available to people under a certain income threshold. Money grows completely tax-free. Withdrawals in retirement are tax-free. No required minimum distributions if you don't need the money. You can pass it to heirs. The wealthy who qualify use it aggressively." },
+          { type: "vault", title: "VAULT SECRET: Backdoor Roth & Roth Conversion Ladder", text: "High earners can't contribute directly to a Roth IRA due to income limits. So they use the 'Backdoor Roth' — contributing to a Traditional IRA and immediately converting it. Completely legal. Used by thousands of high-income earners annually. The Roth Conversion Ladder is used by early retirees: convert Traditional IRA funds to Roth over years of low-income, paying minimal taxes, creating a tax-free income stream in retirement. The IRS allows this. Your financial advisor may not have mentioned it because it reduces the fees they charge on your taxable accounts." },
+          { type: "action", text: "Find out: does your employer offer a 401(k) match? If yes, are you contributing at least enough to capture the full match? If not, calculate the exact dollar amount you are leaving on the table annually." }
+        ]
+      },
+      {
+        title: "Credit — The Score That Controls Your Access to Capital",
+        content: [
+          { type: "heading", text: "Credit is not debt. It's leverage." },
+          { type: "body", text: "Most people are taught to fear credit. The wealthy use it as a tool. A strong credit profile gives you access to capital at low interest rates — which means you can borrow money cheaply and deploy it into assets that return more than the cost of borrowing." },
+          { type: "callout", text: "Poor credit doesn't just cost you on loans. It costs you on car insurance in most states. Rental applications. Security deposits. Business partnerships. Even some job applications. A low score is a tax on everything — paid silently and continuously by those who can least afford it." },
+          { type: "vault", title: "VAULT SECRET: Business Credit is a Separate System", text: "Your personal credit and your business credit are two entirely separate profiles. Most people don't know this. A new LLC can begin building business credit through a DUNS number, net-30 vendor accounts (Uline, Grainger, Quill), and a business credit card. Within 12-24 months, a properly structured business can access credit lines that have nothing to do with your personal social security number or personal credit score. The business takes the liability. Your personal credit stays clean. This is how sophisticated entrepreneurs separate personal financial exposure from business risk." },
+          { type: "action", text: "Pull your free credit report at AnnualCreditReport.com. Identify every negative item and look up the statute of limitations for removal in your state." }
+        ]
+      },
+      {
+        title: "Comparing Wealth Paths — Employee vs Owner",
+        content: [
+          { type: "quote", text: "The problem with the rat race is that even if you win, you're still a rat.", author: "Lily Tomlin" },
+          { type: "heading", text: "The system taxes labor. It subsidizes ownership." },
+          { type: "body", text: "W-2 employees pay income tax, Social Security tax (6.2%), and Medicare tax (1.45%) — all before they spend a dollar. Business owners pay themselves after deducting legitimate business expenses, can choose their salary structure, and access retirement contribution strategies unavailable to employees." },
+          { type: "callout", text: "An S-Corp owner can pay themselves a reasonable salary — say $60,000 — and take additional profit as distributions, which are not subject to self-employment tax. On $150,000 in business income, the difference in tax treatment compared to W-2 can be $10,000-$20,000 annually. That's not illegal. That's the tax code doing exactly what it was designed to do — reward business ownership." },
+          { type: "vault", title: "VAULT SECRET: The Solo 401(k) for Self-Employed", text: "A self-employed individual or LLC owner can contribute to a Solo 401(k) as BOTH employer and employee — up to $66,000+ annually (2024 limits). This creates a massive tax deduction for high earners while building retirement wealth. A W-2 employee is limited to $23,000 in contributions. The business owner can contribute nearly 3x that. Same income. Completely different outcome. The tax code rewards those who understand it." },
+          { type: "action", text: "Calculate the difference in take-home pay between earning $100,000 as a W-2 employee vs a properly structured S-Corp owner in your state. Use a tax calculator. Write what you find." }
+        ]
+      }
     ],
     quiz: [
       { q: "Fractional reserve banking means:", options: ["Banks keep all deposits in a vault", "Banks loan out multiples of their actual deposits", "Banks only accept gold", "Banks are fully government-owned"], correct: 1 },
@@ -1864,12 +2012,69 @@ const MODULES = [
     id: 4, title: "Introduction to Crypto & Blockchain", subtitle: "The technology they couldn't contain",
     icon: "⛓", tag: "CRYPTO", duration: "55–70 min", xpReward: 500,
     lessons: [
-      { title: "What Problem Does Blockchain Actually Solve?", content: [{ type: "quote", text: "Bitcoin is a remarkable cryptographic achievement.", author: "Eric Schmidt, Former Google CEO" }, { type: "heading", text: "The Trust Problem" }, { type: "body", text: "Every financial transaction you make is controlled by a middleman. Your bank approves or denies your wire. PayPal freezes your account. A government can freeze an entire banking system overnight. We saw this in Canada in 2022 when protesters had their accounts frozen without trial." }, { type: "callout", text: "Blockchain doesn't ask for permission. It runs on consensus — thousands of nodes validating every transaction simultaneously. To alter a transaction, you'd need to control 51% of the entire network simultaneously. That's the first truly trustless financial system in human history." }, { type: "vault", title: "VAULT SECRET: Why Governments Fear Bitcoin", text: "A central bank controls inflation, interest rates, and the money supply — the three most powerful economic levers in a nation. Bitcoin has a fixed supply of 21 million coins. No government, no board, no executive order can change this. For governments built on the power to print money, this is an existential threat." }, { type: "action", text: "Research: What happened to Cyprus bank depositors in 2013? What happened to Canadian truckers' bank accounts in 2022? Write what you find." }] },
-      { title: "Bitcoin & Ethereum — Two Different Revolutions", content: [{ type: "quote", text: "Bitcoin is Gold 2.0.", author: "Tyler Winklevoss" }, { type: "heading", text: "Not all crypto is the same" }, { type: "body", text: "Bitcoin was designed as one thing: peer-to-peer electronic cash with a fixed supply. No CEO. No headquarters. No shutdown switch. Ethereum introduced programmability — smart contracts that execute automatically when conditions are met. No lawyers, no banks, no middlemen required to enforce agreements." }, { type: "callout", text: "Ethereum enabled an entire new financial system built on code — DeFi. Loans, exchanges, insurance, and yield — all operating without banks. In 2020-2021, DeFi grew from $1 billion to $100 billion in locked value in under 18 months." }, { type: "vault", title: "VAULT SECRET: What Institutions Are Buying", text: "MicroStrategy holds over 200,000 Bitcoin on its corporate balance sheet. BlackRock launched a Bitcoin ETF. El Salvador made Bitcoin legal tender. Institutions and sovereigns are quietly moving out of dollars and into hard assets. The retail investor is always the last to know." }, { type: "action", text: "Write one sentence describing Bitcoin and one sentence describing Ethereum in your own words." }] },
-      { title: "Solana & Why Speed Matters for the New Economy", content: [{ type: "heading", text: "Not every blockchain optimizes the same way" }, { type: "body", text: "Bitcoin prioritizes security. Ethereum prioritizes programmability. Solana was built for throughput — 65,000 transactions per second, sub-second finality, fractions of a cent per transaction. For real-world adoption, speed matters enormously." }, { type: "callout", text: "Iron Vault Token is built on Solana. Fast settlement means distributions can flow to token holders automatically and immediately. Low fees mean small holders aren't priced out by transaction costs." }, { type: "vault", title: "VAULT SECRET: Puerto Rico Act 60", text: "If you establish residency in Puerto Rico and qualify under Act 60, your capital gains tax rate drops to 0%. Zero. Your crypto gains, your investment gains, realized after establishing bona fide residency — pay no federal capital gains tax and no Puerto Rico capital gains tax. This is a U.S. territory. The wealthy know about it." }, { type: "action", text: "Look up Solana's current transaction speed and cost vs Ethereum's. Then look up what Act 60 requires for qualification." }] },
-      { title: "Wallets, Private Keys & Self-Custody", content: [{ type: "heading", text: "Not your keys. Not your coins." }, { type: "body", text: "When you keep crypto on an exchange, you don't own it — you own a claim on it. FTX had $32 billion in customer assets in 2022. In November of that year, customer withdrawals were frozen. The money was gone. Celsius, BlockFi — same story." }, { type: "callout", text: "Self-custody through a hardware wallet means the asset is mathematically yours. No platform can freeze it, lose it, or loan it out. The private key is the only thing that matters." }, { type: "vault", title: "VAULT SECRET: The Seed Phrase is Your Vault", text: "Your 12 or 24-word seed phrase is worth exactly as much as the assets secured by it. Do not photograph it. Do not store it digitally. Engrave it on steel. Store copies in separate physical locations. Trusts and estate planning can include crypto instructions." }, { type: "action", text: "Write three security habits you would follow before holding any crypto in self-custody." }] },
-      { title: "What a Token Actually Is — And How to Evaluate One", content: [{ type: "heading", text: "Most tokens are worthless. A few change everything." }, { type: "body", text: "A token is a digital asset issued on a blockchain. The range is enormous — from Bitcoin backed by 15 years of security, to tokens created in minutes by anonymous developers that disappear overnight." }, { type: "list", items: ["Utility tokens: enable access or function within a system", "Governance tokens: grant voting rights over a protocol", "Stablecoins: designed to maintain stable value", "Asset-backed tokens: connected to real-world value (RWA)", "Meme/community tokens: driven by culture and speculation"] }, { type: "callout", text: "The question that separates sophisticated participants from gamblers: 'If price never moved, would this token still have value?' If the answer is no — it's speculation, not investment." }, { type: "action", text: "Pick two tokens. For each, answer: What does it do? Who uses it? Why does it need to be a token?" }] },
-      { title: "Risks Everyone Ignores — Including the Ones You Can't See", content: [{ type: "quote", text: "Risk comes from not knowing what you're doing.", author: "Warren Buffett" }, { type: "heading", text: "The risks they tell you about — and the ones they don't" }, { type: "list", items: ["Market Risk — prices can move 80% in either direction rapidly", "Scam Risk — phishing, fake giveaways, rug pulls, impersonation", "Regulatory Risk — governments can restrict access, classify assets", "Technology Risk — exchange failures, smart contract exploits", "Emotional Risk — the most expensive and least discussed"] }, { type: "callout", text: "The emotional risk in crypto is categorically different from traditional markets because it never closes. 3am panic sells. Weekend manipulation. Holiday flash crashes. Your brain was not designed for this." }, { type: "vault", title: "VAULT SECRET: The Regulatory Playbook", text: "When governments can't stop a technology, they regulate it. Watch for: Classification — labeling tokens as securities. Taxation — treating every swap as a taxable event. Exchange licensing — restricting which exchanges can operate. None of this stops the underlying technology." }, { type: "action", text: "Write three personal rules you would follow before ever buying any digital asset." }] }
+      {
+        title: "What Problem Does Blockchain Actually Solve?",
+        content: [
+          { type: "quote", text: "Bitcoin is a remarkable cryptographic achievement and the ability to create something that is not duplicable in the digital world has enormous value.", author: "Eric Schmidt, Former Google CEO" },
+          { type: "heading", text: "The Trust Problem" },
+          { type: "body", text: "Every financial transaction you make is controlled by a middleman. Your bank approves or denies your wire. PayPal freezes your account. A government can freeze an entire banking system overnight. We saw this in Canada in 2022 when protesters had their accounts frozen without trial. We saw it in Cyprus in 2013 when banks confiscated a percentage of every deposit above €100,000 to bail out the government. These are not conspiracy theories. These are documented events." },
+          { type: "callout", text: "Blockchain doesn't ask for permission. It doesn't require trust in any single institution. It runs on consensus — thousands of nodes validating every transaction simultaneously. To alter a transaction, you'd need to control 51% of the entire network simultaneously. That's the first truly trustless financial system in human history." },
+          { type: "vault", title: "VAULT SECRET: Why Governments Fear Bitcoin", text: "A central bank controls inflation, interest rates, and the money supply — the three most powerful economic levers in a nation. Bitcoin has a fixed supply of 21 million coins, coded in from day one. No government, no board, no executive order can change this. This is why Bitcoin is called 'hard money.' It cannot be debased by printing. No central authority controls it. For governments built on the power to print money, this is an existential threat. Watch the regulatory environment carefully — the attack will always come labeled as 'protecting consumers.'" },
+          { type: "action", text: "Research: What happened to Cyprus bank depositors in 2013? What happened to Canadian truckers' bank accounts in 2022? Write what you find." }
+        ]
+      },
+      {
+        title: "Bitcoin & Ethereum — Two Different Revolutions",
+        content: [
+          { type: "quote", text: "Bitcoin is Gold 2.0.", author: "Tyler Winklevoss" },
+          { type: "heading", text: "Not all crypto is the same" },
+          { type: "body", text: "Bitcoin was designed as one thing: peer-to-peer electronic cash with a fixed supply. No CEO. No headquarters. No shutdown switch. It has processed trillions of dollars in value without a single day of downtime since 2009. Ethereum introduced programmability — smart contracts that execute automatically when conditions are met. No lawyers, no banks, no middlemen required to enforce agreements." },
+          { type: "callout", text: "Ethereum enabled an entire new financial system built on code — DeFi (Decentralized Finance). Loans, exchanges, insurance, and yield — all operating without banks. In 2020-2021, DeFi grew from $1 billion to $100 billion in locked value in under 18 months. The traditional financial industry had to watch from the sidelines." },
+          { type: "vault", title: "VAULT SECRET: Why Institutions Are Buying Bitcoin", text: "MicroStrategy holds over 200,000 Bitcoin on its corporate balance sheet. BlackRock, the world's largest asset manager with $10 trillion AUM, launched a Bitcoin ETF. El Salvador made Bitcoin legal tender. These are not random events. Institutions and sovereigns are quietly moving out of dollars and into hard assets. The retail investor is always the last to know — and typically pays the highest price for being last." },
+          { type: "action", text: "Write one sentence describing Bitcoin and one sentence describing Ethereum in your own words — not the definition you read. Your understanding, your words." }
+        ]
+      },
+      {
+        title: "Solana & Why Speed Matters for the New Economy",
+        content: [
+          { type: "heading", text: "Not every blockchain optimizes the same way" },
+          { type: "body", text: "Bitcoin prioritizes security and decentralization above all else — at the cost of speed and transaction cost. Ethereum prioritizes programmability. Solana was built for throughput — 65,000 transactions per second, sub-second finality, fractions of a cent per transaction. For real-world adoption, speed matters enormously." },
+          { type: "callout", text: "Iron Vault Token is built on Solana. This is a deliberate choice. Fast settlement means distributions can flow to token holders automatically and immediately. Low fees mean small holders aren't priced out by transaction costs. Real estate income on-chain needs to move like digital cash — not wait 10 minutes and cost $30 per transaction." },
+          { type: "vault", title: "VAULT SECRET: Puerto Rico Act 60", text: "If you establish residency in Puerto Rico and qualify under Act 60 (formerly Acts 20 and 22), your capital gains tax rate drops to 0%. Zero. Not reduced — eliminated. Your crypto gains, your investment gains, realized after establishing bona fide residency — pay no federal capital gains tax and no Puerto Rico capital gains tax. This is a U.S. territory. It uses U.S. dollars. It has U.S. infrastructure. And it has a tax treaty with the mainland that creates this window. The wealthy know about it. Most people have never heard of it." },
+          { type: "action", text: "Look up Solana's current transaction speed and cost vs Ethereum's. Then look up what Act 60 requires for qualification." }
+        ]
+      },
+      {
+        title: "Wallets, Private Keys & Self-Custody",
+        content: [
+          { type: "heading", text: "Not your keys. Not your coins." },
+          { type: "body", text: "When you keep crypto on an exchange, you don't own it — you own a claim on it. FTX had $32 billion in customer assets in 2022. In November of that year, customer withdrawals were frozen. The money was gone. Celsius Network — same story. BlockFi — same story. Three major platforms. Millions of users. Billions in losses. All because users didn't hold their own keys." },
+          { type: "callout", text: "Self-custody through a hardware wallet (Ledger, Trezor) means the asset is mathematically yours. No platform can freeze it, lose it, or loan it out. The private key is the only thing that matters. Whoever holds the key holds the asset. This is the first time in history that regular people can hold sovereign assets with no counterparty risk." },
+          { type: "vault", title: "VAULT SECRET: The Seed Phrase is Your Vault", text: "Your 12 or 24-word seed phrase is worth exactly as much as the assets secured by it. Treat it accordingly. Do not photograph it. Do not store it digitally. Do not speak it to anyone claiming to be 'support.' Engrave it on steel. Store copies in separate physical locations. Trusts and estate planning can include crypto instructions — consult an estate attorney familiar with digital assets. This is how you pass crypto to heirs without probate and without anyone knowing what you hold." },
+          { type: "action", text: "Write three security habits you would follow before holding any crypto in self-custody." }
+        ]
+      },
+      {
+        title: "What a Token Actually Is — And How to Evaluate One",
+        content: [
+          { type: "heading", text: "Most tokens are worthless. A few change everything." },
+          { type: "body", text: "A token is a digital asset issued on a blockchain. The range is enormous — from Bitcoin with a $1 trillion+ market cap backed by 15 years of security, to tokens created in minutes by anonymous developers that disappear overnight. The difference between them is utility, transparency, team, economics, and time." },
+          { type: "list", items: ["Utility tokens: enable access or function within a system", "Governance tokens: grant voting rights over a protocol", "Stablecoins: designed to maintain stable value", "Asset-backed tokens: connected to real-world value (RWA)", "Meme/community tokens: driven by culture and speculation"] },
+          { type: "callout", text: "The question that separates sophisticated participants from gamblers: 'If price never moved, would this token still have value?' If the answer is no — it's speculation, not investment." },
+          { type: "action", text: "Pick two tokens. For each, answer: What does it do? Who uses it? Why does it need to be a token? What drives demand beyond price speculation?" }
+        ]
+      },
+      {
+        title: "Risks Everyone Ignores — Including the Ones You Can't See",
+        content: [
+          { type: "quote", text: "Risk comes from not knowing what you're doing.", author: "Warren Buffett" },
+          { type: "heading", text: "The risks they tell you about — and the ones they don't" },
+          { type: "list", items: ["Market Risk — prices can move 80% in either direction rapidly", "Scam Risk — phishing, fake giveaways, rug pulls, impersonation, fake support", "Regulatory Risk — governments can restrict access, classify assets, impose taxes", "Technology Risk — exchange failures, smart contract exploits, wallet errors", "Emotional Risk — the most expensive and least discussed"] },
+          { type: "callout", text: "The emotional risk in crypto is categorically different from traditional markets because it never closes. It trades 24/7, 365 days a year. 3am panic sells. Weekend manipulation. Holiday flash crashes. Your brain was not designed for this. The investors who survive long-term are not the smartest — they're the most disciplined." },
+          { type: "vault", title: "VAULT SECRET: The Regulatory Playbook", text: "When governments can't stop a technology, they regulate it. Watch for three tactics: (1) Classification — labeling tokens as securities forces compliance and limits retail access. (2) Taxation — treating every swap and trade as a taxable event creates compliance burden that pushes out small participants. (3) Exchange licensing — restricting which exchanges can operate in a jurisdiction limits access. None of this stops the underlying technology. It just temporarily advantages those with resources to navigate compliance — which is always the existing wealthy class. Stay informed. Stay adaptive." },
+          { type: "action", text: "Write three personal rules you would follow before ever buying any digital asset. Make them specific enough that you would actually follow them." }
+        ]
+      }
     ],
     quiz: [
       { q: "Blockchain technology primarily attempts to solve:", options: ["Making all investments risk-free", "The need to trust a central middleman for records and transfers", "Eliminating taxes worldwide", "Guaranteeing profits for users"], correct: 1 },
@@ -1888,12 +2093,70 @@ const MODULES = [
     id: 5, title: "Digital Assets & Modern Wealth", subtitle: "The strategies they keep to themselves",
     icon: "⚡", tag: "STRATEGY", duration: "50–65 min", xpReward: 500,
     lessons: [
-      { title: "Stablecoins & Real-World Asset Backing", content: [{ type: "heading", text: "Stability in a volatile world" }, { type: "body", text: "Stablecoins are digital assets designed to maintain a stable value — usually pegged to the U.S. dollar. They allow you to move money globally in seconds, earn yield on-chain, and settle transactions without cryptocurrency volatility." }, { type: "list", items: ["Cash-backed (USDC, USDT) — dollar reserves held by a custodian", "Government security-backed — short-term treasuries as collateral", "Crypto-overcollateralized (DAI) — crypto reserves exceeding the issued value", "Algorithmic (historically high-risk — see Terra/Luna 2022)"] }, { type: "callout", text: "Real-World Asset (RWA) tokens go further — connecting on-chain digital tokens directly to real estate, bonds, invoices, or other physical assets. This is the bridge between traditional finance and decentralized infrastructure. It's where Iron Vault operates." }, { type: "vault", title: "VAULT SECRET: Yield on Stablecoins", text: "While your bank pays 0.01% on savings, DeFi protocols currently offer 4-8% APY on stablecoin deposits. Platforms like Aave and Compound allow you to lend stablecoins to borrowers who over-collateralize with crypto. The yield differential is real and significant." }, { type: "action", text: "Research one stablecoin. Write how it maintains its peg, what backs it, and what risks exist if that backing fails." }] },
-      { title: "Revenue-Sharing Models & How to Evaluate Them", content: [{ type: "heading", text: "When tokens share real economics — and when they're lying" }, { type: "body", text: "Some token ecosystems distribute a portion of real platform revenue to holders — through fee sharing, staking rewards, treasury distributions, or asset-generated income. These models can be powerful when real economics exist." }, { type: "callout", text: "The critical question: Where does the money actually come from? If the answer is 'new investor deposits' — that's not revenue sharing. That's a Ponzi structure. Real revenue comes from external economic activity." }, { type: "vault", title: "VAULT SECRET: The LLC + On-Chain Income Structure", text: "Sophisticated Web3 operators structure their token income through LLCs, receive distributions as business income, and deploy that capital into additional assets. Business income has deductions available that personal income does not." }, { type: "action", text: "Write the difference between 'real revenue' and 'speculative hype' in your own words. Then apply that test to three projects you've heard of." }] },
-      { title: "Token Utility vs Speculation — Know What You're Buying", content: [{ type: "heading", text: "Utility makes assets. Speculation makes bubbles." }, { type: "body", text: "Utility means a token enables something real — access, payments, governance, fee reduction, network usage. Speculation means buying because you expect someone else to pay more later." }, { type: "callout", text: "A useful diagnostic: if the team disappeared tomorrow, would the token still have value? Strong utility tokens power systems that exist independent of any team." }, { type: "vault", title: "VAULT SECRET: The Accredited Investor Wall", text: "The most lucrative investment opportunities are legally restricted to 'accredited investors.' Tokenization is starting to break this wall. Real estate syndications on-chain with $500 minimums. Private credit accessible to retail. The democratization is real." }, { type: "action", text: "Choose one token. List every use case you can verify. If speculation is the only story, write that honestly." }] },
-      { title: "The Infinite Banking Concept — How the Wealthy Use Life Insurance", content: [{ type: "quote", text: "The greatest financial secret of the wealthy is not stocks or real estate. It's cash value life insurance.", author: "Nelson Nash, Becoming Your Own Banker" }, { type: "heading", text: "This is the play most financial advisors won't explain" }, { type: "body", text: "A properly structured Indexed Universal Life (IUL) or Whole Life insurance policy builds cash value over time. That cash value is an asset you can borrow against at low interest rates. The loan is not taxable income." }, { type: "callout", text: "The structure: You fund the policy aggressively. Cash value grows tax-deferred. You borrow against cash value to invest in real estate or business. Cash flow from those assets repays the loan. Your policy keeps compounding. Repeat." }, { type: "vault", title: "VAULT SECRET: The Trust + Life Insurance Strategy", text: "Place a $1M+ life insurance policy inside an Irrevocable Life Insurance Trust (ILIT). The trust owns the policy. The death benefit passes to heirs completely outside your estate, avoiding estate taxes. The trust can borrow against the cash value during your lifetime." }, { type: "action", text: "Research: What is an Irrevocable Life Insurance Trust (ILIT)? Write how it differs from owning a life insurance policy personally." }] },
-      { title: "Tax Strategy — Legal Structures the Wealthy Actually Use", content: [{ type: "quote", text: "The avoidance of taxes is the only intellectual pursuit that carries any reward.", author: "John Maynard Keynes" }, { type: "heading", text: "Tax avoidance is legal. Tax evasion is not. Know the difference." }, { type: "body", text: "The U.S. tax code taxes different types of income at radically different rates. W-2 wages can be taxed up to 37% federal. Long-term capital gains are taxed at 0%, 15%, or 20%. The system is not neutral." }, { type: "callout", text: "The U.S. tax code taxes different types of income at radically different rates. W-2 wages can be taxed up to 37% federal. Long-term capital gains are taxed at 0%, 15%, or 20%. The system was designed with winners in mind." }, { type: "vault", title: "VAULT SECRET: The 'On-Paper-Broke' LLC Strategy", text: "A legitimately operating LLC can receive business income while the owner takes a modest personal salary. The LLC pays for business expenses — reducing taxable income. When personal income is low enough, the individual may qualify for certain tax credits and income-tested programs — all while the LLC holds and builds assets." }, { type: "action", text: "Research: What is the difference between a Schedule C sole proprietorship, an LLC, and an S-Corp? Write the tax treatment differences for each." }] },
-      { title: "Building a Sustainable Strategy — Process Over Prediction", content: [{ type: "quote", text: "Compound interest is the eighth wonder of the world. He who understands it, earns it. He who doesn't, pays it.", author: "Albert Einstein (attributed)" }, { type: "heading", text: "A sustainable strategy looks boring from the outside" }, { type: "list", items: ["Learn deeply before committing capital", "Build the entity structure before building the portfolio", "Use only risk capital — money you could lose without crisis", "Dollar-cost average into volatile assets over time", "Diversify across asset classes, not just within crypto", "Hold for long enough to let compounding work", "Review quarterly — not daily"] }, { type: "callout", text: "The enemy of wealth is not the tax man or the market. It's impatience. The people who lost the most in every crash were those who needed the money tomorrow." }, { type: "vault", title: "VAULT SECRET: The Portfolio of the Informed", text: "A sophisticated participant in 2025 might hold: cash flow real estate (core wealth engine), index funds (passive market exposure), a small Bitcoin position (hard money hedge), a small allocation to tokenized RWA (asymmetric upside), and permanent life insurance cash value (tax-free growth, leverage vehicle)." }, { type: "action", text: "Write three personal rules your future self would thank you for. Make them behavioral — not about returns, about process." }] }
+      {
+        title: "Stablecoins & Real-World Asset Backing",
+        content: [
+          { type: "heading", text: "Stability in a volatile world" },
+          { type: "body", text: "Stablecoins are digital assets designed to maintain a stable value — usually pegged to the U.S. dollar. They allow you to move money globally in seconds, earn yield on-chain, and settle transactions without cryptocurrency volatility. Common uses: international payments, DeFi liquidity, settlement between platforms." },
+          { type: "list", items: ["Cash-backed (USDC, USDT) — dollar reserves held by a custodian", "Government security-backed — short-term treasuries as collateral", "Crypto-overcollateralized (DAI) — crypto reserves exceeding the issued value", "Algorithmic (historically high-risk — see Terra/Luna 2022)"] },
+          { type: "callout", text: "Real-World Asset (RWA) tokens go further — connecting on-chain digital tokens directly to real estate, bonds, invoices, or other physical assets. This is the bridge between traditional finance and decentralized infrastructure. It's where Iron Vault operates." },
+          { type: "vault", title: "VAULT SECRET: Yield on Stablecoins", text: "While your bank pays 0.01% on savings, DeFi protocols currently offer 4-8% APY on stablecoin deposits. Platforms like Aave and Compound allow you to lend stablecoins to borrowers who over-collateralize with crypto. No bank approval. No minimum. Risks exist — smart contract exploits, protocol failures — but the yield differential is real and significant. The wealthy who understand DeFi have been earning 5-10x bank rates for years." },
+          { type: "action", text: "Research one stablecoin. Write how it maintains its peg, what backs it, and what risks exist if that backing fails." }
+        ]
+      },
+      {
+        title: "Revenue-Sharing Models & How to Evaluate Them",
+        content: [
+          { type: "heading", text: "When tokens share real economics — and when they're lying" },
+          { type: "body", text: "Some token ecosystems attempt to distribute a portion of real platform revenue to holders — through fee sharing, staking rewards, treasury distributions, or asset-generated income. These models can be powerful when real economics exist. They are traps when they don't." },
+          { type: "callout", text: "The critical question: Where does the money actually come from? If the answer is 'new investor deposits' — that's not revenue sharing. That's a Ponzi structure. Real revenue comes from external economic activity: rental income, transaction fees from actual users, licensing, or services. Transparent. Auditable. Real." },
+          { type: "vault", title: "VAULT SECRET: The LLC + On-Chain Income Structure", text: "Sophisticated Web3 operators structure their token income through LLCs, receive distributions as business income, and deploy that capital strategically into additional assets. The entity — not the person — participates in the ecosystem. Business income has deductions available that personal income does not. Legal fees, software, education, travel for business purposes — all potentially deductible against crypto income when properly structured. Consult a tax professional familiar with digital assets. This is a frontier area where structure matters enormously." },
+          { type: "action", text: "Write the difference between 'real revenue' and 'speculative hype' in your own words. Then apply that test to three projects you've heard of." }
+        ]
+      },
+      {
+        title: "Token Utility vs Speculation — Know What You're Buying",
+        content: [
+          { type: "heading", text: "Utility makes assets. Speculation makes bubbles." },
+          { type: "body", text: "Utility means a token enables something real — access, payments, governance, fee reduction, network usage. Speculation means buying because you expect someone else to pay more later. Both exist in every market. The error is thinking speculation is investment." },
+          { type: "callout", text: "A useful diagnostic: if the founding team disappeared tomorrow, would the token still have value? Strong utility tokens power systems that exist independent of any team. Pure speculation tokens are entirely dependent on continued promotion and narrative maintenance." },
+          { type: "vault", title: "VAULT SECRET: The Accredited Investor Wall", text: "The most lucrative investment opportunities — private equity, venture capital, certain real estate syndications, hedge funds — are legally restricted to 'accredited investors' (net worth over $1M excluding primary residence, or income over $200K). This wall keeps average people out of the best deals while institutional capital compounds. Tokenization is starting to break this wall. Real estate syndications on-chain with $500 minimums. Private credit accessible to retail. The democratization is real — and the establishment hates it for exactly that reason." },
+          { type: "action", text: "Choose one token. List every use case you can verify. If speculation is the only story, write that honestly." }
+        ]
+      },
+      {
+        title: "The Infinite Banking Concept — How the Wealthy Use Life Insurance",
+        content: [
+          { type: "quote", text: "The greatest financial secret of the wealthy is not stocks or real estate. It's cash value life insurance — and they've been using it for 200 years.", author: "Nelson Nash, Becoming Your Own Banker" },
+          { type: "heading", text: "This is the play most financial advisors won't explain" },
+          { type: "body", text: "A properly structured Indexed Universal Life (IUL) or Whole Life insurance policy builds cash value over time. That cash value is an asset you can borrow against at low interest rates. The loan is not taxable income. The policy continues to grow as if you hadn't borrowed." },
+          { type: "callout", text: "The structure: You fund the policy aggressively. Cash value grows tax-deferred, indexed to market gains with a floor protecting against loss. You borrow against cash value to invest in real estate, business, or other assets. Cash flow from those assets repays the loan. Your policy keeps compounding. Repeat. The wealthy call this 'Be Your Own Bank.'" },
+          { type: "vault", title: "VAULT SECRET: The Trust + Life Insurance Strategy", text: "Place a $1M+ life insurance policy inside an Irrevocable Life Insurance Trust (ILIT). The trust — not you — owns the policy. The death benefit passes to heirs completely outside of your estate, avoiding estate taxes entirely on that amount. The trust can be structured to borrow against the cash value during your lifetime. The trust now has a $1M asset it can leverage. Invest borrowed capital into cash-flowing assets. Cash flow services the policy loan. Asset appreciates. At death, trust distributes tax-free to heirs. This is generational wealth infrastructure. It's legal. It's been used by banking families for over a century. It requires a specialized estate attorney and a knowledgeable insurance professional. Most people never hear about it because there's no recurring fee for anyone to explain it to you once." },
+          { type: "action", text: "Research: What is an Irrevocable Life Insurance Trust (ILIT)? Write how it differs from owning a life insurance policy personally." }
+        ]
+      },
+      {
+        title: "Tax Strategy — Legal Structures the Wealthy Actually Use",
+        content: [
+          { type: "quote", text: "The avoidance of taxes is the only intellectual pursuit that carries any reward.", author: "John Maynard Keynes" },
+          { type: "heading", text: "Tax avoidance is legal. Tax evasion is not. Know the difference." },
+          { type: "body", text: "Tax avoidance — using legal strategies to minimize your tax liability — is not only legal, it's expected. The tax code is literally an instruction manual for reducing your taxes, written by legislators who themselves use every strategy available." },
+          { type: "callout", text: "The U.S. tax code taxes different types of income at radically different rates. W-2 wages can be taxed up to 37% federal. Long-term capital gains are taxed at 0%, 15%, or 20%. Qualified dividends — same rates. Carried interest (hedge fund managers) — taxed as capital gains. Distributions from certain entities — lower rates. The system is not neutral. It was designed with winners in mind." },
+          { type: "vault", title: "VAULT SECRET: The 'On-Paper-Broke' LLC Strategy", text: "A legitimately operating LLC can receive business income while the owner takes a modest personal salary. The LLC pays for business expenses — reducing taxable income. The owner's W-2 or personal income appears modest. When personal income is low enough, the individual may qualify for ACA health subsidies, certain tax credits, and income-tested government programs — all while the LLC holds and builds assets. This is 100% legal when the LLC is legitimately operating and expenses are genuine business expenses. Wealthy people do not personally own their cars, homes, or anything they can legitimately put in an entity. The entity takes the deduction. The person takes the lifestyle. This is basic tax strategy that took wealthy families generations to perfect and costs nothing but knowledge to implement." },
+          { type: "action", text: "Research: What is the difference between a Schedule C sole proprietorship, an LLC, and an S-Corp? Write the tax treatment differences for each." }
+        ]
+      },
+      {
+        title: "Building a Sustainable Strategy — Process Over Prediction",
+        content: [
+          { type: "quote", text: "Compound interest is the eighth wonder of the world. He who understands it, earns it. He who doesn't, pays it.", author: "Albert Einstein (attributed)" },
+          { type: "heading", text: "A sustainable strategy looks boring from the outside" },
+          { type: "list", items: ["Learn deeply before committing capital", "Build the entity structure before building the portfolio", "Use only risk capital — money you could lose without crisis", "Dollar-cost average into volatile assets over time", "Diversify across asset classes, not just within crypto", "Hold for long enough to let compounding work", "Review quarterly — not daily"] },
+          { type: "callout", text: "The enemy of wealth is not the tax man or the market. It's impatience. The people who lost the most in every crash were those who needed the money tomorrow. The people who built wealth were those who stayed alive long enough to be right." },
+          { type: "vault", title: "VAULT SECRET: The Portfolio of the Informed", text: "A sophisticated participant in 2025 might hold: cash flow real estate (core wealth engine), index funds (passive market exposure), a small Bitcoin position (hard money hedge against dollar debasement), a small allocation to emerging assets like tokenized RWA (asymmetric upside), and permanent life insurance cash value (tax-free growth, leverage vehicle). Not one or the other. All of them, properly sized. This is not radical. This is what diversified private wealth looks like when you've been educated correctly." },
+          { type: "action", text: "Write three personal rules your future self would thank you for. Make them behavioral — not about returns, about process." }
+        ]
+      }
     ],
     quiz: [
       { q: "A stablecoin is generally designed to:", options: ["Increase in price every month", "Maintain a relatively stable value", "Replace all stocks permanently", "Eliminate taxes"], correct: 1 },
@@ -1912,12 +2175,72 @@ const MODULES = [
     id: 6, title: "The Iron Vault System", subtitle: "Why we built this. What comes next.",
     icon: "🛡", tag: "IRON VAULT", duration: "45–60 min", xpReward: 500,
     lessons: [
-      { title: "The Iron Vault 3-Phase Vision", content: [{ type: "quote", text: "An investment in knowledge pays the best interest.", author: "Benjamin Franklin" }, { type: "heading", text: "Phase 1 — Community & Education (Now)" }, { type: "body", text: "Before a single token is sold at scale, the community must understand what they're participating in. Iron Vault inverts the model. Education is the product. The token is the reward for being informed." }, { type: "heading", text: "Phase 2 — Real Asset Acquisition & Revenue" }, { type: "body", text: "Income-producing real-world assets — real estate and related opportunities — provide the economic engine. Rental income, appreciation, and cash flow from physical assets tied to digital infrastructure." }, { type: "heading", text: "Phase 3 — Digital Infrastructure Expansion" }, { type: "body", text: "Additional financial tools, expanded token utility, and asset-linked digital products — if legally and operationally viable. The roadmap is phased deliberately. Foundation first. Expansion when earned." }, { type: "callout", text: "A phased model is the opposite of how most projects are marketed. No promises of instant returns. No manufactured urgency. The community that understands the system is the asset." }, { type: "action", text: "Write which phase you believe creates the most long-term value — and defend your reasoning." }] },
-      { title: "How Real Assets Connect to Digital Systems", content: [{ type: "heading", text: "Real substance + digital efficiency = the actual opportunity" }, { type: "body", text: "Traditional real estate is powerful but slow. Buying takes months. Selling takes months. Blockchain changes all of this." }, { type: "callout", text: "A smart contract can hold rental income and distribute it proportionally to token holders within seconds of receipt — automatically, transparently, and without a third party taking a cut." }, { type: "vault", title: "VAULT SECRET: How Iron Vault's Smart Contracts Work", text: "Iron Vault's distribution mechanism receives income from real-world asset activity and allocates it according to token holdings recorded on-chain. When the contract triggers, it reads token balances, calculates proportional shares, and executes distributions — without manual intervention, without a bank transfer. Every distribution is publicly verifiable on the Solana blockchain." }, { type: "action", text: "Name one real-world asset class that would benefit most from automated, transparent distribution infrastructure." }] },
-      { title: "Why Education-First Is Actually the Strategy", content: [{ type: "quote", text: "The man who does not read has no advantage over the man who cannot read.", author: "Mark Twain" }, { type: "heading", text: "Uninformed money is emotional money — and emotional money is exploitable" }, { type: "body", text: "The history of financial markets is a history of the informed transferring wealth from the uninformed during moments of fear and greed." }, { type: "callout", text: "An educated community doesn't panic. Educated participants ask better questions. They recognize manipulation, evaluate claims independently, and hold through volatility because they understand what they own." }, { type: "body", text: "This is why you're here. This is why this course exists before the token launch. Not as marketing. As infrastructure." }, { type: "action", text: "Write one thing you understand now that you didn't before this course. Be specific." }] },
-      { title: "Risks, Disclosures & Eyes Wide Open", content: [{ type: "heading", text: "Every opportunity carries real risk. Honesty here is non-negotiable." }, { type: "list", items: ["Market Risk — token value can decline significantly and rapidly", "Execution Risk — plans may delay, underperform, or change", "Regulatory Risk — laws governing digital assets continue to evolve", "Liquidity Risk — buying or selling may be difficult in certain market conditions", "Technology Risk — smart contract bugs, network outages, wallet vulnerabilities", "Team Risk — execution depends on human performance"] }, { type: "callout", text: "There are no guarantees. Not of returns, not of appreciation, not of success. Anyone who tells you otherwise is either uninformed or dishonest." }, { type: "body", text: "A mature participant asks: What can go wrong? — before asking: What if this works? If you cannot answer the first question, you are not ready to participate." }, { type: "action", text: "Write the top three risks that concern you personally. Then write how you would manage each one before committing capital." }] },
-      { title: "What You Do After This Course", content: [{ type: "heading", text: "Knowledge without action is expensive entertainment" }, { type: "list", items: ["Step 1: Pause. Do not make emotional decisions because you feel motivated.", "Step 2: Organize your financial foundation — emergency fund, debt plan, basic budget.", "Step 3: Evaluate your entity structure. Do you have an LLC? Should you?", "Step 4: If participating in digital assets — learn self-custody first.", "Step 5: Continue learning. This course is a starting point, not a destination."] }, { type: "callout", text: "The gap between knowing and doing is where most people stay permanently. The people who act on what they learn — even imperfectly — are the ones who look back in five years grateful they started." }, { type: "vault", title: "VAULT SECRET: The First Move Most People Skip", text: "Before you buy your first investment, open a business checking account under an LLC. Before that, form the LLC ($50-200 in most states). Before that, get an EIN from the IRS (free, takes 5 minutes online). These three steps create the legal separation that protects your personal assets, opens business credit, and enables business deductions." }, { type: "action", text: "Write a 30-day action plan. Include at least one concrete structural move — not just 'save money.'" }] },
-      { title: "Completion — What You Now Know That Most People Don't", content: [{ type: "quote", text: "The first step to getting the things you want out of life is this: Decide what you want.", author: "Ben Stein" }, { type: "heading", text: "You have crossed a threshold most people never approach" }, { type: "body", text: "Most people will spend their entire lives inside a financial system they don't understand, paying taxes they don't have to, building wealth they never reach. They weren't lazy. They weren't stupid. They were never taught." }, { type: "callout", text: "You now know: how money is created and debased. How the tax code rewards ownership over labor. How entities separate your personal exposure from your financial activity. How real assets connect to digital infrastructure. How to evaluate an opportunity without being manipulated." }, { type: "body", text: "The system was designed by people who understood it, for people who didn't. You've closed that gap. Use it wisely, patiently, and with full awareness of the risks." }, { type: "action", text: "Answer: What belief about money changed most? What action will you take in the next 7 days? What mistake will you now avoid?" }] }
+      {
+        title: "The Iron Vault 3-Phase Vision",
+        content: [
+          { type: "quote", text: "An investment in knowledge pays the best interest.", author: "Benjamin Franklin" },
+          { type: "heading", text: "Phase 1 — Community & Education (Now)" },
+          { type: "body", text: "Before a single token is sold at scale, the community must understand what they're participating in. This is not standard practice in crypto. Most projects launch first, educate never, and wonder why their communities panic-sell at the first dip. Iron Vault inverts the model. Education is the product. The token is the reward for being informed." },
+          { type: "heading", text: "Phase 2 — Real Asset Acquisition & Revenue" },
+          { type: "body", text: "Income-producing real-world assets — real estate and related opportunities — provide the economic engine. Rental income, appreciation, and cash flow from physical assets tied to digital infrastructure. Subject to market conditions, execution quality, and regulatory compliance." },
+          { type: "heading", text: "Phase 3 — Digital Infrastructure Expansion" },
+          { type: "body", text: "Additional financial tools, expanded token utility, and asset-linked digital products — if legally and operationally viable. The roadmap is phased deliberately. Foundation first. Expansion when earned." },
+          { type: "callout", text: "A phased model is the opposite of how most projects are marketed. No promises of instant returns. No manufactured urgency. The community that understands the system is the asset. Everything else is built on top of that." },
+          { type: "action", text: "Write which phase you believe creates the most long-term value — and defend your reasoning." }
+        ]
+      },
+      {
+        title: "How Real Assets Connect to Digital Systems",
+        content: [
+          { type: "heading", text: "Real substance + digital efficiency = the actual opportunity" },
+          { type: "body", text: "Traditional real estate is powerful but slow. Buying takes months. Selling takes months. Ownership records are on paper or in county databases. Distributions to investors require wire transfers, accounting, and human coordination. Blockchain changes all of this." },
+          { type: "callout", text: "A smart contract can hold rental income and distribute it proportionally to token holders within seconds of receipt — automatically, transparently, and without a third party taking a cut. The property manager collects rent. The smart contract receives it. Token holders receive their share. On-chain, auditable, instant." },
+          { type: "vault", title: "VAULT SECRET: How Iron Vault's Smart Contracts Work", text: "Iron Vault's distribution mechanism is structured to receive income from real-world asset activity and allocate it according to token holdings recorded on-chain. When the contract triggers, it reads token balances, calculates proportional shares, and executes distributions — without manual intervention, without a bank transfer, without a middleman skimming the transaction. Every distribution is publicly verifiable on the Solana blockchain. No trust required. The code is the agreement." },
+          { type: "action", text: "Name one real-world asset class that would benefit most from this kind of automated, transparent distribution infrastructure." }
+        ]
+      },
+      {
+        title: "Why Education-First Is Actually the Strategy",
+        content: [
+          { type: "quote", text: "The man who does not read has no advantage over the man who cannot read.", author: "Mark Twain" },
+          { type: "heading", text: "Uninformed money is emotional money — and emotional money is exploitable" },
+          { type: "body", text: "The history of financial markets is a history of the informed transferring wealth from the uninformed during moments of fear and greed. The crash of 2008: informed banks sold mortgage-backed securities to uninformed pension funds. The crypto crashes: informed insiders sold to uninformed retail at the top. The pattern is consistent. The solution is knowledge." },
+          { type: "callout", text: "An educated community doesn't panic. Educated participants ask better questions. They recognize manipulation, can evaluate claims independently, and hold through volatility because they understand what they own. This is not idealism — it's strategic. A panic-resistant community is a stronger community. And a stronger community is a more valuable ecosystem." },
+          { type: "body", text: "This is why you're here. This is why this course exists before the token launch. Not as marketing. As infrastructure." },
+          { type: "action", text: "Write one thing you understand now that you didn't before this course. Be specific." }
+        ]
+      },
+      {
+        title: "Risks, Disclosures & Eyes Wide Open",
+        content: [
+          { type: "heading", text: "Every opportunity carries real risk. Honesty here is non-negotiable." },
+          { type: "list", items: ["Market Risk — token value can decline significantly and rapidly", "Execution Risk — plans may delay, underperform, or change", "Regulatory Risk — laws governing digital assets continue to evolve", "Liquidity Risk — buying or selling may be difficult in certain market conditions", "Technology Risk — smart contract bugs, network outages, wallet vulnerabilities", "Team Risk — execution depends on human performance and decision-making"] },
+          { type: "callout", text: "There are no guarantees. Not of returns, not of appreciation, not of success. Anyone who tells you otherwise is either uninformed or dishonest. The difference between Iron Vault and most projects is that we tell you this before you participate — not in fine print afterward." },
+          { type: "body", text: "A mature participant asks: What can go wrong? — before asking: What if this works? If you cannot answer the first question, you are not ready to participate." },
+          { type: "action", text: "Write the top three risks that concern you personally. Then write how you would manage each one before committing capital." }
+        ]
+      },
+      {
+        title: "What You Do After This Course",
+        content: [
+          { type: "heading", text: "Knowledge without action is expensive entertainment" },
+          { type: "list", items: ["Step 1: Pause. Do not make emotional decisions because you feel motivated.", "Step 2: Organize your financial foundation — emergency fund, debt plan, basic budget.", "Step 3: Evaluate your entity structure. Do you have an LLC? Should you?", "Step 4: If participating in digital assets — learn self-custody first.", "Step 5: Continue learning. This course is a starting point, not a destination."] },
+          { type: "callout", text: "The gap between knowing and doing is where most people stay permanently. The people who act on what they learn — even imperfectly — are the ones who look back in five years grateful they started." },
+          { type: "vault", title: "VAULT SECRET: The First Move Most People Skip", text: "Before you buy your first investment, open a business checking account under an LLC. Before that, form the LLC ($50-200 in most states). Before that, get an EIN from the IRS (free, takes 5 minutes online). These three steps create the legal separation that protects your personal assets, opens business credit, enables business deductions, and positions you to operate as an entity rather than an individual. Most people skip this entirely and build wealth in their personal name — exposed, taxable, and vulnerable. Do it first. Everything else is easier from there." },
+          { type: "action", text: "Write a 30-day action plan. Include at least one concrete structural move — not just 'save money.'" }
+        ]
+      },
+      {
+        title: "Completion — What You Now Know That Most People Don't",
+        content: [
+          { type: "quote", text: "The first step to getting the things you want out of life is this: Decide what you want.", author: "Ben Stein" },
+          { type: "heading", text: "You have crossed a threshold most people never approach" },
+          { type: "body", text: "Most people will spend their entire lives inside a financial system they don't understand, paying taxes they don't have to, building wealth they never reach. They weren't lazy. They weren't stupid. They were never taught. The information in this course has existed for decades — locked inside expensive accountants, private family offices, and word-of-mouth among the wealthy." },
+          { type: "callout", text: "You now know: how money is created, how it's debased, and how to protect yourself. How the tax code rewards ownership over labor. How entities separate your personal exposure from your financial activity. How real assets connect to digital infrastructure. How to evaluate an opportunity without being manipulated. How to build — not just earn." },
+          { type: "body", text: "The system was designed by people who understood it, for people who didn't. You've closed that gap. Use it wisely, patiently, and with full awareness of the risks. And share it — because the awakening of one person helps everyone." },
+          { type: "action", text: "Answer: What belief about money changed most? What action will you take in the next 7 days? What mistake will you now avoid?" }
+        ]
+      }
     ],
     quiz: [
       { q: "Iron Vault's Phase 1 focuses on:", options: ["Immediate token launch and sales", "Community building and education before scale", "Eliminating all financial intermediaries", "Guaranteed monthly distributions"], correct: 1 },
@@ -1928,11 +2251,16 @@ const MODULES = [
       { q: "The first structural financial move most people skip is:", options: ["Buying Bitcoin immediately", "Forming an LLC and opening a business checking account", "Moving to Puerto Rico", "Buying a rental property"], correct: 1 },
       { q: "Financial literacy is best viewed as:", options: ["A one-time certificate to earn", "An ongoing, lifelong strategic advantage", "Something only relevant if you're wealthy", "Unrelated to everyday decisions"], correct: 1 },
       { q: "Smart contract distributions are advantageous because:", options: ["They require bank approval to process", "They execute automatically, proportionally, and publicly on-chain", "They are only accessible to accredited investors", "They eliminate all tax obligations"], correct: 1 },
-      { q: "There are guarantees of returns, success, or appreciation in Iron Vault:", options: ["Yes, as stated in the smart contract", "Only for members", "No — participation involves real risk", "Yes, backed by government insurance"], correct: 2 },
+      { q: "There are guarantees of returns, success, or appreciation in Iron Vault:", options: ["Yes, as stated in the smart contract", "Only for founding members", "No — participation involves real risk", "Yes, backed by government insurance"], correct: 2 },
       { q: "The appropriate mindset after completing this course is:", options: ["Rush into all available investment opportunities immediately", "Share nothing — information is power to keep private", "Apply knowledge deliberately, structurally, and with full awareness of risk", "Wait until the market is perfect before acting"], correct: 2 }
     ]
-  },
-  ...EDUCATION_ONLY_MODULES
+  }
+];
+
+const MODULES = [
+  FREE_MODULE_0,
+  ...ORIGINAL_SIX_MODULES,
+  ...NEW_SIX_MODULES
 ];
 
 const PASS_SCORE = 8;
@@ -2201,9 +2529,12 @@ function ContentBlock({b}){
 }
 
 // ─── MAIN ─────────────────────────────────────────────────────────────────
-export default function IronVaultAcademyUnlocked({ allowedModules = [1, 2, 3, 4, 5, 6], accessType = "all_modules", onModuleComplete }){
+/**
+ * @param {{ allowedModules?: number[], accessType?: "free" | "single_module" | "all_modules" | "admin", onModuleComplete?: () => void }} props
+ */
+export default function IronVaultAcademyUnlocked({ allowedModules = [], accessType = "free", onModuleComplete }){
   const { ready, authenticated, user, login, logout, getAccessToken } = usePrivy();
-  const displayName = user?.email?.address || user?.phone?.number || "Member";
+  const displayName = user?.email?.address || user?.phone?.number || (authenticated ? "Member" : "Guest");
 
   const [view, setView] = useState("hub");
   const [modIdx, setModIdx] = useState(0);
@@ -2218,6 +2549,7 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [1, 2, 3, 4,
   const [revealed, setRevealed] = useState(false);
   const [quizQuestions, setQuizQuestions] = useState([]);
   const [showReadyHelp, setShowReadyHelp] = useState(false);
+  const [pendingOrientationScore, setPendingOrientationScore] = useState(null);
 
   useEffect(() => {
     if (ready) {
@@ -2272,24 +2604,67 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [1, 2, 3, 4,
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [view, lessonIdx]);
 
+  useEffect(() => {
+    if (!ready || !authenticated || pendingOrientationScore === null) return;
+
+    let cancelled = false;
+
+    getAccessToken()
+      .then((token) => {
+        if (!token) throw new Error("Missing access token");
+
+        return Promise.all([
+          fetch("/api/education-progress", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ action: "lesson", moduleIndex: 0, lessonIndex: 0 }),
+          }),
+          fetch("/api/education-progress", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ action: "quiz", moduleIndex: 0, score: pendingOrientationScore, passed: true }),
+          }),
+        ]);
+      })
+      .then(() => {
+        if (cancelled) return;
+        submitOrientationQualification(pendingOrientationScore);
+        setPendingOrientationScore(null);
+      })
+      .catch((error) => {
+        console.warn("[academy:orientation-qualified] Failed to save pending Module 0 qualification after login.", error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authenticated, getAccessToken, pendingOrientationScore, ready]);
+
   // ── Computed ──
   const totalXP = progress.reduce((s,p,i)=>s+(p.passed?MODULES[i].xpReward:0),0);
   const modsDone = progress.filter(p=>p.passed).length;
   const lessonsDone = progress.reduce((s,p)=>s+p.done.size,0);
   const totalLessons = MODULES.reduce((s,m)=>s+m.lessons.length,0);
+  const isFreeAccess = accessType === "free" || !authenticated;
   const isSingleModuleAccess = accessType === "single_module";
   const allowedModuleSet = useMemo(() => {
     const ids = new Set([0, ...allowedModules]);
-    if (!isSingleModuleAccess) FULL_CURRICULUM_MODULE_IDS.forEach((id) => ids.add(id));
+    if (!isFreeAccess && !isSingleModuleAccess) FULL_CURRICULUM_MODULE_IDS.forEach((id) => ids.add(id));
     return ids;
-  }, [allowedModules, isSingleModuleAccess]);
+  }, [allowedModules, isFreeAccess, isSingleModuleAccess]);
 
   /**
-   * UNLOCKED VARIANT: Module access rules
+  * Module access rules
    * - Module 0 is free and always available
    * - Module 1 is available to entitled users without requiring Module 0
    * - Subsequent modules require the previous module quiz to be passed
-   * - NO payment check. All modules present, gated only by sequential quiz completion.
+  * - Free visitors can inspect locked paid modules but cannot open them.
    */
   function modStatus(i){
     const mod = MODULES[i];
@@ -2354,6 +2729,25 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [1, 2, 3, 4,
     setAnswers({});setCurQ(0);setRevealed(false);setView("quiz");
   }
 
+  function submitOrientationQualification(score){
+    const email = user?.email?.address ?? null;
+    const name = user?.google?.name ?? user?.farcaster?.displayName ?? (displayName !== "Guest" ? displayName : null);
+
+    fetch("/api/academy/orientation-qualified", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        name,
+        score,
+        passed: true,
+        moduleId: 0,
+      }),
+    }).catch((error) => {
+      console.warn("[academy:orientation-qualified] Qualification webhook request failed.", error);
+    });
+  }
+
   function selectOpt(oi){ if(!revealed) setAnswers(a=>({...a,[curQ]:oi})); }
 
   function confirmAns(){ setRevealed(true); }
@@ -2387,6 +2781,15 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [1, 2, 3, 4,
             if (passed && onModuleComplete) onModuleComplete();
           })
           .catch(() => {});
+      }
+
+      if (passed && MODULES[modIdx].id === 0) {
+        if (authenticated) {
+          submitOrientationQualification(score);
+        } else {
+          setPendingOrientationScore(score);
+          console.warn("[academy:orientation-qualified] Guest completed Module 0; prompt account creation before saving qualification.");
+        }
       }
 
       if(passed){setConfetti(true);setTimeout(()=>setConfetti(false),4000);}
@@ -2424,31 +2827,6 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [1, 2, 3, 4,
       </div>
     );
   }
-  if(!authenticated){
-    return(
-      <div className="iv">
-        <style>{CSS}</style>
-        <div style={{minHeight:"100vh",display:"grid",placeItems:"center",padding:"40px 20px",position:"relative",zIndex:1}}>
-          <div style={{maxWidth:520,width:"100%",background:"#0F0F0F",border:"1px solid rgba(123,47,190,0.3)",borderRadius:6,padding:"48px 40px",textAlign:"center"}}>
-            <div className="iv-dot" style={{margin:"0 auto 20px"}}/>
-            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:44,letterSpacing:2,color:"#fff",marginBottom:10}}>
-              MEMBER<br/><span style={{color:"#AAFF00"}}>ACCESS VAULT</span>
-            </div>
-            <p style={{fontSize:14,color:"#555",lineHeight:1.7,marginBottom:28}}>
-              Member access vault. Sign in to access your curriculum.
-            </p>
-            <button
-              style={{width:"100%",background:"#AAFF00",border:"none",borderRadius:3,padding:16,color:"#080808",fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:2,cursor:"pointer"}}
-              onClick={login}
-            >
-              SIGN IN → ACCESS VAULT
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // ── HUB ──
   if(view==="hub"){
     return(
@@ -2456,11 +2834,11 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [1, 2, 3, 4,
         <style>{CSS}</style>
         {/* Member banner */}
         <div className="iv-member-banner">
-          <span>🔐 MEMBER</span>
+          <span>{isFreeAccess ? "🔓 FREE" : "🔐 MEMBER"}</span>
           <span style={{color:"#555",fontSize:8,letterSpacing:1}}>·</span>
-          <span>{isSingleModuleAccess ? `MODULE ${allowedModules[0] ?? 1} ACCESS` : "FULL CURRICULUM UNLOCKED"}</span>
+          <span>{isFreeAccess ? "ORIENTATION UNLOCKED" : isSingleModuleAccess ? `MODULE ${allowedModules[0] ?? 1} ACCESS` : "FULL CURRICULUM UNLOCKED"}</span>
           <span style={{color:"#555",fontSize:8,letterSpacing:1}}>·</span>
-          <span>{isSingleModuleAccess ? `COMPLETE MODULE ${allowedModules[0] ?? 1} TO EARN XP` : "COMPLETE IN SEQUENCE TO EARN XP"}</span>
+          <span>{isFreeAccess ? "PAID MODULES REQUIRE MEMBER ACCESS" : isSingleModuleAccess ? `COMPLETE MODULE ${allowedModules[0] ?? 1} TO EARN XP` : "COMPLETE IN SEQUENCE TO EARN XP"}</span>
         </div>
         <header className="iv-header">
           <div className="iv-logo"><div className="iv-dot"/>IRON VAULT</div>
@@ -2469,22 +2847,22 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [1, 2, 3, 4,
             <div className="iv-xp-track"><div className="iv-xp-fill" style={{width:`${(totalXP/TOTAL_XP)*100}%`}}/></div>
             <span className="iv-xp-val">{totalXP.toLocaleString()}</span>
           </div>
-          <div className="iv-chip" onClick={async()=>{ await logout(); setProgress(createEmptyProgress()); setProgressHydrated(false); }}>
-            👤 {displayName} · Sign Out
+          <div className="iv-chip" onClick={async()=>{ if(authenticated){ await logout(); setProgress(createEmptyProgress()); setProgressHydrated(false); } else login(); }}>
+            👤 {displayName} · {authenticated ? "Sign Out" : "Sign In"}
           </div>
         </header>
         <div className="iv-hub">
           <div className="iv-wrap">
-            <div className="iv-eyebrow">▸ MEMBER — {isSingleModuleAccess ? "SINGLE MODULE ACCESS" : "FULL CURRICULUM ACCESS"}</div>
+            <div className="iv-eyebrow">▸ {isFreeAccess ? "FREE ACCESS" : "MEMBER"} — {isFreeAccess ? "ORIENTATION AVAILABLE" : isSingleModuleAccess ? "SINGLE MODULE ACCESS" : "FULL CURRICULUM ACCESS"}</div>
             <h1 className="iv-h1">Your Vault<br/>Dashboard</h1>
-            <p className="iv-sub">{isSingleModuleAccess ? `Module ${allowedModules[0] ?? 1} is unlocked as part of your member position. Module 0 is free. Complete your unlocked module and pass the quiz at 8/10 to earn XP.` : "The full Iron Vault Academy curriculum is unlocked as part of your member position. Start with the free orientation, then complete each module in sequence to earn XP and unlock the next level."}</p>
+            <p className="iv-sub">{isFreeAccess ? "Start with the free Iron Vault Orientation. The twelve paid academy modules are visible here and remain locked until member access is active." : isSingleModuleAccess ? `Your member position unlocks paid Module ${allowedModules[0] ?? 1}. The free orientation stays available to everyone. Complete your unlocked module and pass the quiz at 8/10 to earn XP.` : "Your member position unlocks the twelve-module Iron Vault Academy curriculum. Start with the free orientation, then complete each paid module in sequence to earn XP and unlock the next level."}</p>
             <div className="iv-stats">
               <div className="iv-stat"><div className="iv-stat-l">VAULT XP</div><div className="iv-stat-v">{totalXP.toLocaleString()}</div><div className="iv-stat-u">of {TOTAL_XP.toLocaleString()} total</div></div>
-              <div className="iv-stat"><div className="iv-stat-l">MODULES PASSED</div><div className="iv-stat-v">{modsDone}</div><div className="iv-stat-u">of {MODULES.length}</div></div>
+              <div className="iv-stat"><div className="iv-stat-l">MODULES PASSED</div><div className="iv-stat-v">{modsDone}</div><div className="iv-stat-u">of {MODULES.length} total · 1 free + 12 paid</div></div>
               <div className="iv-stat"><div className="iv-stat-l">LESSONS DONE</div><div className="iv-stat-v">{lessonsDone}</div><div className="iv-stat-u">of {totalLessons}</div></div>
               <div className="iv-stat"><div className="iv-stat-l">PASS THRESHOLD</div><div className="iv-stat-v">80<span style={{fontSize:16}}>%</span></div><div className="iv-stat-u">8 of 10 correct</div></div>
             </div>
-            <div className="iv-eyebrow" style={{marginBottom:14}}>▸ CURRICULUM — {isSingleModuleAccess ? `MODULE ${allowedModules[0] ?? 1} UNLOCKED + FREE ORIENTATION` : "FULL CURRICULUM UNLOCKED"}</div>
+            <div className="iv-eyebrow" style={{marginBottom:14}}>▸ CURRICULUM — {isFreeAccess ? "FREE ORIENTATION + LOCKED PAID MODULES" : isSingleModuleAccess ? `MODULE ${allowedModules[0] ?? 1} UNLOCKED + FREE ORIENTATION` : "FREE ORIENTATION + TWELVE PAID MODULES"}</div>
             <div className="iv-grid">
               {MODULES.map((mod,i)=>{
                 const st=modStatus(i);
@@ -2496,7 +2874,7 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [1, 2, 3, 4,
                     <div className="iv-card-hd">
                       <div className="iv-icon">{mod.icon}</div>
                       <div className={`iv-badge ${st==="locked"?"b-lock":st==="passed"?"b-pass":st==="progress"?"b-prog":"b-avail"}`}>
-                        {mod.free&&st!=="passed"?"FREE - START HERE":st==="locked"?"🔒 COMPLETE PREVIOUS":st==="passed"?"✓ PASSED":st==="progress"?"● IN PROGRESS":"▶ AVAILABLE"}
+                        {mod.free&&st!=="passed"?"FREE — START HERE":st==="locked"?(isFreeAccess?"🔒 MEMBER ACCESS":"🔒 COMPLETE PREVIOUS"):st==="passed"?"✓ PASSED":st==="progress"?"● IN PROGRESS":"▶ AVAILABLE"}
                       </div>
                     </div>
                     <div className="iv-prog-bar">
@@ -2529,9 +2907,9 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [1, 2, 3, 4,
       <div className="iv">
         <style>{CSS}</style>
         <div className="iv-member-banner">
-          <span>🔐 MEMBER</span>
+          <span>{isFreeAccess ? "🔓 FREE" : "🔐 MEMBER"}</span>
           <span style={{color:"#555",fontSize:8}}>·</span>
-          <span>{isSingleModuleAccess ? `MODULE ${allowedModules[0] ?? 1} ACCESS` : "FULL CURRICULUM UNLOCKED"}</span>
+          <span>{isFreeAccess ? "ORIENTATION UNLOCKED" : isSingleModuleAccess ? `MODULE ${allowedModules[0] ?? 1} ACCESS` : "FULL CURRICULUM UNLOCKED"}</span>
         </div>
         <header className="iv-header">
           <div className="iv-logo"><div className="iv-dot"/>IRON VAULT</div>
@@ -2540,7 +2918,7 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [1, 2, 3, 4,
             <div className="iv-xp-track"><div className="iv-xp-fill" style={{width:`${(totalXP/TOTAL_XP)*100}%`}}/></div>
             <span className="iv-xp-val">{totalXP.toLocaleString()}</span>
           </div>
-          <div className="iv-chip">👤 {displayName}</div>
+          <div className="iv-chip" onClick={authenticated ? undefined : login}>👤 {displayName}{authenticated ? "" : " · Sign In"}</div>
         </header>
         <div className="iv-page">
           <button className="iv-back" onClick={()=>setView("hub")}>← DASHBOARD</button>
@@ -2703,18 +3081,20 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [1, 2, 3, 4,
         <div className="iv-results">
           <span className="iv-results-icon">{passed?"🏆":"📖"}</span>
           <div className={`iv-results-score ${passed?"rs-pass":"rs-fail"}`}>{score}/10</div>
-          <div className="iv-results-title">{passed ? (isOrientation ? "ORIENTATION COMPLETE" : "VAULT UNLOCKED") : "NOT YET"}</div>
+          <div className="iv-results-title">{passed ? (isOrientation ? "PRESALE QUALIFIED" : "VAULT UNLOCKED") : "NOT YET"}</div>
           <p className="iv-results-sub">
             {passed
               ? isOrientation
-                ? "You passed the Iron Vault Orientation. Your submission has been recorded. A representative may follow up with next steps. You can continue learning inside the Iron Vault Academy."
+                ? ORIENTATION_PASS_MESSAGE
                 : `Module ${mod.id} complete. You now know what most people will never be taught.`
               : `${score}/10 — we need ${PASS_SCORE} to pass. Review the lessons. The knowledge will stick harder the second time.`}
           </p>
           {passed&&<div className="iv-results-xp">⚡ +{mod.xpReward} XP EARNED</div>}
           <div className="iv-results-btns">
             <button className="iv-btn-ghost" onClick={startQuiz}>{passed?"RETAKE":"TRY AGAIN →"}</button>
-            {passed&&!hasNext&&<button className="iv-btn-ghost" onClick={()=>setView("hub")}>VIEW DASHBOARD →</button>}
+            {passed&&isOrientation&&!authenticated&&<button className="iv-btn-lime" onClick={login}>CREATE ACCOUNT TO SAVE →</button>}
+            {passed&&isOrientation&&<Link className="iv-btn-ghost" href="https://ironvaulttoken.com/learn">UNLOCK THE FULL IRON VAULT ACADEMY</Link>}
+            {passed&&!hasNext&&<button className="iv-btn-ghost" onClick={()=>setView("hub")}>{isFreeAccess ? "BACK TO ACADEMY →" : "VIEW DASHBOARD →"}</button>}
             <button className="iv-btn-lime" onClick={()=>{
               // Guard: only advance to next module if it is explicitly in allowedModuleSet
               if(passed&&hasNext&&allowedModuleSet.has(MODULES[modIdx+1].id)){setModIdx(m=>m+1);setView("module");}

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getProgress, markLessonComplete, saveQuizResult } from "@/lib/education-actions"
 import { ensureUserProfile } from "@/lib/backoffice-profile"
-import { canAccessModule, requireMemberAccess, requireModuleAccess, type MemberAccessScope } from "@/lib/server/member-access"
+import { canAccessAcademyModule, canAccessModule, getAcademyAccessScope, requireMemberAccess, requireModuleAccess, type MemberAccessScope } from "@/lib/server/member-access"
 import { getUserModuleCompletionStatus } from "@/lib/server/module-completion"
 import { recordVerifiedModuleCompletion } from "@/lib/server/reward-milestones"
 
@@ -69,7 +69,7 @@ async function syncRewardsForUser(privyUserId: string, scope: MemberAccessScope)
 }
 
 function canRecordEducationOnlyProgress(scope: MemberAccessScope, moduleId: number): boolean {
-  if (moduleId === FREE_MODULE_ID) return true
+  if (moduleId === FREE_MODULE_ID) return canAccessAcademyModule(scope, moduleId)
   if (PAID_REWARD_MODULE_IDS.has(moduleId)) return canAccessModule(scope, moduleId)
   if (EDUCATION_ONLY_MODULE_IDS.has(moduleId)) return scope.accessType === "all_modules" || scope.accessType === "admin"
   return false
@@ -115,24 +115,24 @@ export async function POST(req: NextRequest) {
     let privyUserId: string
     let accessScope: MemberAccessScope
     try {
-      const access = await requireMemberAccess(req)
-      privyUserId = access.auth.privyUserId
-      await ensureUserProfile(access.auth.privyUserId, {
-        email: access.auth.email,
-        walletAddress: access.auth.walletAddress,
-        tier: getMetadataString(access.entitlement?.metadata, "tier"),
-      })
-      accessScope = {
-        hasAccess: true,
-        accessType: access.isAdmin ? "admin" : access.entitlement?.metadata?.access_type === "single_module" ? "single_module" : "all_modules",
-        allowedModules: access.isAdmin
-          ? [1, 2, 3, 4, 5, 6]
-          : access.entitlement?.metadata?.access_type === "single_module"
-            ? [Number(access.entitlement.metadata.module_number)]
-            : [1, 2, 3, 4, 5, 6],
-        entitlementId: access.entitlement?.id,
-        rewardTrack: access.entitlement?.metadata?.reward_track === "single_module" ? "single_module" : "full_academy",
+      const academyAccess = await getAcademyAccessScope(req)
+      if (!academyAccess.auth) {
+        return NextResponse.json({ error: "Unauthorized: authentication required to save progress" }, { status: 401 })
       }
+
+      privyUserId = academyAccess.auth.privyUserId
+      accessScope = academyAccess.scope
+
+      let memberAccess: Awaited<ReturnType<typeof requireMemberAccess>> | null = null
+      if (accessScope.accessType !== "free") {
+        memberAccess = await requireMemberAccess(req)
+      }
+
+      await ensureUserProfile(academyAccess.auth.privyUserId, {
+        email: academyAccess.auth.email,
+        walletAddress: academyAccess.auth.walletAddress,
+        tier: getMetadataString(memberAccess?.entitlement?.metadata, "tier"),
+      })
     } catch (error: unknown) {
       const status = mapAccessErrorToStatus(error)
       const message = error instanceof Error ? error.message : "Failed to verify member access"

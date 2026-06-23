@@ -36,13 +36,15 @@ export type MemberAccessContext = {
 
 export type MemberAccessScope = {
 	hasAccess: boolean
-	accessType: 'all_modules' | 'single_module' | 'admin'
+	accessType: 'free' | 'all_modules' | 'single_module' | 'admin'
 	allowedModules: number[]
 	entitlementId?: string
 	rewardTrack?: 'full_academy' | 'single_module'
 }
 
 const ACCESS_TOKEN_COOKIE_NAMES = ['privy-token', 'privy-id-token'] as const
+export const FREE_ACADEMY_MODULE_ID = 0
+export const FULL_ACADEMY_MODULE_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const
 
 function getErrorMessage(error: unknown): string {
 	return error instanceof Error ? error.message : 'Unknown error'
@@ -83,6 +85,15 @@ async function getAuthenticatedUser(request?: Request): Promise<AuthenticatedPri
 			throw error
 		}
 		throw new Error('Unauthorized: invalid authentication token')
+	}
+}
+
+export async function getOptionalAuthenticatedUser(request?: Request): Promise<AuthenticatedPrivyUser | null> {
+	try {
+		return await getAuthenticatedUser(request)
+	} catch (error: unknown) {
+		if (isUnauthorizedError(error)) return null
+		throw error
 	}
 }
 
@@ -163,7 +174,7 @@ function scopeFromEntitlement(entitlement: MemberEntitlement): MemberAccessScope
 	return {
 		hasAccess: true,
 		accessType: 'all_modules',
-		allowedModules: [1, 2, 3, 4, 5, 6],
+		allowedModules: [...FULL_ACADEMY_MODULE_IDS],
 		entitlementId: entitlement.id,
 		rewardTrack: 'full_academy',
 	}
@@ -175,7 +186,7 @@ export async function getMemberAccessScope(request?: Request): Promise<MemberAcc
 		return {
 			hasAccess: true,
 			accessType: 'admin',
-			allowedModules: [1, 2, 3, 4, 5, 6],
+			allowedModules: [...FULL_ACADEMY_MODULE_IDS],
 			rewardTrack: 'full_academy',
 		}
 	}
@@ -191,8 +202,50 @@ export function canAccessModule(scope: MemberAccessScope, moduleNumber: number):
 	return scope.hasAccess && scope.allowedModules.includes(moduleNumber)
 }
 
+export function canAccessAcademyHub(): boolean {
+	return true
+}
+
+export function canAccessAcademyModule(scope: MemberAccessScope | null, moduleNumber: number): boolean {
+	if (moduleNumber === FREE_ACADEMY_MODULE_ID) return true
+	if (!scope) return false
+	return canAccessModule(scope, moduleNumber)
+}
+
+export function canAccessDashboard(scope: MemberAccessScope | null): boolean {
+	return Boolean(scope?.hasAccess && scope.accessType !== 'free')
+}
+
+export function canAccessMemberFeature(scope: MemberAccessScope | null): boolean {
+	return canAccessDashboard(scope)
+}
+
+export async function getAcademyAccessScope(request?: Request): Promise<{ auth: AuthenticatedPrivyUser | null; scope: MemberAccessScope }> {
+	const auth = await getOptionalAuthenticatedUser(request)
+	if (!auth) {
+		return {
+			auth: null,
+			scope: { hasAccess: true, accessType: 'free', allowedModules: [FREE_ACADEMY_MODULE_ID] },
+		}
+	}
+
+	try {
+		const scope = await getMemberAccessScope(request)
+		return { auth, scope }
+	} catch (error: unknown) {
+		const message = getErrorMessage(error)
+		if (message.startsWith('Forbidden:')) {
+			return {
+				auth,
+				scope: { hasAccess: true, accessType: 'free', allowedModules: [FREE_ACADEMY_MODULE_ID] },
+			}
+		}
+		throw error
+	}
+}
+
 export async function requireModuleAccess(request: Request | undefined, moduleNumber: number): Promise<MemberAccessScope> {
-	if (!Number.isInteger(moduleNumber) || moduleNumber < 1 || moduleNumber > 6) {
+	if (!Number.isInteger(moduleNumber) || !FULL_ACADEMY_MODULE_IDS.includes(moduleNumber as typeof FULL_ACADEMY_MODULE_IDS[number])) {
 		throw new Error('Forbidden: invalid module access request')
 	}
 
