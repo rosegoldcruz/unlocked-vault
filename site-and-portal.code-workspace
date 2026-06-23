@@ -5,6 +5,12 @@
 		},
 		{
 			"path": "../ironvaulttoken.com"
+		},
+		{
+			"path": "../info.ironvaulttoken.com"
+		},
+		{
+			"path": "../ivtt"
 		}
 	],
 	"settings": {}

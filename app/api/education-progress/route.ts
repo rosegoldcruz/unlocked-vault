@@ -5,6 +5,10 @@ import { canAccessModule, requireMemberAccess, requireModuleAccess, type MemberA
 import { getUserModuleCompletionStatus } from "@/lib/server/module-completion"
 import { recordVerifiedModuleCompletion } from "@/lib/server/reward-milestones"
 
+const FREE_MODULE_ID = 0
+const PAID_REWARD_MODULE_IDS = new Set([1, 2, 3, 4, 5, 6])
+const EDUCATION_ONLY_MODULE_IDS = new Set([7, 8, 9, 10, 11, 12])
+
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0
 }
@@ -64,6 +68,27 @@ async function syncRewardsForUser(privyUserId: string, scope: MemberAccessScope)
   }
 }
 
+function canRecordEducationOnlyProgress(scope: MemberAccessScope, moduleId: number): boolean {
+  if (moduleId === FREE_MODULE_ID) return true
+  if (PAID_REWARD_MODULE_IDS.has(moduleId)) return canAccessModule(scope, moduleId)
+  if (EDUCATION_ONLY_MODULE_IDS.has(moduleId)) return scope.accessType === "all_modules" || scope.accessType === "admin"
+  return false
+}
+
+async function persistEducationProgressWithoutRewards(
+  privyUserId: string,
+  accessScope: MemberAccessScope,
+  moduleId: number,
+  persist: () => Promise<void>,
+) {
+  if (!canRecordEducationOnlyProgress(accessScope, moduleId)) {
+    return null
+  }
+
+  await persist()
+  return { completedModules: [], eligibleMilestones: [], queuedMilestones: [], walletMissing: false }
+}
+
 export async function POST(req: NextRequest) {
   try {
     let body: unknown
@@ -120,32 +145,56 @@ export async function POST(req: NextRequest) {
     }
 
     if (payload.action === "lesson") {
-      const moduleIndex = Number(payload.moduleIndex)
+      const moduleId = Number(payload.moduleIndex)
       const lessonIndex = Number(payload.lessonIndex)
 
-      if (!Number.isInteger(moduleIndex) || !Number.isInteger(lessonIndex)) {
+      if (!Number.isInteger(moduleId) || !Number.isInteger(lessonIndex)) {
         return NextResponse.json({ error: "Invalid moduleIndex or lessonIndex" }, { status: 400 })
       }
 
-      const moduleNumber = moduleIndex + 1
-      accessScope = await requireModuleAccess(req, moduleNumber)
-      await markLessonComplete(privyUserId, moduleIndex, lessonIndex)
+      if (!PAID_REWARD_MODULE_IDS.has(moduleId)) {
+        const rewardSummary = await persistEducationProgressWithoutRewards(
+          privyUserId,
+          accessScope,
+          moduleId,
+          () => markLessonComplete(privyUserId, moduleId, lessonIndex),
+        )
+        if (!rewardSummary) {
+          return NextResponse.json({ error: "Forbidden: module access not purchased" }, { status: 403 })
+        }
+        return NextResponse.json({ success: true, ...rewardSummary })
+      }
+
+      accessScope = await requireModuleAccess(req, moduleId)
+      await markLessonComplete(privyUserId, moduleId, lessonIndex)
       const rewardSummary = await syncRewardsForUser(privyUserId, accessScope)
       return NextResponse.json({ success: true, ...rewardSummary })
     }
 
     if (payload.action === "quiz") {
-      const moduleIndex = Number(payload.moduleIndex)
+      const moduleId = Number(payload.moduleIndex)
       const score = Number(payload.score)
       const passed = Boolean(payload.passed)
 
-      if (!Number.isInteger(moduleIndex) || !Number.isInteger(score)) {
+      if (!Number.isInteger(moduleId) || !Number.isInteger(score)) {
         return NextResponse.json({ error: "Invalid moduleIndex or score" }, { status: 400 })
       }
 
-      const moduleNumber = moduleIndex + 1
-      accessScope = await requireModuleAccess(req, moduleNumber)
-      await saveQuizResult(privyUserId, moduleIndex, score, passed)
+      if (!PAID_REWARD_MODULE_IDS.has(moduleId)) {
+        const rewardSummary = await persistEducationProgressWithoutRewards(
+          privyUserId,
+          accessScope,
+          moduleId,
+          () => saveQuizResult(privyUserId, moduleId, score, passed),
+        )
+        if (!rewardSummary) {
+          return NextResponse.json({ error: "Forbidden: module access not purchased" }, { status: 403 })
+        }
+        return NextResponse.json({ success: true, ...rewardSummary })
+      }
+
+      accessScope = await requireModuleAccess(req, moduleId)
+      await saveQuizResult(privyUserId, moduleId, score, passed)
       const rewardSummary = await syncRewardsForUser(privyUserId, accessScope)
 
       return NextResponse.json({ success: true, ...rewardSummary })

@@ -38,7 +38,7 @@ async function getLatestQuizByModule(privyUserId: string): Promise<Map<number, L
   const latestByModule = new Map<number, LatestQuizRow>()
 
   for (const row of (data ?? []) as LatestQuizRow[]) {
-    const moduleNumber = Number(row.module_index) + 1
+    const moduleNumber = Number(row.module_index)
     if (!Number.isInteger(moduleNumber) || moduleNumber < 1 || moduleNumber > TOTAL_MODULES) continue
     if (!latestByModule.has(moduleNumber)) {
       latestByModule.set(moduleNumber, row)
