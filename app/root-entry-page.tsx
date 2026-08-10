@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { usePrivy } from '@privy-io/react-auth'
+import { usePrivy, useModalStatus } from '@privy-io/react-auth'
 
 type AccessCheckState = 'idle' | 'checking' | 'failed'
 
@@ -22,12 +22,36 @@ function delay(ms: number): Promise<void> {
 export default function RootEntryPage() {
   const router = useRouter()
   const { ready, authenticated, login, getAccessToken } = usePrivy()
+  const { isOpen: privyModalOpen } = useModalStatus()
   const [accessCheck, setAccessCheck] = useState<AccessCheckState>('idle')
   const [failureReason, setFailureReason] = useState<string | null>(null)
   const [retryNonce, setRetryNonce] = useState(0)
   const checkedRef = useRef(false)
 
+  // Privy's hosted login modal (email entry, then OTP code entry) lives
+  // outside this component tree. While it's open, warn on tab close/refresh
+  // so an in-progress OTP code isn't silently discarded before the
+  // ~15-minute code validity window elapses.
   useEffect(() => {
+    if (!privyModalOpen) return
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [privyModalOpen])
+
+  useEffect(() => {
+    // Guard: never redirect, re-check access, or otherwise reset this page
+    // while the Privy login modal is still open (e.g. the user is mid OTP
+    // entry). `authenticated` only flips true once Privy verifies the code,
+    // so this effect naturally waits until then, but the explicit check
+    // below keeps that invariant obvious and safe against future edits.
+    if (privyModalOpen) return
+
     if (!ready || !authenticated) {
       checkedRef.current = false
       setAccessCheck('idle')
@@ -106,7 +130,7 @@ export default function RootEntryPage() {
     return () => {
       cancelled = true
     }
-  }, [authenticated, ready, router, getAccessToken, retryNonce])
+  }, [authenticated, ready, router, getAccessToken, retryNonce, privyModalOpen])
 
   if (!ready || (authenticated && accessCheck !== 'failed')) {
     return null
