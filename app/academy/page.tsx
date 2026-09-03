@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@clerk/nextjs'
+import { BackofficeLayout } from '@/components/backoffice/BackofficeLayout'
+import { BackofficeProvider } from '@/components/backoffice/BackofficeProvider'
 import IronVaultAcademyUnlocked from '@/iron-vault-academy-unlocked'
 
 export default function AcademyPage() {
@@ -43,10 +45,20 @@ export default function AcademyPage() {
     )
   }
 
-  return (
+  const academy = (
     <IronVaultAcademyUnlocked
       allowedModules={scope?.allowedModules ?? []}
       accessType={scope?.accessType ?? 'free'}
     />
   )
+
+  if (isSignedIn) {
+    return (
+      <BackofficeProvider>
+        <BackofficeLayout>{academy}</BackofficeLayout>
+      </BackofficeProvider>
+    )
+  }
+
+  return academy
 }
