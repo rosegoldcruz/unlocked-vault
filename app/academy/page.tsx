@@ -1,24 +1,27 @@
 "use client"
 
 import { useEffect, useState } from 'react'
-import { useAuth } from '@clerk/nextjs'
+import { usePrivy } from '@privy-io/react-auth'
 import IronVaultAcademyUnlocked from '@/iron-vault-academy-unlocked'
 
 export default function AcademyPage() {
-  const { isLoaded, isSignedIn } = useAuth()
+  const { ready, authenticated, getAccessToken } = usePrivy()
   const [scope, setScope] = useState<{ allowedModules: number[]; accessType: 'free' | 'single_module' | 'all_modules' | 'admin' } | null>(null)
   const [scopeLoaded, setScopeLoaded] = useState(false)
 
   useEffect(() => {
-    if (!isLoaded) return
-    if (!isSignedIn) {
+    if (!ready) return
+    if (!authenticated) {
       setScope({ allowedModules: [], accessType: 'free' })
       setScopeLoaded(true)
       return
     }
 
     let cancelled = false
-    fetch('/api/access/me', { credentials: 'same-origin', cache: 'no-store' })
+    getAccessToken()
+      .then((token) => token
+        ? fetch('/api/access/me', { headers: { Authorization: `Bearer ${token}` } })
+        : null)
       .then((response) => response?.json())
       .then((payload) => {
         if (cancelled) return
@@ -33,7 +36,7 @@ export default function AcademyPage() {
       .catch(() => { if (!cancelled) setScopeLoaded(true) })
 
     return () => { cancelled = true }
-  }, [isLoaded, isSignedIn])
+  }, [authenticated, getAccessToken, ready])
 
   if (!scopeLoaded) {
     return (

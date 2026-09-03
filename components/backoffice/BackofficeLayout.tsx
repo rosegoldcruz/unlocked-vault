@@ -1,7 +1,6 @@
 "use client"
 
 import Link from 'next/link'
-import { SignOutButton } from '@clerk/nextjs'
 import { usePathname } from 'next/navigation'
 import { useState, type ComponentType, type ReactNode } from 'react'
 import {
@@ -18,6 +17,7 @@ import {
   Menu,
   X,
 } from 'lucide-react'
+import { usePrivy } from '@privy-io/react-auth'
 import { useBackofficeAuth } from '@/hooks/useBackofficeAuth'
 import { cn } from '@/lib/utils'
 import { CoinBurst } from '@/components/ui/coin-burst'
@@ -45,6 +45,7 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
 ]
 
 function NavLinks({ pathname, onNavigate, isAdmin }: { pathname: string; onNavigate?: () => void; isAdmin: boolean }) {
+  const { logout } = usePrivy()
   const navItems = isAdmin ? [...NAV_ITEMS, ...ADMIN_NAV_ITEMS] : NAV_ITEMS
   return (
     <nav className="space-y-2">
@@ -71,16 +72,14 @@ function NavLinks({ pathname, onNavigate, isAdmin }: { pathname: string; onNavig
         )
       })}
       <CoinBurst>
-        <SignOutButton>
-          <button
-            type="button"
-            onClick={() => onNavigate?.()}
-            className="flex w-full items-center gap-3 rounded border border-[#1a1a1a] bg-[#0f0f0f] px-3 py-2.5 text-sm text-zinc-400 transition-all duration-150 hover:border-red-400/30 hover:text-red-300"
-          >
-            <LogOut className="h-4 w-4" />
-            <span>Logout</span>
-          </button>
-        </SignOutButton>
+        <button
+          type="button"
+          onClick={() => { onNavigate?.(); void logout() }}
+          className="flex w-full items-center gap-3 rounded border border-[#1a1a1a] bg-[#0f0f0f] px-3 py-2.5 text-sm text-zinc-400 transition-all duration-150 hover:border-red-400/30 hover:text-red-300"
+        >
+          <LogOut className="h-4 w-4" />
+          <span>Logout</span>
+        </button>
       </CoinBurst>
     </nav>
   )

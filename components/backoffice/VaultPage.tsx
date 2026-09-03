@@ -1,5 +1,6 @@
 "use client"
 
+import { usePrivy } from '@privy-io/react-auth'
 import { useEffect, useState } from 'react'
 import { fetchBackofficeJson, type BackofficePositionResponse } from '@/lib/backoffice-client'
 import { useBackofficeAuth } from '@/hooks/useBackofficeAuth'
@@ -34,20 +35,24 @@ function CopyButton({ value, label }: { value: string | null | undefined; label:
 
 export function VaultPage() {
   const { profile } = useBackofficeAuth()
+  const { ready, authenticated, getAccessToken } = usePrivy()
   const [position, setPosition] = useState<UserPosition | null>(null)
   const [posLoading, setPosLoading] = useState(true)
   const [posError, setPosError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (!ready || !authenticated) return
     const load = async () => {
       try {
         setPosLoading(true); setPosError(null)
-        const payload = await fetchBackofficeJson<BackofficePositionResponse>('/api/backoffice/positions')
+        const token = await getAccessToken()
+        if (!token) throw new Error('Unauthorized: unable to retrieve access token')
+        const payload = await fetchBackofficeJson<BackofficePositionResponse>('/api/backoffice/positions', token)
         setPosition(payload.position)
       } catch (err: unknown) { setPosError(err instanceof Error ? err.message : 'Failed to load position data') } finally { setPosLoading(false) }
     }
     void load()
-  }, [])
+  }, [authenticated, getAccessToken, ready])
 
   const participationRows = position ? [
     { label: '2% Royalty Positions', value: position.royalty_2_percent_status },

@@ -1,6 +1,6 @@
 "use client"
 
-import { SignInButton, useAuth } from '@clerk/nextjs'
+import { usePrivy } from '@privy-io/react-auth'
 import { createContext, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { fetchBackofficeJson, type BackofficeProfileResponse } from '@/lib/backoffice-client'
 import type { BackofficeProfile } from '@/types/backoffice'
@@ -17,17 +17,19 @@ type BackofficeContextValue = {
 export const BackofficeContext = createContext<BackofficeContextValue | null>(null)
 
 export function BackofficeProvider({ children }: { children: ReactNode }) {
-  const { isLoaded, isSignedIn } = useAuth()
+  const { ready, authenticated, login, getAccessToken } = usePrivy()
   const [profile, setProfile] = useState<BackofficeProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const refreshProfile = useCallback(async () => {
-    if (!isLoaded) return
-    if (!isSignedIn) { setProfile(null); setError(null); setLoading(false); return }
+    if (!ready) return
+    if (!authenticated) { setProfile(null); setError(null); setLoading(false); return }
     setLoading(true); setError(null)
     try {
-      const payload = await fetchBackofficeJson<BackofficeProfileResponse>('/api/backoffice/profile')
+      const token = await getAccessToken()
+      if (!token) throw new Error('Unauthorized: unable to retrieve access token')
+      const payload = await fetchBackofficeJson<BackofficeProfileResponse>('/api/backoffice/profile', token)
       setProfile(payload.profile); setError(null)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load backoffice profile')
@@ -35,7 +37,7 @@ export function BackofficeProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false)
     }
-  }, [isLoaded, isSignedIn])
+  }, [authenticated, getAccessToken, ready])
 
   useEffect(() => { void refreshProfile() }, [refreshProfile])
 
@@ -44,19 +46,17 @@ export function BackofficeProvider({ children }: { children: ReactNode }) {
     return { profile, loading, error, refreshProfile, isVip: role === 'VIP' || role === 'ADMIN', isAdmin: role === 'ADMIN' }
   }, [error, loading, profile, refreshProfile])
 
-  if (!isLoaded) return null
+  if (!ready) return null
 
-  if (!isSignedIn) return (
+  if (!authenticated) return (
     <div className="min-h-screen bg-[#080808] text-zinc-100 grid place-items-center px-6">
       <div className="iv-panel w-full max-w-md p-8 text-center">
         <p className="iv-label mb-3">Iron Vault</p>
         <h1 className="iv-title mb-3 text-4xl">Sign in to continue</h1>
         <p className="iv-body mb-6 text-sm">Member backoffice access requires your authenticated Iron Vault account.</p>
-        <SignInButton mode="modal">
-          <button type="button" className="iv-button inline-flex items-center justify-center px-5 py-2.5 text-sm">
-            Sign In
-          </button>
-        </SignInButton>
+        <button type="button" onClick={() => login()} className="iv-button inline-flex items-center justify-center px-5 py-2.5 text-sm">
+          Sign In
+        </button>
       </div>
     </div>
   )

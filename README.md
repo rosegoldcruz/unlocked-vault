@@ -12,7 +12,7 @@ Live at → `member.ironvaulttoken.com`
 ```bash
 npm install
 cp .env.example .env.local
-# add Clerk auth keys and Supabase service credentials to .env.local
+# add your NEXT_PUBLIC_PRIVY_APP_ID to .env.local
 npm run dev
 ```
 
@@ -20,7 +20,7 @@ npm run dev
 
 1. Push this repo to GitHub
 2. Import into Vercel as a new project
-3. Add Clerk authentication variables for app `app_3InRR2DhLWHDxfI8KIXDozCfc15`
+3. Add environment variable: `NEXT_PUBLIC_PRIVY_APP_ID`
 4. In Vercel Domains, connect `member.ironvaulttoken.com` to this project
 
 ## Structure
@@ -29,7 +29,7 @@ npm run dev
 |---|---|
 | `iron-vault-academy-unlocked.jsx` | Main academy component (all modules unlocked) |
 | `app/page.tsx` | Entry point — renders the academy |
-| `app/layout.tsx` | Wraps app with Clerk auth provider |
+| `app/layout.tsx` | Wraps app with Privy auth provider |
 
 ## How it differs from `/learn` (gated version)
 

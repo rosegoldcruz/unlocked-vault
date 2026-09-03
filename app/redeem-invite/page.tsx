@@ -1,9 +1,9 @@
 'use client'
 
-import { SignInButton, useAuth } from '@clerk/nextjs'
-import { FormEvent, useMemo, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { usePrivy } from '@privy-io/react-auth'
 
 type RedeemState =
   | { type: 'idle'; message: string }
@@ -13,32 +13,39 @@ type RedeemState =
 
 export default function RedeemInvitePage() {
   const router = useRouter()
-  const { isLoaded, isSignedIn } = useAuth()
+  const { ready, authenticated, login, getAccessToken } = usePrivy()
   const [inviteCode, setInviteCode] = useState('')
   const [state, setState] = useState<RedeemState>({ type: 'idle', message: '' })
 
+  useEffect(() => {
+    if (ready && !authenticated) {
+      login()
+    }
+  }, [authenticated, login, ready])
+
   const canSubmit = useMemo(() => {
-    return isLoaded && isSignedIn && inviteCode.trim().length > 0 && state.type !== 'loading'
-  }, [inviteCode, isLoaded, isSignedIn, state.type])
+    return ready && authenticated && inviteCode.trim().length > 0 && state.type !== 'loading'
+  }, [authenticated, inviteCode, ready, state.type])
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-
-    if (!isSignedIn) {
-      setState({ type: 'error', message: 'You must be signed in before redeeming an invite.' })
-      return
-    }
 
     if (!canSubmit) return
 
     setState({ type: 'loading', message: 'Redeeming invite...' })
 
     try {
+      const token = await getAccessToken()
+      if (!token) {
+        setState({ type: 'error', message: 'You must be signed in before redeeming an invite.' })
+        return
+      }
+
       const response = await fetch('/api/access/redeem-invite', {
         method: 'POST',
-        credentials: 'same-origin',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ inviteCode }),
       })
@@ -71,17 +78,6 @@ export default function RedeemInvitePage() {
           Enter the invite code issued to you. Redemption is tied to your current signed-in account.
         </p>
 
-        {!isSignedIn ? (
-          <div className="mt-6 rounded border border-[#1a1a1a] bg-[#0f0f0f] p-4">
-            <p className="mb-4 text-sm text-zinc-400">Sign in before redeeming an invite.</p>
-            <SignInButton mode="modal">
-              <button type="button" className="iv-button inline-flex items-center justify-center px-5 py-2.5 text-sm">
-                Sign In
-              </button>
-            </SignInButton>
-          </div>
-        ) : null}
-
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <label className="block">
             <span className="iv-label-muted mb-2 block">Invite Code</span>
@@ -92,7 +88,7 @@ export default function RedeemInvitePage() {
               onChange={(event) => setInviteCode(event.target.value.toUpperCase())}
               className="iv-field w-full px-3 py-2.5 text-sm"
               placeholder="ENTER-CODE"
-              disabled={state.type === 'loading' || !isSignedIn}
+              disabled={state.type === 'loading'}
             />
           </label>
 

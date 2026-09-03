@@ -6,7 +6,7 @@ This document describes invite redemption for the member portal.
 
 - Method: `POST`
 - Path: `/api/access/redeem-invite`
-- Auth: Clerk session cookie for the signed-in member
+- Auth: Privy bearer token (`Authorization: Bearer <token>`)
 
 Request body:
 
@@ -18,7 +18,7 @@ Request body:
 
 ## Behavior
 
-- Validates the authenticated Clerk user on the server and resolves it to the member's existing Iron Vault account identity.
+- Validates authenticated Privy user on the server.
 - Rejects missing invite code with `400`.
 - Returns `200` with `already_entitled` when the account already has active member access.
 - Returns `200` with `already_redeemed` when the invite was already redeemed by the same account.

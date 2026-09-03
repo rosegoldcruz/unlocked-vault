@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireIronVaultUser } from '@/lib/server/clerk-auth'
+import { requirePrivyUser } from '@/lib/server/privy-auth'
 import { getSupabaseAdmin } from '@/lib/server/supabase-admin'
 import { ensureUserProfile } from '@/lib/backoffice-profile'
 import type { StatusTicket } from '@/types/backoffice'
@@ -10,7 +10,7 @@ function isNonEmptyString(value: unknown): value is string {
 
 export async function GET(req: NextRequest) {
   try {
-    const auth = await requireIronVaultUser(req)
+    const auth = await requirePrivyUser(req)
     await ensureUserProfile(auth.privyUserId, { email: auth.email, walletAddress: auth.walletAddress })
     const { data, error } = await getSupabaseAdmin().from('iv_status_tickets').select('*').eq('privy_user_id', auth.privyUserId).order('created_at', { ascending: false })
     if (error) throw error
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const auth = await requireIronVaultUser(req)
+    const auth = await requirePrivyUser(req)
     await ensureUserProfile(auth.privyUserId, { email: auth.email, walletAddress: auth.walletAddress })
     const body = await req.json()
     if (!isNonEmptyString(body?.subject)) return NextResponse.json({ error: 'Missing required field: subject' }, { status: 400 })

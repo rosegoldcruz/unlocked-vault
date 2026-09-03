@@ -1,5 +1,6 @@
 "use client"
 
+import { usePrivy } from '@privy-io/react-auth'
 import { type FormEvent, useEffect, useState } from 'react'
 import { fetchBackofficeJson, type BackofficeTicketCreateResponse, type BackofficeTicketsResponse } from '@/lib/backoffice-client'
 import type { StatusTicket } from '@/types/backoffice'
@@ -7,6 +8,7 @@ import { useBackofficeAuth } from '@/hooks/useBackofficeAuth'
 
 export function StatusDesk() {
   const { profile } = useBackofficeAuth()
+  const { ready, authenticated, getAccessToken } = usePrivy()
   const [tickets, setTickets] = useState<StatusTicket[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -16,22 +18,27 @@ export function StatusDesk() {
   useEffect(() => { setForm((prev) => ({ ...prev, email: profile?.email ?? '' })) }, [profile?.email])
 
   useEffect(() => {
+    if (!ready || !authenticated) return
     const load = async () => {
       try {
         setLoading(true); setError(null)
-        const payload = await fetchBackofficeJson<BackofficeTicketsResponse>('/api/backoffice/tickets')
+        const token = await getAccessToken()
+        if (!token) throw new Error('Unauthorized: unable to retrieve access token')
+        const payload = await fetchBackofficeJson<BackofficeTicketsResponse>('/api/backoffice/tickets', token)
         setTickets(payload.tickets)
       } catch (err: unknown) { setError(err instanceof Error ? err.message : 'Failed to load tickets') } finally { setLoading(false) }
     }
     void load()
-  }, [])
+  }, [authenticated, getAccessToken, ready])
 
   const submitTicket = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!form.subject.trim() || !form.message.trim()) { setError('Subject and message are required'); return }
     try {
       setSubmitting(true); setError(null)
-      const payload = await fetchBackofficeJson<BackofficeTicketCreateResponse>('/api/backoffice/tickets', { method: 'POST', body: { name: form.name, email: form.email, subject: form.subject, message: form.message } })
+      const token = await getAccessToken()
+      if (!token) throw new Error('Unauthorized: unable to retrieve access token')
+      const payload = await fetchBackofficeJson<BackofficeTicketCreateResponse>('/api/backoffice/tickets', token, { method: 'POST', body: { name: form.name, email: form.email, subject: form.subject, message: form.message } })
       setTickets((prev) => [payload.ticket, ...prev])
       setForm((prev) => ({ ...prev, subject: '', message: '' }))
     } catch (err: unknown) { setError(err instanceof Error ? err.message : 'Failed to submit ticket') } finally { setSubmitting(false) }

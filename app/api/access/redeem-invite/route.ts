@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireIronVaultUser } from '@/lib/server/clerk-auth'
+import { requirePrivyUser } from '@/lib/server/privy-auth'
 import { getSupabaseAdmin } from '@/lib/server/supabase-admin'
 
 type InviteStatus = 'active' | 'used' | 'revoked' | 'expired'
@@ -127,11 +127,7 @@ async function findExistingInviteEntitlement(
 
 export async function POST(req: NextRequest) {
   try {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('[academy-access] validation route hit', { hasConfiguredCode: Boolean(process.env.IRON_VAULT_MASTER_INVITE_CODE) })
-    }
-
-    const auth = await requireIronVaultUser(req)
+    const auth = await requirePrivyUser(req)
     const body = await req.json().catch(() => null)
     const inviteCode = normalizeInviteCode(body?.inviteCode)
 
@@ -183,7 +179,7 @@ export async function POST(req: NextRequest) {
     // Master invite code: reusable admin-controlled code that always works.
     // Enabled only when IRON_VAULT_MASTER_INVITE_CODE is set in the environment.
     if (isMasterInviteCode(inviteCode)) {
-      const { error: masterEntitlementError } = await getSupabaseAdmin()
+      const { data: masterEntitlement, error: masterEntitlementError } = await getSupabaseAdmin()
         .from('iv_member_entitlements')
         .insert({
           privy_user_id: auth.privyUserId,
