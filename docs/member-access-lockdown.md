@@ -2,13 +2,13 @@
 
 ## Current access rule
 
-Member routes are protected by `requireMemberAccess()`. A verified Privy session is required, and non-admin users must have an active, unexpired row in `iv_member_entitlements`.
+Member routes are protected by `requireMemberAccess()`. A verified Clerk session is required, and non-admin users must have an active, unexpired row in `iv_member_entitlements`.
 
 `iv_user_profiles.role = MEMBER` does not grant access by itself. `ADMIN` users may bypass entitlement checks.
 
 ## Grandfather cutoff rule
 
-Existing profile users created at or before `GRANDFATHER_CUTOFF_ISO` may be granted a `grandfathered` entitlement. Future Privy account creation alone does not grant academy or dashboard access.
+Existing profile users created at or before `GRANDFATHER_CUTOFF_ISO` may be granted a `grandfathered` entitlement. Future account creation alone does not grant academy or dashboard access.
 
 The current cutoff for the lockdown run is:
 
@@ -40,7 +40,7 @@ The script inserts `iv_member_entitlements` rows with `source = 'grandfathered'`
 
 ## Verify new users are blocked
 
-Create or use a Privy user that has no active `iv_member_entitlements` row and is not an admin. After login, `/api/access/me` should return `403`, and the UI should land on `/access-required`.
+Create or use a Clerk user that has no active `iv_member_entitlements` row and is not an admin. After login, `/api/access/me` should return `403`, and the UI should land on `/access-required`.
 
 ## Stripe access
 
@@ -48,7 +48,7 @@ Stripe-paid users should receive an active `iv_member_entitlements` row with `so
 
 ## Invite access
 
-Invite redemption uses `/api/access/redeem-invite`. A valid invite creates an active `iv_member_entitlements` row with `source = 'invite'`, tied to the current verified Privy identity.
+Invite redemption uses `/api/access/redeem-invite`. A valid invite creates an active `iv_member_entitlements` row with `source = 'invite'`, tied to the current verified Clerk identity through the Iron Vault identity-link table.
 
 ## Emergency rollback
 

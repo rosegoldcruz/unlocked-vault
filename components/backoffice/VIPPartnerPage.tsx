@@ -1,7 +1,6 @@
 "use client"
 
 import { type FormEvent, useState } from 'react'
-import { usePrivy } from '@privy-io/react-auth'
 import {
   ArrowRight,
   BadgeCheck,
@@ -100,7 +99,6 @@ function getOffer(id: OfferId) {
 
 export function VIPPartnerPage({ videoSrc }: { videoSrc?: string }) {
   const { profile } = useBackofficeAuth()
-  const { getAccessToken } = usePrivy()
   const [selectedOffer, setSelectedOffer] = useState<OfferId>('private-partner')
   const [form, setForm] = useState({ name: '', phone: '', message: '' })
   const [submitting, setSubmitting] = useState(false)
@@ -121,9 +119,7 @@ export function VIPPartnerPage({ videoSrc }: { videoSrc?: string }) {
     try {
       setSubmitting(true)
       setError(null)
-      const token = await getAccessToken()
-      if (!token) throw new Error('Unable to verify your portal session.')
-      await fetchBackofficeJson<BackofficeTicketCreateResponse>('/api/backoffice/tickets', token, {
+      await fetchBackofficeJson<BackofficeTicketCreateResponse>('/api/backoffice/tickets', {
         method: 'POST',
         body: {
           name: form.name,

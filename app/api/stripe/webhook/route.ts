@@ -190,6 +190,7 @@ async function grantMemberEntitlement(stripe: Stripe, event: Stripe.Event, sessi
     payment_tier: getString(session.metadata?.payment_tier) ?? getString(session.metadata?.paymentTier),
     legacy_tier: getString(session.metadata?.legacy_tier) ?? getString(session.metadata?.legacyTier),
     internal_test: getBoolean(session.metadata?.internal_test),
+    clerk_user_id: getString(session.metadata?.clerk_user_id) ?? getString(session.metadata?.clerkUserId),
   })
 
   const { data: entitlement, error: insertError } = await getSupabaseAdmin()

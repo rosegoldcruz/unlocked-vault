@@ -20,7 +20,7 @@
     "rewards:dry-run": "tsx scripts/run-payout-dry-run.ts"
   },
   "dependencies": {
-    "@privy-io/react-auth": "^3.22.1",
+    "@clerk/nextjs": "^7.9.1",
     "@privy-io/server-auth": "^1.32.5",
     "@solana-program/memo": "^0.10.0",
     "@solana-program/system": "^0.10.0",
@@ -29,6 +29,7 @@
     "@solana/web3.js": "^1.98.4",
     "@supabase/supabase-js": "^2.106.2",
     "autoprefixer": "^10.5.0",
+    "bs58": "^6.0.0",
     "clsx": "^2.1.1",
     "lucide-react": "^1.17.0",
     "next": "15.5.15",

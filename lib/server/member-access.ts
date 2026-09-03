@@ -1,10 +1,5 @@
-import { cookies, headers } from 'next/headers'
 import { getSupabaseAdmin } from '@/lib/server/supabase-admin'
-import {
-	getPrivyAccessTokenFromHeaders,
-	requirePrivyUserFromAccessToken,
-	type AuthenticatedPrivyUser,
-} from '@/lib/server/privy-auth'
+import { getOptionalIronVaultUser, requireIronVaultUser, type AuthenticatedIronVaultUser } from '@/lib/server/clerk-auth'
 
 type EntitlementStatus = 'active' | 'revoked' | 'expired'
 type EntitlementSource = 'stripe' | 'invite' | 'grandfathered' | 'admin'
@@ -29,7 +24,7 @@ type MemberEntitlement = {
 }
 
 export type MemberAccessContext = {
-	auth: AuthenticatedPrivyUser
+	auth: AuthenticatedIronVaultUser
 	isAdmin: boolean
 	entitlement: MemberEntitlement | null
 }
@@ -42,7 +37,6 @@ export type MemberAccessScope = {
 	rewardTrack?: 'full_academy' | 'single_module'
 }
 
-const ACCESS_TOKEN_COOKIE_NAMES = ['privy-token', 'privy-id-token'] as const
 export const FREE_ACADEMY_MODULE_ID = 0
 export const FULL_ACADEMY_MODULE_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const
 
@@ -54,43 +48,15 @@ function isUnauthorizedError(error: unknown): boolean {
 	return getErrorMessage(error).startsWith('Unauthorized:')
 }
 
-async function getAccessToken(request?: Request): Promise<string | null> {
-	if (request) {
-		return getPrivyAccessTokenFromHeaders(request.headers)
-	}
-
-	const headerStore = await headers()
-	const tokenFromHeaders = getPrivyAccessTokenFromHeaders(headerStore)
-	if (tokenFromHeaders) return tokenFromHeaders
-
-	const cookieStore = await cookies()
-	for (const cookieName of ACCESS_TOKEN_COOKIE_NAMES) {
-		const cookieValue = cookieStore.get(cookieName)?.value
-		if (cookieValue && cookieValue.length > 0) {
-			return decodeURIComponent(cookieValue)
-		}
-	}
-
-	return null
+async function getAuthenticatedUser(_request?: Request): Promise<AuthenticatedIronVaultUser> {
+	void _request
+	return requireIronVaultUser()
 }
 
-async function getAuthenticatedUser(request?: Request): Promise<AuthenticatedPrivyUser> {
-	const token = await getAccessToken(request)
-	if (!token) throw new Error('Unauthorized: missing authentication token')
-
+export async function getOptionalAuthenticatedUser(_request?: Request): Promise<AuthenticatedIronVaultUser | null> {
+	void _request
 	try {
-		return await requirePrivyUserFromAccessToken(token)
-	} catch (error: unknown) {
-		if (isUnauthorizedError(error)) {
-			throw error
-		}
-		throw new Error('Unauthorized: invalid authentication token')
-	}
-}
-
-export async function getOptionalAuthenticatedUser(request?: Request): Promise<AuthenticatedPrivyUser | null> {
-	try {
-		return await getAuthenticatedUser(request)
+		return await getOptionalIronVaultUser()
 	} catch (error: unknown) {
 		if (isUnauthorizedError(error)) return null
 		throw error
@@ -220,7 +186,7 @@ export function canAccessMemberFeature(scope: MemberAccessScope | null): boolean
 	return canAccessDashboard(scope)
 }
 
-export async function getAcademyAccessScope(request?: Request): Promise<{ auth: AuthenticatedPrivyUser | null; scope: MemberAccessScope }> {
+export async function getAcademyAccessScope(request?: Request): Promise<{ auth: AuthenticatedIronVaultUser | null; scope: MemberAccessScope }> {
 	const auth = await getOptionalAuthenticatedUser(request)
 	if (!auth) {
 		return {
