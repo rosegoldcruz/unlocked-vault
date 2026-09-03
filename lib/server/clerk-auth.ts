@@ -169,24 +169,40 @@ async function findLegacyCandidates(user: User, emails: string[], wallets: strin
 }
 
 function resolveCandidate(candidates: LegacyCandidate[]): { privyUserId: string; strategy: IdentityLinkStrategy } | null {
-  const uniqueIds = [...new Set(candidates.map((candidate) => candidate.privyUserId))]
-  if (uniqueIds.length === 0) return null
-  if (uniqueIds.length > 1) {
+  const idsForStrategy = (strategy: LegacyCandidate['strategy']) => [
+    ...new Set(candidates.filter((candidate) => candidate.strategy === strategy).map((candidate) => candidate.privyUserId)),
+  ]
+  const throwAmbiguous = () => {
     throw new Error('Forbidden: multiple legacy accounts match this verified Clerk identity')
   }
 
-  const matched = candidates.find((candidate) => candidate.privyUserId === uniqueIds[0])
-  if (!matched) return null
+  const trustedIds = idsForStrategy('trusted_clerk_legacy_id')
+  if (trustedIds.length > 1) throwAmbiguous()
+  if (trustedIds.length === 1) {
+    return { privyUserId: trustedIds[0], strategy: 'trusted_clerk_legacy_id' }
+  }
 
-  const strategies = new Set(candidates.map((candidate) => candidate.strategy))
-  const strategy =
-    strategies.has('trusted_clerk_legacy_id')
-      ? 'trusted_clerk_legacy_id'
-      : strategies.size > 1
-        ? 'verified_identity'
-        : matched.strategy
+  const walletIds = idsForStrategy('verified_wallet')
+  const emailIds = idsForStrategy('verified_email')
+  if (walletIds.length > 1) throwAmbiguous()
+  if (emailIds.length > 1 && walletIds.length !== 1) throwAmbiguous()
 
-  return { privyUserId: matched.privyUserId, strategy }
+  if (walletIds.length === 1) {
+    const walletId = walletIds[0]
+    if (emailIds.length === 1 && emailIds[0] !== walletId) throwAmbiguous()
+    if (emailIds.length > 1 && !emailIds.includes(walletId)) throwAmbiguous()
+
+    return {
+      privyUserId: walletId,
+      strategy: emailIds.length === 1 ? 'verified_identity' : 'verified_wallet',
+    }
+  }
+
+  if (emailIds.length === 1) {
+    return { privyUserId: emailIds[0], strategy: 'verified_email' }
+  }
+
+  return null
 }
 
 async function upsertIdentityLink(params: {
