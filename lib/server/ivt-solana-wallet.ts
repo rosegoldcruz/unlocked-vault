@@ -23,7 +23,7 @@ export type IvtTokenBalance = {
 } | null
 
 function getPrivyClient(): PrivyClient | null {
-  const appId = process.env.PRIVY_APP_ID || process.env.NEXT_PUBLIC_PRIVY_APP_ID
+  const appId = process.env.PRIVY_APP_ID ?? process.env.NEXT_PUBLIC_PRIVY_APP_ID
   const appSecret = process.env.PRIVY_APP_SECRET
   if (!appId || !appSecret) return null
   return new PrivyClient(appId, appSecret)

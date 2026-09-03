@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { usePrivy } from '@privy-io/react-auth'
 
 type Summary = {
   totalCompletions: number
@@ -61,8 +60,6 @@ function statusClasses(status: string): string {
 }
 
 export function AdminRewardsDashboard() {
-  const { ready, authenticated, getAccessToken } = usePrivy()
-
   const [summary, setSummary] = useState<Summary | null>(null)
   const [jobs, setJobs] = useState<PayoutJob[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -75,25 +72,17 @@ export function AdminRewardsDashboard() {
   const [error, setError] = useState<string | null>(null)
   const [actionJobId, setActionJobId] = useState<string | null>(null)
 
-  const fetchJson = useCallback(async (path: string) => {
-    const token = await getAccessToken()
-    if (!token) throw new Error('Missing auth token')
-
-    const response = await fetch(path, { headers: { Authorization: `Bearer ${token}` } })
+  const fetchJson = useCallback(async (path: string, init: RequestInit = {}) => {
+    const response = await fetch(path, { ...init, credentials: 'same-origin', cache: 'no-store' })
     const payload = await response.json().catch(() => null)
     if (!response.ok) {
       const message = payload && typeof payload.error === 'string' ? payload.error : 'Request failed'
       throw new Error(message)
     }
     return payload
-  }, [getAccessToken])
+  }, [])
 
   const loadData = useCallback(async () => {
-    if (!ready || !authenticated) {
-      setLoading(false)
-      return
-    }
-
     setLoading(true)
     setError(null)
 
@@ -116,7 +105,7 @@ export function AdminRewardsDashboard() {
     } finally {
       setLoading(false)
     }
-  }, [authenticated, fetchJson, milestoneFilter, ready, statusFilter])
+  }, [fetchJson, milestoneFilter, statusFilter])
 
   useEffect(() => {
     void loadData()
@@ -139,7 +128,7 @@ export function AdminRewardsDashboard() {
     setActionJobId(id)
     setError(null)
     try {
-      await fetchJson(`/api/admin/rewards/payout-jobs/${id}/retry`)
+      await fetchJson(`/api/admin/rewards/payout-jobs/${id}/retry`, { method: 'POST' })
       await loadData()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to retry payout job')
@@ -152,7 +141,7 @@ export function AdminRewardsDashboard() {
     setActionJobId(id)
     setError(null)
     try {
-      await fetchJson(`/api/admin/rewards/payout-jobs/${id}/cancel`)
+      await fetchJson(`/api/admin/rewards/payout-jobs/${id}/cancel`, { method: 'POST' })
       await loadData()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to cancel payout job')

@@ -150,7 +150,7 @@ Status: BLOCKED at Step 2 (no controlled entitled test user can exist in the cur
 - `git status --short`: clean working tree.
 - `git log --oneline -5`: HEAD = `85f4740 test: update reward dry-run runtime configuration`.
 - `npm run build`: **PASS** — compiles successfully (one pre-existing unrelated warning:
-  `Module not found: '@farcaster/mini-app-solana'` from `@privy-io/react-auth`, not from project code),
+  `Module not found: '@farcaster/mini-app-solana'` from the former Privy React SDK, not from project code),
   all 17 routes generated, exit 0.
 
 ### Step 2 — Identify one controlled entitled test user
