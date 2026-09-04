@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { auth as clerkAuth, currentUser } from '@clerk/nextjs/server'
 import { requireIronVaultUser } from '@/lib/server/clerk-auth'
 import { getSupabaseAdmin } from '@/lib/server/supabase-admin'
 import { resolveCanonicalAccess } from '@/lib/server/access-model'
@@ -27,6 +28,13 @@ type MemberEntitlement = {
   developer_lab_access?: boolean | null
 }
 
+type RedeemIdentity = {
+  clerkUserId: string
+  privyUserId: string
+  email: string | null
+  walletAddress: string | null
+}
+
 const MASTER_INVITE_CODE = (process.env.IRON_VAULT_MASTER_INVITE_CODE ?? '').trim().toUpperCase()
 const MASTER_INVITE_ACCESS = {
   package: 'INTERMEDIATE',
@@ -52,6 +60,17 @@ function isUnauthorized(message: string): boolean {
 function normalizeNullable(value: string | null): string | null {
   if (!value) return null
   return value.trim().toLowerCase()
+}
+
+function normalizeOptional(value: string | null | undefined): string | null {
+  const trimmed = value?.trim()
+  return trimmed && trimmed.length > 0 ? trimmed : null
+}
+
+function normalizeWalletAddress(value: string | null | undefined): string | null {
+  const normalized = normalizeOptional(value)
+  if (!normalized) return null
+  return normalized.startsWith('0x') ? normalized.toLowerCase() : normalized
 }
 
 function isInviteExpired(expiresAt: string | null): boolean {
@@ -135,19 +154,64 @@ async function findExistingInviteEntitlement(
   return null
 }
 
+async function resolveMasterInviteIdentity(): Promise<RedeemIdentity> {
+  const { userId } = await clerkAuth()
+  if (!userId) throw new Error('Unauthorized: missing Clerk session')
+
+  const user = await currentUser()
+  if (!user) throw new Error('Unauthorized: missing Clerk user')
+
+  const primaryEmail = user.emailAddresses.find((email) => email.id === user.primaryEmailAddressId)
+  const email = normalizeNullable(primaryEmail?.emailAddress ?? user.emailAddresses[0]?.emailAddress ?? null)
+  const primaryWallet = user.web3Wallets.find((wallet) => wallet.id === user.primaryWeb3WalletId)
+  const walletAddress = normalizeWalletAddress(primaryWallet?.web3Wallet ?? user.web3Wallets[0]?.web3Wallet ?? null)
+
+  const { data: existingLink, error: existingLinkError } = await getSupabaseAdmin()
+    .from('iv_auth_identity_links')
+    .select('privy_user_id')
+    .eq('clerk_user_id', userId)
+    .maybeSingle<{ privy_user_id: string }>()
+
+  if (existingLinkError) throw existingLinkError
+
+  const privyUserId = existingLink?.privy_user_id ?? userId
+
+  const { error: linkError } = await getSupabaseAdmin()
+    .from('iv_auth_identity_links')
+    .upsert(
+      {
+        clerk_user_id: userId,
+        privy_user_id: privyUserId,
+        email,
+        wallet_address: walletAddress,
+        link_strategy: existingLink ? 'existing_link' : 'new_clerk_user',
+        metadata: { source: 'master_invite_runtime_resolver' },
+        last_seen_at: new Date().toISOString(),
+      },
+      { onConflict: 'clerk_user_id' },
+    )
+
+  if (linkError) throw linkError
+
+  return { clerkUserId: userId, privyUserId, email, walletAddress }
+}
+
 export async function POST(req: NextRequest) {
   try {
     if (process.env.NODE_ENV !== 'production') {
       console.log('[academy-access] validation route hit', { hasConfiguredCode: Boolean(process.env.IRON_VAULT_MASTER_INVITE_CODE) })
     }
 
-    const auth = await requireIronVaultUser(req)
     const body = await req.json().catch(() => null)
     const inviteCode = normalizeInviteCode(body?.inviteCode)
 
     if (!inviteCode) {
       return NextResponse.json({ error: 'Missing required field: inviteCode' }, { status: 400 })
     }
+
+    const auth = isMasterInviteCode(inviteCode)
+      ? await resolveMasterInviteIdentity()
+      : await requireIronVaultUser(req)
 
     const activeEntitlementChecks: Array<Promise<MemberEntitlement | null>> = [
       findActiveEntitlementForIdentity('privy_user_id', auth.privyUserId),
