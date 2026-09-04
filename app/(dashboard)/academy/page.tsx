@@ -37,7 +37,7 @@ export default function AcademyPage() {
 
   if (!scopeLoaded) {
     return (
-      <div className="grid place-items-center bg-[#080808]" style={{ minHeight: '100vh' }}>
+      <div className="grid min-h-[60vh] place-items-center">
         <p className="font-mono text-xs text-zinc-500 tracking-widest animate-pulse">LOADING ACADEMY ACCESS...</p>
       </div>
     )
