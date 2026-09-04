@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { usePrivy } from '@privy-io/react-auth'
 
 type RewardStatusPayload = {
   walletAddress: string | null
@@ -74,7 +73,6 @@ function statusClasses(status: string): string {
 }
 
 export default function RewardsPage() {
-  const { ready, authenticated, getAccessToken } = usePrivy()
   const [data, setData] = useState<RewardStatusPayload | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -83,26 +81,13 @@ export default function RewardsPage() {
     let cancelled = false
 
     async function loadRewardStatus() {
-      if (!ready || !authenticated) {
-        if (!cancelled) {
-          setData(null)
-          setError(null)
-          setLoading(false)
-        }
-        return
-      }
-
       setLoading(true)
       setError(null)
 
       try {
-        const token = await getAccessToken()
-        if (!token) throw new Error('Unable to load rewards: missing auth token')
-
         const response = await fetch('/api/rewards/status', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: 'same-origin',
+          cache: 'no-store',
         })
 
         const payload = (await response.json().catch(() => null)) as RewardStatusPayload | { error?: string } | null
@@ -135,7 +120,7 @@ export default function RewardsPage() {
     return () => {
       cancelled = true
     }
-  }, [authenticated, getAccessToken, ready])
+  }, [])
 
   const completionSet = useMemo(() => new Set(data?.completedModules ?? []), [data?.completedModules])
   const isSingleModule = data?.accessScope.rewardTrack === 'single_module'

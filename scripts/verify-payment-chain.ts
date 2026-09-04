@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from '@/lib/server/supabase-admin'
 const target = process.argv[2]
 
 function assertTarget() {
-  if (!target) throw new Error('Usage: npm run verify:payment-chain -- <privy_user_id|stripe_checkout_session_id|payout_job_id>')
+  if (!target) throw new Error('Usage: npm run verify:payment-chain -- <privy_user_id|payment_session_id|payout_job_id>')
 }
 
 async function main() {
@@ -21,8 +21,8 @@ async function main() {
 
   const { data: entitlements, error: entitlementError } = await supabase
     .from('iv_member_entitlements')
-    .select('id, privy_user_id, status, stripe_checkout_session_id, metadata')
-    .or(`privy_user_id.eq.${privyUserId},stripe_checkout_session_id.eq.${target}`)
+    .select('id, privy_user_id, status, metadata')
+    .eq('privy_user_id', privyUserId)
     .limit(10)
   if (entitlementError) throw entitlementError
 

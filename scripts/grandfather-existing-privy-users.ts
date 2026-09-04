@@ -16,7 +16,7 @@ type UserProfile = {
 
 type MemberEntitlement = {
   id: string
-  source: 'stripe' | 'invite' | 'grandfathered' | 'admin'
+  source: 'invite' | 'grandfathered' | 'admin'
   status: 'active' | 'revoked' | 'expired'
 }
 

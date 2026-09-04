@@ -1,9 +1,10 @@
 'use client'
 
+import { SignInButton, useAuth } from '@clerk/nextjs'
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { usePrivy } from '@privy-io/react-auth'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 type AccessCheckState = 'idle' | 'checking' | 'failed'
 
@@ -12,23 +13,16 @@ type AccessMeResponse = {
   entitled?: boolean
 }
 
-const MAX_SYNC_ATTEMPTS = 5
-const RETRY_DELAYS_MS = [500, 1_000, 2_000, 4_000, 8_000] as const
-
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
 export default function RootEntryPage() {
   const router = useRouter()
-  const { ready, authenticated, login, getAccessToken } = usePrivy()
+  const { isLoaded, isSignedIn } = useAuth()
   const [accessCheck, setAccessCheck] = useState<AccessCheckState>('idle')
   const [failureReason, setFailureReason] = useState<string | null>(null)
   const [retryNonce, setRetryNonce] = useState(0)
   const checkedRef = useRef(false)
 
   useEffect(() => {
-    if (!ready || !authenticated) {
+    if (!isLoaded || !isSignedIn) {
       checkedRef.current = false
       setAccessCheck('idle')
       return
@@ -41,39 +35,8 @@ export default function RootEntryPage() {
     setAccessCheck('checking')
     setFailureReason(null)
 
-    const syncAndVerifyServerAccess = async () => {
+    const verifyServerAccess = async () => {
       try {
-        let token: string | null = null
-        for (let attempt = 0; attempt < MAX_SYNC_ATTEMPTS; attempt += 1) {
-          token = await getAccessToken()
-          if (cancelled || token) break
-          await delay(RETRY_DELAYS_MS[attempt] ?? RETRY_DELAYS_MS[RETRY_DELAYS_MS.length - 1])
-        }
-
-        if (!token) {
-          if (!cancelled) {
-            setFailureReason('empty_access_token')
-            setAccessCheck('failed')
-          }
-          return
-        }
-
-        const sessionResponse = await fetch('/api/auth/privy-session', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` },
-          credentials: 'include',
-          cache: 'no-store',
-        })
-
-        if (cancelled) return
-
-        if (!sessionResponse.ok) {
-          const data = (await sessionResponse.json().catch(() => null)) as { reason?: string } | null
-          setFailureReason(data?.reason ?? 'session_sync_failed')
-          setAccessCheck('failed')
-          return
-        }
-
         const response = await fetch('/api/access/me', { credentials: 'include', cache: 'no-store' })
 
         if (cancelled) return
@@ -95,31 +58,39 @@ export default function RootEntryPage() {
         setAccessCheck('failed')
       } catch {
         if (!cancelled) {
-          setFailureReason('session_sync_error')
+          setFailureReason('access_check_error')
           setAccessCheck('failed')
         }
       }
     }
 
-    void syncAndVerifyServerAccess()
+    void verifyServerAccess()
 
     return () => {
       cancelled = true
     }
-  }, [authenticated, ready, router, getAccessToken, retryNonce])
+  }, [isLoaded, isSignedIn, router, retryNonce])
 
-  if (!ready || (authenticated && accessCheck !== 'failed')) {
+  if (!isLoaded || (isSignedIn && accessCheck !== 'failed')) {
     return null
   }
 
-  if (authenticated && accessCheck === 'failed') {
+  if (isSignedIn && accessCheck === 'failed') {
     return (
-      <main className="min-h-screen bg-[#080808] text-zinc-100 grid place-items-center px-6">
+      <main className="iv-member-shell grid min-h-screen place-items-center px-6">
+        <div className="iv-member-ambient" aria-hidden>
+          <div className="iv-member-ambient-glow" />
+          <div className="iv-member-dot-pattern" />
+          <div className="iv-member-flickering-grid" />
+        </div>
+        <div className="absolute right-4 top-4 sm:right-6 sm:top-6">
+          <ThemeToggle />
+        </div>
         <div className="iv-panel w-full max-w-md p-8 text-center">
           <p className="iv-label mb-3">Iron Vault</p>
-          <h1 className="iv-title mb-3 text-4xl">Session sync failed</h1>
+          <h1 className="iv-title mb-3 text-4xl">Access check failed</h1>
           <p className="iv-body mb-6 text-sm">
-            We could not confirm your access with the server yet. Retry to sync your session again.
+            We could not confirm your access with the server yet. Retry to check your session again.
           </p>
           {failureReason ? (
             <p className="mb-6 text-xs text-zinc-500">Diagnostic: {failureReason}</p>
@@ -142,24 +113,29 @@ export default function RootEntryPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#080808] text-zinc-100 grid place-items-center px-6">
+    <main className="iv-member-shell grid min-h-screen place-items-center px-6">
+      <div className="iv-member-ambient" aria-hidden>
+        <div className="iv-member-ambient-glow" />
+        <div className="iv-member-dot-pattern" />
+        <div className="iv-member-flickering-grid" />
+      </div>
+      <div className="absolute right-4 top-4 sm:right-6 sm:top-6">
+        <ThemeToggle />
+      </div>
       <div className="iv-panel w-full max-w-md p-8 text-center">
         <p className="iv-label mb-3">Iron Vault</p>
         <h1 className="iv-title mb-3 text-4xl">Member Portal</h1>
         <p className="iv-body mb-6 text-sm">
           Sign in to continue. Access is limited to approved members.
         </p>
-        <button
-          type="button"
-          onClick={() => login()}
-          className="iv-button inline-flex items-center justify-center px-5 py-2.5 text-sm"
-          disabled={!ready}
-        >
-          Sign In
-        </button>
+        <SignInButton mode="modal">
+          <button type="button" className="iv-button inline-flex items-center justify-center px-5 py-2.5 text-sm">
+            Sign In
+          </button>
+        </SignInButton>
         <p className="mt-6 text-xs text-zinc-500">
           If you do not yet have access, continue on the{' '}
-          <Link className="text-lime-300 hover:text-lime-200" href="https://ironvaulttoken.com/learn">
+          <Link className="text-[var(--iv-accent-deep)] hover:text-[var(--iv-ink)]" href="https://ironvaulttoken.com/learn">
             Learn page
           </Link>
           .

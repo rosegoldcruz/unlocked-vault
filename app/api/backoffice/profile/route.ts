@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requirePrivyUser } from '@/lib/server/privy-auth'
+import { requireIronVaultUser } from '@/lib/server/clerk-auth'
 import { ensureUserProfile } from '@/lib/backoffice-profile'
 import { syncVaultXpForUser } from '@/lib/server/reward-milestones'
 import {
@@ -31,7 +31,7 @@ function logProfileError(error: unknown) {
 
 export async function GET(req: NextRequest) {
   try {
-    const auth = await requirePrivyUser(req)
+    const auth = await requireIronVaultUser(req)
     const evmWalletAddress = isEvmWallet(auth.walletAddress) ? auth.walletAddress : null
     let profile = await ensureUserProfile(auth.privyUserId, {
       email: auth.email,

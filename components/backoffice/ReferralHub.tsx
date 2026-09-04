@@ -1,6 +1,5 @@
 "use client"
 
-import { usePrivy } from '@privy-io/react-auth'
 import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { Copy, Link2 } from 'lucide-react'
 import { fetchBackofficeJson, type BackofficeReferralCreateResponse, type BackofficeReferralsResponse } from '@/lib/backoffice-client'
@@ -12,7 +11,6 @@ const defaultForm: ReferralFormState = { name: '', phone: '', relationship: '', 
 
 export function ReferralHub() {
   const { profile } = useBackofficeAuth()
-  const { ready, authenticated, getAccessToken } = usePrivy()
   const [referrals, setReferrals] = useState<ReferralLead[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -26,27 +24,22 @@ export function ReferralHub() {
   }, [profile?.referral_code])
 
   useEffect(() => {
-    if (!ready || !authenticated) return
     const load = async () => {
       try {
         setLoading(true); setError(null)
-        const token = await getAccessToken()
-        if (!token) throw new Error('Unauthorized: unable to retrieve access token')
-        const payload = await fetchBackofficeJson<BackofficeReferralsResponse>('/api/backoffice/referrals', token)
+        const payload = await fetchBackofficeJson<BackofficeReferralsResponse>('/api/backoffice/referrals')
         setReferrals(payload.referrals)
       } catch (err: unknown) { setError(err instanceof Error ? err.message : 'Failed to load referrals') } finally { setLoading(false) }
     }
     void load()
-  }, [authenticated, getAccessToken, ready])
+  }, [])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!form.name.trim() || !form.phone.trim()) { setError('Name and phone are required'); return }
     try {
       setSubmitting(true); setError(null)
-      const token = await getAccessToken()
-      if (!token) throw new Error('Unauthorized: unable to retrieve access token')
-      const payload = await fetchBackofficeJson<BackofficeReferralCreateResponse>('/api/backoffice/referrals', token, { method: 'POST', body: { name: form.name, phone: form.phone, relationship: form.relationship, bestTimeToCall: form.bestTimeToCall, profession: form.profession, linkSent: form.linkSent } })
+      const payload = await fetchBackofficeJson<BackofficeReferralCreateResponse>('/api/backoffice/referrals', { method: 'POST', body: { name: form.name, phone: form.phone, relationship: form.relationship, bestTimeToCall: form.bestTimeToCall, profession: form.profession, linkSent: form.linkSent } })
       setReferrals((prev) => [payload.referral, ...prev])
       setForm(defaultForm)
     } catch (err: unknown) { setError(err instanceof Error ? err.message : 'Failed to submit referral lead') } finally { setSubmitting(false) }

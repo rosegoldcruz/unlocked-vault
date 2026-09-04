@@ -11,7 +11,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { usePrivy } from "@privy-io/react-auth";
+import { useClerk, useUser } from "@clerk/nextjs";
 
 const FONTS = `@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Space+Mono:wght@400;700&display=swap');`;
 
@@ -2533,8 +2533,9 @@ function ContentBlock({b}){
  * @param {{ allowedModules?: number[], accessType?: "free" | "single_module" | "all_modules" | "admin", onModuleComplete?: () => void }} props
  */
 export default function IronVaultAcademyUnlocked({ allowedModules = [], accessType = "free", onModuleComplete }){
-  const { ready, authenticated, user, login, logout, getAccessToken } = usePrivy();
-  const displayName = user?.email?.address || user?.phone?.number || (authenticated ? "Member" : "Guest");
+  const { isLoaded, isSignedIn, user } = useUser();
+  const { openSignIn, signOut } = useClerk();
+  const displayName = user?.primaryEmailAddress?.emailAddress || user?.fullName || user?.username || (isSignedIn ? "Member" : "Guest");
 
   const [view, setView] = useState("hub");
   const [modIdx, setModIdx] = useState(0);
@@ -2552,34 +2553,30 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [], accessTy
   const [pendingOrientationScore, setPendingOrientationScore] = useState(null);
 
   useEffect(() => {
-    if (ready) {
+    if (isLoaded) {
       setShowReadyHelp(false);
       return;
     }
 
     const timeout = setTimeout(() => setShowReadyHelp(true), 5000);
     return () => clearTimeout(timeout);
-  }, [ready]);
+  }, [isLoaded]);
 
   useEffect(() => {
-    if (!ready || !authenticated) return;
+    if (!isLoaded || !isSignedIn) return;
 
     let cancelled = false;
     setProgressHydrated(false);
 
-    getAccessToken()
-      .then((token) => {
-        if (!token) throw new Error("Missing access token")
-
-        return fetch("/api/education-progress", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ action: "get" }),
-        })
-      })
+    fetch("/api/education-progress", {
+      method: "POST",
+      credentials: "same-origin",
+      cache: "no-store",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ action: "get" }),
+    })
       .then((response) => response.json())
       .then((data) => {
         if (cancelled) return;
@@ -2597,7 +2594,7 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [], accessTy
     return () => {
       cancelled = true;
     };
-  }, [ready, authenticated, getAccessToken]);
+  }, [isLoaded, isSignedIn]);
 
   useEffect(() => {
     if (view !== "lesson") return;
@@ -2605,33 +2602,30 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [], accessTy
   }, [view, lessonIdx]);
 
   useEffect(() => {
-    if (!ready || !authenticated || pendingOrientationScore === null) return;
+    if (!isLoaded || !isSignedIn || pendingOrientationScore === null) return;
 
     let cancelled = false;
 
-    getAccessToken()
-      .then((token) => {
-        if (!token) throw new Error("Missing access token");
-
-        return Promise.all([
-          fetch("/api/education-progress", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ action: "lesson", moduleIndex: 0, lessonIndex: 0 }),
-          }),
-          fetch("/api/education-progress", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ action: "quiz", moduleIndex: 0, score: pendingOrientationScore, passed: true }),
-          }),
-        ]);
-      })
+    Promise.all([
+      fetch("/api/education-progress", {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action: "lesson", moduleIndex: 0, lessonIndex: 0 }),
+      }),
+      fetch("/api/education-progress", {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action: "quiz", moduleIndex: 0, score: pendingOrientationScore, passed: true }),
+      }),
+    ])
       .then(() => {
         if (cancelled) return;
         submitOrientationQualification(pendingOrientationScore);
@@ -2644,14 +2638,14 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [], accessTy
     return () => {
       cancelled = true;
     };
-  }, [authenticated, getAccessToken, pendingOrientationScore, ready]);
+  }, [isLoaded, isSignedIn, pendingOrientationScore]);
 
   // ── Computed ──
   const totalXP = progress.reduce((s,p,i)=>s+(p.passed?MODULES[i].xpReward:0),0);
   const modsDone = progress.filter(p=>p.passed).length;
   const lessonsDone = progress.reduce((s,p)=>s+p.done.size,0);
   const totalLessons = MODULES.reduce((s,m)=>s+m.lessons.length,0);
-  const isFreeAccess = accessType === "free" || !authenticated;
+  const isFreeAccess = accessType === "free" || !isSignedIn;
   const isSingleModuleAccess = accessType === "single_module";
   const allowedModuleSet = useMemo(() => {
     const ids = new Set([0, ...allowedModules]);
@@ -2706,21 +2700,16 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [], accessTy
       return next;
     });
 
-    if (authenticated) {
-      getAccessToken()
-        .then((token) => {
-          if (!token) return;
-
-          fetch("/api/education-progress", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-              body: JSON.stringify({ action: "lesson", moduleIndex: MODULES[mi].id, lessonIndex: li }),
-          }).catch(() => {});
-        })
-        .catch(() => {});
+    if (isSignedIn) {
+      fetch("/api/education-progress", {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action: "lesson", moduleIndex: MODULES[mi].id, lessonIndex: li }),
+      }).catch(() => {});
     }
   }
 
@@ -2730,8 +2719,8 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [], accessTy
   }
 
   function submitOrientationQualification(score){
-    const email = user?.email?.address ?? null;
-    const name = user?.google?.name ?? user?.farcaster?.displayName ?? (displayName !== "Guest" ? displayName : null);
+    const email = user?.primaryEmailAddress?.emailAddress ?? null;
+    const name = user?.fullName ?? user?.username ?? (displayName !== "Guest" ? displayName : null);
 
     fetch("/api/academy/orientation-qualified", {
       method: "POST",
@@ -2764,19 +2753,16 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [], accessTy
         return next;
       });
 
-      if (authenticated) {
-        getAccessToken()
-          .then((token) => {
-            if (!token) return;
-            return fetch("/api/education-progress", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({ action: "quiz", moduleIndex: MODULES[modIdx].id, score, passed }),
-            });
-          })
+      if (isSignedIn) {
+        fetch("/api/education-progress", {
+          method: "POST",
+          credentials: "same-origin",
+          cache: "no-store",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ action: "quiz", moduleIndex: MODULES[modIdx].id, score, passed }),
+        })
           .then(() => {
             if (passed && onModuleComplete) onModuleComplete();
           })
@@ -2784,7 +2770,7 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [], accessTy
       }
 
       if (passed && MODULES[modIdx].id === 0) {
-        if (authenticated) {
+        if (isSignedIn) {
           submitOrientationQualification(score);
         } else {
           setPendingOrientationScore(score);
@@ -2800,7 +2786,7 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [], accessTy
   const letters=["A","B","C","D"];
 
   // ── Auth gate ──
-  if(!ready){
+  if(!isLoaded){
     return(
       <div className="iv">
         <style>{CSS}</style>
@@ -2816,8 +2802,8 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [], accessTy
             {showReadyHelp && (
               <div style={{marginTop:18,padding:"14px 16px",background:"#111",border:"1px solid #1A1A1A",borderRadius:4,textAlign:"left",fontSize:12,color:"#999",lineHeight:1.6}}>
                 <div style={{color:"#AAFF00",fontFamily:"'Space Mono',monospace",fontSize:10,letterSpacing:1,marginBottom:6}}>TROUBLESHOOT</div>
-                <div>Privy initialization is taking longer than expected.</div>
-                <div>1. Confirm this exact domain is allowed in your Privy app settings.</div>
+                <div>Clerk initialization is taking longer than expected.</div>
+                <div>1. Confirm this exact domain is allowed in your Clerk app settings.</div>
                 <div>2. Disable ad/privacy blockers for this site.</div>
                 <div>3. Hard refresh and retry.</div>
               </div>
@@ -2847,8 +2833,8 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [], accessTy
             <div className="iv-xp-track"><div className="iv-xp-fill" style={{width:`${(totalXP/TOTAL_XP)*100}%`}}/></div>
             <span className="iv-xp-val">{totalXP.toLocaleString()}</span>
           </div>
-          <div className="iv-chip" onClick={async()=>{ if(authenticated){ await logout(); setProgress(createEmptyProgress()); setProgressHydrated(false); } else login(); }}>
-            👤 {displayName} · {authenticated ? "Sign Out" : "Sign In"}
+          <div className="iv-chip" onClick={async()=>{ if(isSignedIn){ await signOut(); setProgress(createEmptyProgress()); setProgressHydrated(false); } else openSignIn(); }}>
+            👤 {displayName} · {isSignedIn ? "Sign Out" : "Sign In"}
           </div>
         </header>
         <div className="iv-hub">
@@ -2918,7 +2904,7 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [], accessTy
             <div className="iv-xp-track"><div className="iv-xp-fill" style={{width:`${(totalXP/TOTAL_XP)*100}%`}}/></div>
             <span className="iv-xp-val">{totalXP.toLocaleString()}</span>
           </div>
-          <div className="iv-chip" onClick={authenticated ? undefined : login}>👤 {displayName}{authenticated ? "" : " · Sign In"}</div>
+          <div className="iv-chip" onClick={isSignedIn ? undefined : openSignIn}>👤 {displayName}{isSignedIn ? "" : " · Sign In"}</div>
         </header>
         <div className="iv-page">
           <button className="iv-back" onClick={()=>setView("hub")}>← DASHBOARD</button>
@@ -3092,7 +3078,7 @@ export default function IronVaultAcademyUnlocked({ allowedModules = [], accessTy
           {passed&&<div className="iv-results-xp">⚡ +{mod.xpReward} XP EARNED</div>}
           <div className="iv-results-btns">
             <button className="iv-btn-ghost" onClick={startQuiz}>{passed?"RETAKE":"TRY AGAIN →"}</button>
-            {passed&&isOrientation&&!authenticated&&<button className="iv-btn-lime" onClick={login}>CREATE ACCOUNT TO SAVE →</button>}
+            {passed&&isOrientation&&!isSignedIn&&<button className="iv-btn-lime" onClick={() => openSignIn()}>CREATE ACCOUNT TO SAVE →</button>}
             {passed&&isOrientation&&<Link className="iv-btn-ghost" href="https://ironvaulttoken.com/learn">UNLOCK THE FULL IRON VAULT ACADEMY</Link>}
             {passed&&!hasNext&&<button className="iv-btn-ghost" onClick={()=>setView("hub")}>{isFreeAccess ? "BACK TO ACADEMY →" : "VIEW DASHBOARD →"}</button>}
             <button className="iv-btn-lime" onClick={()=>{

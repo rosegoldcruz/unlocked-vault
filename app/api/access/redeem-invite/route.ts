@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requirePrivyUser } from '@/lib/server/privy-auth'
+import { requireIronVaultUser } from '@/lib/server/clerk-auth'
 import { getSupabaseAdmin } from '@/lib/server/supabase-admin'
+import { resolveCanonicalAccess } from '@/lib/server/access-model'
 
 type InviteStatus = 'active' | 'used' | 'revoked' | 'expired'
 
@@ -20,6 +21,10 @@ type MemberInvite = {
 type MemberEntitlement = {
   id: string
   status: 'active' | 'revoked' | 'expired'
+  metadata?: Record<string, unknown> | null
+  package?: string | null
+  core_academy_access?: string | null
+  developer_lab_access?: boolean | null
 }
 
 const MASTER_INVITE_CODE = (process.env.IRON_VAULT_MASTER_INVITE_CODE ?? '').trim().toUpperCase()
@@ -69,7 +74,7 @@ async function findActiveEntitlementForIdentity(
   const nowIso = new Date().toISOString()
   const { data, error } = await getSupabaseAdmin()
     .from('iv_member_entitlements')
-    .select('id,status')
+    .select('id,status,metadata,package,core_academy_access,developer_lab_access')
     .eq(column, value)
     .eq('status', 'active')
     .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
@@ -127,7 +132,11 @@ async function findExistingInviteEntitlement(
 
 export async function POST(req: NextRequest) {
   try {
-    const auth = await requirePrivyUser(req)
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[academy-access] validation route hit', { hasConfiguredCode: Boolean(process.env.IRON_VAULT_MASTER_INVITE_CODE) })
+    }
+
+    const auth = await requireIronVaultUser(req)
     const body = await req.json().catch(() => null)
     const inviteCode = normalizeInviteCode(body?.inviteCode)
 
@@ -149,10 +158,15 @@ export async function POST(req: NextRequest) {
 
     for (const check of activeEntitlementChecks) {
       const entitlement = await check
-      if (entitlement) {
+      if (entitlement && resolveCanonicalAccess({
+        package: entitlement.package,
+        core_academy_access: entitlement.core_academy_access,
+        developer_lab_access: entitlement.developer_lab_access,
+        ...(entitlement.metadata ?? {}),
+      }).coreAcademyAccess === 'FULL') {
         return NextResponse.json(
           {
-            status: 'already_entitled',
+            status: 'already_unlocked',
             message: 'Your account already has member access.',
           },
           { status: 200 },
@@ -179,7 +193,7 @@ export async function POST(req: NextRequest) {
     // Master invite code: reusable admin-controlled code that always works.
     // Enabled only when IRON_VAULT_MASTER_INVITE_CODE is set in the environment.
     if (isMasterInviteCode(inviteCode)) {
-      const { data: masterEntitlement, error: masterEntitlementError } = await getSupabaseAdmin()
+      const { error: masterEntitlementError } = await getSupabaseAdmin()
         .from('iv_member_entitlements')
         .insert({
           privy_user_id: auth.privyUserId,
@@ -192,7 +206,13 @@ export async function POST(req: NextRequest) {
           metadata: {
             redeemed_via: 'member_portal',
             master_invite: true,
+            package: 'ENTRY_LEVEL',
+            core_academy_access: 'FREE',
+            developer_lab_access: false,
           },
+          package: 'ENTRY_LEVEL',
+          core_academy_access: 'FREE',
+          developer_lab_access: false,
         })
         .select('id')
         .single<{ id: string }>()
@@ -248,7 +268,11 @@ export async function POST(req: NextRequest) {
         metadata: {
           invite_id: invite.id,
           redeemed_via: 'member_portal',
+          ...invite.metadata,
         },
+        package: resolveCanonicalAccess(invite.metadata).package,
+        core_academy_access: resolveCanonicalAccess(invite.metadata).coreAcademyAccess,
+        developer_lab_access: resolveCanonicalAccess(invite.metadata).developerLabAccess,
       })
       .select('id')
       .single<{ id: string }>()

@@ -1,13 +1,9 @@
-import { cookies, headers } from 'next/headers'
 import { getSupabaseAdmin } from '@/lib/server/supabase-admin'
-import {
-	getPrivyAccessTokenFromHeaders,
-	requirePrivyUserFromAccessToken,
-	type AuthenticatedPrivyUser,
-} from '@/lib/server/privy-auth'
+import { getOptionalIronVaultUser, requireIronVaultUser, type AuthenticatedIronVaultUser } from '@/lib/server/clerk-auth'
+import { resolveCanonicalAccess, type AcademyPackage, type CoreAcademyAccess } from '@/lib/server/access-model'
 
 type EntitlementStatus = 'active' | 'revoked' | 'expired'
-type EntitlementSource = 'stripe' | 'invite' | 'grandfathered' | 'admin'
+type EntitlementSource = 'invite' | 'grandfathered' | 'admin'
 
 type MemberEntitlement = {
 	id: string
@@ -16,22 +12,25 @@ type MemberEntitlement = {
 	wallet_address: string | null
 	source: EntitlementSource
 	status: EntitlementStatus
-	stripe_customer_id: string | null
-	stripe_checkout_session_id: string | null
-	stripe_payment_intent_id: string | null
 	invite_code: string | null
 	granted_by: string | null
 	granted_at: string
 	expires_at: string | null
 	metadata: Record<string, unknown>
+	package?: AcademyPackage | null
+	core_academy_access?: CoreAcademyAccess | null
+	developer_lab_access?: boolean | null
 	created_at: string
 	updated_at: string
 }
 
 export type MemberAccessContext = {
-	auth: AuthenticatedPrivyUser
+	auth: AuthenticatedIronVaultUser
 	isAdmin: boolean
 	entitlement: MemberEntitlement | null
+	package: AcademyPackage
+	coreAcademyAccess: CoreAcademyAccess
+	developerLabAccess: boolean
 }
 
 export type MemberAccessScope = {
@@ -40,9 +39,11 @@ export type MemberAccessScope = {
 	allowedModules: number[]
 	entitlementId?: string
 	rewardTrack?: 'full_academy' | 'single_module'
+	package: AcademyPackage
+	coreAcademyAccess: CoreAcademyAccess
+	developerLabAccess: boolean
 }
 
-const ACCESS_TOKEN_COOKIE_NAMES = ['privy-token', 'privy-id-token'] as const
 export const FREE_ACADEMY_MODULE_ID = 0
 export const FULL_ACADEMY_MODULE_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const
 
@@ -54,43 +55,15 @@ function isUnauthorizedError(error: unknown): boolean {
 	return getErrorMessage(error).startsWith('Unauthorized:')
 }
 
-async function getAccessToken(request?: Request): Promise<string | null> {
-	if (request) {
-		return getPrivyAccessTokenFromHeaders(request.headers)
-	}
-
-	const headerStore = await headers()
-	const tokenFromHeaders = getPrivyAccessTokenFromHeaders(headerStore)
-	if (tokenFromHeaders) return tokenFromHeaders
-
-	const cookieStore = await cookies()
-	for (const cookieName of ACCESS_TOKEN_COOKIE_NAMES) {
-		const cookieValue = cookieStore.get(cookieName)?.value
-		if (cookieValue && cookieValue.length > 0) {
-			return decodeURIComponent(cookieValue)
-		}
-	}
-
-	return null
+async function getAuthenticatedUser(_request?: Request): Promise<AuthenticatedIronVaultUser> {
+	void _request
+	return requireIronVaultUser()
 }
 
-async function getAuthenticatedUser(request?: Request): Promise<AuthenticatedPrivyUser> {
-	const token = await getAccessToken(request)
-	if (!token) throw new Error('Unauthorized: missing authentication token')
-
+export async function getOptionalAuthenticatedUser(_request?: Request): Promise<AuthenticatedIronVaultUser | null> {
+	void _request
 	try {
-		return await requirePrivyUserFromAccessToken(token)
-	} catch (error: unknown) {
-		if (isUnauthorizedError(error)) {
-			throw error
-		}
-		throw new Error('Unauthorized: invalid authentication token')
-	}
-}
-
-export async function getOptionalAuthenticatedUser(request?: Request): Promise<AuthenticatedPrivyUser | null> {
-	try {
-		return await getAuthenticatedUser(request)
+		return await getOptionalIronVaultUser()
 	} catch (error: unknown) {
 		if (isUnauthorizedError(error)) return null
 		throw error
@@ -133,7 +106,14 @@ export async function requireMemberAccess(request?: Request): Promise<MemberAcce
 	const auth = await getAuthenticatedUser(request)
 	const isAdmin = await isAdminUser(auth.privyUserId)
 	if (isAdmin) {
-		return { auth, isAdmin: true, entitlement: null }
+		return {
+			auth,
+			isAdmin: true,
+			entitlement: null,
+			package: 'ENTRY_LEVEL',
+			coreAcademyAccess: 'FULL',
+			developerLabAccess: true,
+		}
 	}
 
 	const checks: Array<Promise<MemberEntitlement | null>> = [findActiveEntitlement('privy_user_id', auth.privyUserId)]
@@ -149,7 +129,13 @@ export async function requireMemberAccess(request?: Request): Promise<MemberAcce
 	for (const check of checks) {
 		const entitlement = await check
 		if (entitlement) {
-			return { auth, isAdmin: false, entitlement }
+			const canonical = resolveCanonicalAccess({
+				package: entitlement.package,
+				core_academy_access: entitlement.core_academy_access,
+				developer_lab_access: entitlement.developer_lab_access,
+				...entitlement.metadata,
+			})
+			return { auth, isAdmin: false, entitlement, ...canonical }
 		}
 	}
 
@@ -157,17 +143,19 @@ export async function requireMemberAccess(request?: Request): Promise<MemberAcce
 }
 
 function scopeFromEntitlement(entitlement: MemberEntitlement): MemberAccessScope {
-	const metadata = entitlement.metadata ?? {}
-	const accessType = metadata.access_type
-	const moduleNumber = Number(metadata.module_number)
-
-	if (accessType === 'single_module' && Number.isInteger(moduleNumber) && moduleNumber >= 1 && moduleNumber <= 6) {
+	const canonical = resolveCanonicalAccess({
+		package: entitlement.package,
+		core_academy_access: entitlement.core_academy_access,
+		developer_lab_access: entitlement.developer_lab_access,
+		...entitlement.metadata,
+	})
+	if (canonical.coreAcademyAccess === 'FREE') {
 		return {
 			hasAccess: true,
-			accessType: 'single_module',
-			allowedModules: [moduleNumber],
+			accessType: 'free',
+			allowedModules: [FREE_ACADEMY_MODULE_ID],
 			entitlementId: entitlement.id,
-			rewardTrack: 'single_module',
+			...canonical,
 		}
 	}
 
@@ -177,6 +165,7 @@ function scopeFromEntitlement(entitlement: MemberEntitlement): MemberAccessScope
 		allowedModules: [...FULL_ACADEMY_MODULE_IDS],
 		entitlementId: entitlement.id,
 		rewardTrack: 'full_academy',
+		...canonical,
 	}
 }
 
@@ -185,9 +174,12 @@ export async function getMemberAccessScope(request?: Request): Promise<MemberAcc
 	if (access.isAdmin) {
 		return {
 			hasAccess: true,
-			accessType: 'admin',
+			accessType: 'all_modules',
 			allowedModules: [...FULL_ACADEMY_MODULE_IDS],
 			rewardTrack: 'full_academy',
+			package: 'ENTRY_LEVEL',
+			coreAcademyAccess: 'FULL',
+			developerLabAccess: true,
 		}
 	}
 
@@ -220,12 +212,12 @@ export function canAccessMemberFeature(scope: MemberAccessScope | null): boolean
 	return canAccessDashboard(scope)
 }
 
-export async function getAcademyAccessScope(request?: Request): Promise<{ auth: AuthenticatedPrivyUser | null; scope: MemberAccessScope }> {
+export async function getAcademyAccessScope(request?: Request): Promise<{ auth: AuthenticatedIronVaultUser | null; scope: MemberAccessScope }> {
 	const auth = await getOptionalAuthenticatedUser(request)
 	if (!auth) {
 		return {
 			auth: null,
-			scope: { hasAccess: true, accessType: 'free', allowedModules: [FREE_ACADEMY_MODULE_ID] },
+			scope: { hasAccess: true, accessType: 'free', allowedModules: [FREE_ACADEMY_MODULE_ID], package: 'ENTRY_LEVEL', coreAcademyAccess: 'FREE', developerLabAccess: false },
 		}
 	}
 
@@ -237,7 +229,7 @@ export async function getAcademyAccessScope(request?: Request): Promise<{ auth: 
 		if (message.startsWith('Forbidden:')) {
 			return {
 				auth,
-				scope: { hasAccess: true, accessType: 'free', allowedModules: [FREE_ACADEMY_MODULE_ID] },
+				scope: { hasAccess: true, accessType: 'free', allowedModules: [FREE_ACADEMY_MODULE_ID], package: 'ENTRY_LEVEL', coreAcademyAccess: 'FREE', developerLabAccess: false },
 			}
 		}
 		throw error
@@ -265,5 +257,12 @@ export async function requireAdminAccess(request?: Request): Promise<MemberAcces
 		throw new Error('Forbidden: admin access required')
 	}
 
-	return { auth, isAdmin: true, entitlement: null }
+	return {
+		auth,
+		isAdmin: true,
+		entitlement: null,
+		package: 'ENTRY_LEVEL',
+		coreAcademyAccess: 'FULL',
+		developerLabAccess: true,
+	}
 }

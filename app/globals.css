@@ -1,15 +1,29 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Space+Mono:wght@400;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+:root {
+	--iv-paper: #FAF9F7;
+	--iv-white: #FFFFFF;
+	--iv-ink: #1D1D1F;
+	--iv-ink-2: #515156;
+	--iv-ink-3: #86868B;
+	--iv-hairline: rgba(29, 29, 31, .10);
+	--iv-hairline-soft: rgba(29, 29, 31, .06);
+	--iv-soft-fill: rgba(29, 29, 31, .05);
+	--iv-nav-bg: #2E2E30;
+	--iv-accent: #635BFF;
+	--iv-radius: 22px;
+	--iv-radius-sm: 14px;
+}
+
 html,
 body {
-	background: #080808;
-	color: #e8e8e8;
+	background: #08090d;
+	color: #f7f7f5;
 	min-height: 100%;
-	font-family: 'DM Sans', sans-serif;
+	font-family: var(--font-geist), -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+	letter-spacing: 0;
 }
 
 body {
@@ -23,18 +37,109 @@ body {
 }
 
 @layer components {
+	.iv-member-shell {
+		--iv-accent: #8b6cff;
+		--iv-accent-deep: #b8a7ff;
+		--iv-green: #a7ff4f;
+		--iv-white: #08090d;
+		--iv-paper: #111319;
+		--iv-ink: #f7f7f5;
+		--iv-ink-2: #b8bbc4;
+		--iv-ink-3: #777b88;
+		--iv-hairline: rgba(255, 255, 255, .13);
+		--iv-hairline-soft: rgba(255, 255, 255, .08);
+		--iv-soft-fill: rgba(255, 255, 255, .055);
+		--iv-member-rail: #0b0c11;
+		--iv-member-header-bg: rgba(8, 9, 13, .9);
+		--iv-member-menu-bg: #111319;
+		--iv-member-dot: rgba(184, 167, 255, .2);
+		--iv-member-dot-hot: rgba(167, 255, 79, .62);
+		--iv-member-glow: rgba(139, 108, 255, .17);
+		position: relative;
+		isolation: isolate;
+		min-height: 100vh;
+		overflow-x: hidden;
+		background: var(--iv-white);
+		color: var(--iv-ink);
+		font-family: var(--font-geist), -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+	}
+
+	html[data-iv-theme="light"] .iv-member-shell {
+		--iv-white: #f6f7f9;
+		--iv-paper: #ffffff;
+		--iv-ink: #15161b;
+		--iv-ink-2: #4e525d;
+		--iv-ink-3: #7a7f8b;
+		--iv-hairline: rgba(18, 20, 27, .14);
+		--iv-hairline-soft: rgba(18, 20, 27, .08);
+		--iv-soft-fill: rgba(18, 20, 27, .055);
+		--iv-member-rail: #ffffff;
+		--iv-member-header-bg: rgba(246, 247, 249, .9);
+		--iv-member-menu-bg: #ffffff;
+		--iv-member-dot: rgba(77, 57, 157, .32);
+		--iv-member-dot-hot: rgba(91, 145, 38, .68);
+		--iv-member-glow: rgba(139, 108, 255, .12);
+	}
+
+	.iv-member-ambient {
+		position: fixed;
+		inset: 0;
+		z-index: -1;
+		overflow: hidden;
+		pointer-events: none;
+		background:
+			radial-gradient(circle at 82% 6%, var(--iv-member-glow), transparent 32%),
+			linear-gradient(180deg, var(--iv-white), var(--iv-white));
+	}
+
+	.iv-member-ambient-glow {
+		position: absolute;
+		width: 56vw;
+		height: 56vw;
+		right: -22vw;
+		top: -26vw;
+		border-radius: 50%;
+		background: var(--iv-member-glow);
+		filter: blur(64px);
+	}
+
+	.iv-member-dot-pattern {
+		position: absolute;
+		inset: 0;
+		background-image:
+			radial-gradient(circle, var(--iv-member-dot-hot) 0 1px, transparent 1.5px),
+			radial-gradient(circle, var(--iv-member-dot) 0 1px, transparent 1.5px);
+		background-position: 0 0, 14px 14px;
+		background-size: 28px 28px;
+		mask-image:
+			radial-gradient(ellipse 48% 34% at 76% 18%, black, transparent),
+			radial-gradient(ellipse 42% 38% at 26% 72%, black, transparent);
+		mask-composite: add;
+		opacity: .72;
+	}
+
+	.iv-member-flickering-grid {
+		position: absolute;
+		inset: 0;
+		background-image:
+			linear-gradient(var(--iv-hairline-soft) 1px, transparent 1px),
+			linear-gradient(90deg, var(--iv-hairline-soft) 1px, transparent 1px);
+		background-size: 64px 64px;
+		opacity: .22;
+	}
+
 	.iv-portal-shell {
-		background: #080808;
-		color: #e8e8e8;
-		font-family: 'DM Sans', sans-serif;
+		background: var(--iv-white);
+		color: var(--iv-ink);
 	}
 
 	.iv-panel {
 		position: relative;
 		overflow: hidden;
-		border: 1px solid #1a1a1a;
-		border-radius: 4px;
-		background: #0f0f0f;
+		border: 1px solid var(--iv-hairline);
+		border-radius: var(--iv-radius-sm);
+		background: color-mix(in srgb, var(--iv-paper) 88%, transparent);
+		box-shadow: 0 18px 42px rgba(0, 0, 0, .08);
 	}
 
 	.iv-panel::before {
@@ -43,13 +148,13 @@ body {
 		top: 0;
 		left: 0;
 		right: 0;
-		height: 2px;
-		background: linear-gradient(90deg, transparent, #7b2fbe, transparent);
-		opacity: 0.9;
+		height: 1px;
+		background: linear-gradient(90deg, transparent, var(--iv-accent), transparent);
+		opacity: .72;
 	}
 
 	.iv-panel-lime::before {
-		background: linear-gradient(90deg, transparent, #aaff00, transparent);
+		background: linear-gradient(90deg, transparent, var(--iv-green), transparent);
 	}
 
 	.iv-panel-hover {
@@ -57,96 +162,217 @@ body {
 	}
 
 	.iv-panel-hover:hover {
-		border-color: rgba(123, 47, 190, 0.5);
+		border-color: color-mix(in srgb, var(--iv-accent) 50%, transparent);
 		transform: translateY(-2px);
-		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+		box-shadow: 0 18px 42px rgba(0, 0, 0, .16);
 	}
 
 	.iv-label {
-		font-family: 'Space Mono', monospace;
-		font-size: 9px;
-		letter-spacing: 3px;
+		font-family: var(--font-geist-mono), monospace;
+		font-size: 11px;
+		letter-spacing: 0;
 		text-transform: uppercase;
-		color: #aaff00;
+		color: var(--iv-accent-deep);
 	}
 
 	.iv-label-muted {
-		font-family: 'Space Mono', monospace;
-		font-size: 8px;
-		letter-spacing: 2px;
+		font-family: var(--font-geist-mono), monospace;
+		font-size: 10px;
+		letter-spacing: 0;
 		text-transform: uppercase;
-		color: #444;
+		color: var(--iv-ink-3);
 	}
 
 	.iv-title {
-		font-family: 'Bebas Neue', sans-serif;
-		letter-spacing: 2px;
-		line-height: 1;
-		color: #fff;
+		font-family: var(--font-inter-tight), var(--font-geist), sans-serif;
+		font-weight: 800;
+		letter-spacing: 0;
+		line-height: .96;
+		color: var(--iv-ink);
 	}
 
 	.iv-card-title {
-		font-family: 'Bebas Neue', sans-serif;
-		letter-spacing: 1px;
+		font-family: var(--font-inter-tight), var(--font-geist), sans-serif;
+		font-weight: 700;
+		letter-spacing: 0;
 		line-height: 1.1;
-		color: #fff;
+		color: var(--iv-ink);
 	}
 
 	.iv-body {
-		color: #777;
+		color: var(--iv-ink-2);
 		line-height: 1.65;
 	}
 
 	.iv-chip-lime {
-		border: 1px solid rgba(170, 255, 0, 0.24);
-		background: rgba(170, 255, 0, 0.08);
-		color: #aaff00;
+		border: 1px solid color-mix(in srgb, var(--iv-green) 32%, transparent);
+		background: color-mix(in srgb, var(--iv-green) 12%, transparent);
+		color: var(--iv-green);
 	}
 
 	.iv-chip-purple {
-		border: 1px solid rgba(123, 47, 190, 0.34);
-		background: rgba(123, 47, 190, 0.12);
-		color: #9d4edd;
+		border: 1px solid color-mix(in srgb, var(--iv-accent) 36%, transparent);
+		background: color-mix(in srgb, var(--iv-accent) 13%, transparent);
+		color: var(--iv-accent-deep);
 	}
 
 	.iv-field {
-		border: 1px solid #1e1e1e;
-		border-radius: 4px;
-		background: #080808;
-		color: #e8e8e8;
+		border: 1px solid var(--iv-hairline);
+		border-radius: 12px;
+		background: var(--iv-member-rail);
+		color: var(--iv-ink);
 	}
 
 	.iv-field:focus {
-		border-color: rgba(170, 255, 0, 0.45);
+		border-color: color-mix(in srgb, var(--iv-accent) 52%, transparent);
 		outline: none;
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--iv-accent) 14%, transparent);
 	}
 
 	.iv-button {
-		border-radius: 3px;
-		background: #aaff00;
-		color: #080808;
-		font-family: 'Bebas Neue', sans-serif;
-		letter-spacing: 2px;
+		border-radius: 999px;
+		background: var(--iv-accent);
+		color: #fff;
+		font-family: var(--font-geist), sans-serif;
+		font-weight: 650;
+		letter-spacing: 0;
 		transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 	}
 
 	.iv-button:hover {
-		background: #bfff33;
+		background: color-mix(in srgb, var(--iv-accent) 84%, #fff);
 	}
 
 	.iv-button-ghost {
-		border: 1px solid #2a2a2a;
-		border-radius: 3px;
-		background: transparent;
-		color: #888;
-		font-family: 'Space Mono', monospace;
-		letter-spacing: 1px;
+		border: 1px solid var(--iv-hairline);
+		border-radius: 999px;
+		background: var(--iv-soft-fill);
+		color: var(--iv-ink-2);
+		font-family: var(--font-geist-mono), monospace;
+		letter-spacing: 0;
 		transition: border-color 0.2s ease, color 0.2s ease;
 	}
 
 	.iv-button-ghost:hover {
-		border-color: #7b2fbe;
-		color: #aaff00;
+		border-color: color-mix(in srgb, var(--iv-accent) 48%, transparent);
+		color: var(--iv-ink);
+	}
+
+	.iv-theme-toggle {
+		min-height: 40px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		border: 1px solid var(--iv-hairline);
+		border-radius: 999px;
+		background: var(--iv-member-menu-bg);
+		color: var(--iv-ink);
+		font-family: var(--font-geist), sans-serif;
+		font-size: 13px;
+		padding: 0 14px;
+		transition: border-color .18s ease, background .18s ease;
+	}
+
+	.iv-theme-toggle:hover {
+		border-color: color-mix(in srgb, var(--iv-accent) 45%, transparent);
+	}
+
+	.iv-member-sidebar {
+		border-right: 1px solid var(--iv-hairline);
+		background: color-mix(in srgb, var(--iv-member-rail) 92%, transparent);
+		box-shadow: 18px 0 48px rgba(0, 0, 0, .16);
+		backdrop-filter: blur(18px);
+	}
+
+	.iv-member-header {
+		border-bottom: 1px solid var(--iv-hairline);
+		background: var(--iv-member-header-bg);
+		backdrop-filter: blur(18px);
+	}
+
+	.iv-member-nav-link {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		border: 1px solid transparent;
+		border-radius: 12px;
+		background: transparent;
+		color: var(--iv-ink-2);
+		padding: 11px 12px;
+		font-size: 14px;
+		line-height: 1.2;
+		transition: background .18s ease, border-color .18s ease, color .18s ease;
+	}
+
+	.iv-member-nav-link:hover {
+		border-color: var(--iv-hairline);
+		background: var(--iv-soft-fill);
+		color: var(--iv-ink);
+	}
+
+	.iv-member-nav-link.is-active {
+		border-color: color-mix(in srgb, var(--iv-accent) 42%, transparent);
+		background: color-mix(in srgb, var(--iv-accent) 14%, transparent);
+		color: var(--iv-accent-deep);
+	}
+
+	.iv-member-chip {
+		border: 1px solid var(--iv-hairline);
+		border-radius: 999px;
+		color: var(--iv-ink-2);
+		font-family: var(--font-geist-mono), monospace;
+		font-size: 10px;
+		text-transform: uppercase;
+		padding: 5px 10px;
+	}
+
+	.iv-member-icon-button {
+		width: 40px;
+		height: 40px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		border: 1px solid var(--iv-hairline);
+		border-radius: 12px;
+		background: var(--iv-member-menu-bg);
+		color: var(--iv-ink);
+	}
+
+	.iv-member-mobile-menu {
+		border-right: 1px solid var(--iv-hairline);
+		background: var(--iv-member-menu-bg);
+		box-shadow: 18px 0 48px rgba(0, 0, 0, .28);
+	}
+
+	.iv-member-shell .text-zinc-50,
+	.iv-member-shell .text-zinc-100 {
+		color: var(--iv-ink) !important;
+	}
+
+	.iv-member-shell .text-zinc-200,
+	.iv-member-shell .text-zinc-300 {
+		color: var(--iv-ink-2) !important;
+	}
+
+	.iv-member-shell .text-zinc-400,
+	.iv-member-shell .text-zinc-500 {
+		color: var(--iv-ink-3) !important;
+	}
+
+	.iv-member-shell .border-\[\#1a1a1a\],
+	.iv-member-shell .border-\[\#1e1e1e\],
+	.iv-member-shell .border-\[\#1f1f1f\],
+	.iv-member-shell .border-\[\#242424\],
+	.iv-member-shell .border-\[\#2a2a2a\] {
+		border-color: var(--iv-hairline) !important;
+	}
+
+	.iv-member-shell .bg-\[\#080808\],
+	.iv-member-shell .bg-\[\#0f0f0f\],
+	.iv-member-shell .bg-\[\#101010\],
+	.iv-member-shell .bg-\[\#141414\] {
+		background-color: var(--iv-member-rail) !important;
 	}
 }
 

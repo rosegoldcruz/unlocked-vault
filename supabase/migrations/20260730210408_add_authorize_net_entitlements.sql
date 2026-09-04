@@ -1,0 +1,1 @@
+-- Already applied in production. This placeholder preserves the remote migration history locally.

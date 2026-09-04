@@ -29,6 +29,7 @@ yarn-error.log*
 .env*
 .deepcode/
 
-/for the user needs it cause memory bad
 
-/site-and-portal.code-workspace
+repomix-output.xml
+repomix-vault.sh
+site-and-portal.code-workspace

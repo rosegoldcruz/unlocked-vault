@@ -7,9 +7,6 @@ create table if not exists public.iv_member_entitlements (
   wallet_address text null,
   source text not null,
   status text not null default 'active',
-  stripe_customer_id text null,
-  stripe_checkout_session_id text null,
-  stripe_payment_intent_id text null,
   invite_code text null,
   granted_by text null,
   granted_at timestamptz not null default now(),
@@ -18,7 +15,7 @@ create table if not exists public.iv_member_entitlements (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   check (status in ('active', 'revoked', 'expired')),
-  check (source in ('stripe', 'invite', 'grandfathered', 'admin')),
+  check (source in ('invite', 'grandfathered', 'admin')),
   check (
     privy_user_id is not null
     or email is not null
@@ -36,10 +33,6 @@ create index if not exists idx_iv_member_entitlements_status
   on public.iv_member_entitlements (status);
 create index if not exists idx_iv_member_entitlements_source
   on public.iv_member_entitlements (source);
-create index if not exists idx_iv_member_entitlements_stripe_customer_id
-  on public.iv_member_entitlements (stripe_customer_id);
-create index if not exists idx_iv_member_entitlements_stripe_checkout_session_id
-  on public.iv_member_entitlements (stripe_checkout_session_id);
 create index if not exists idx_iv_member_entitlements_invite_code
   on public.iv_member_entitlements (invite_code);
 
