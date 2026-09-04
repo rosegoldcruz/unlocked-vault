@@ -28,6 +28,11 @@ type MemberEntitlement = {
 }
 
 const MASTER_INVITE_CODE = (process.env.IRON_VAULT_MASTER_INVITE_CODE ?? '').trim().toUpperCase()
+const MASTER_INVITE_ACCESS = {
+  package: 'INTERMEDIATE',
+  coreAcademyAccess: 'FULL',
+  developerLabAccess: false,
+} as const
 
 function normalizeInviteCode(value: unknown): string | null {
   if (typeof value !== 'string') return null
@@ -174,25 +179,47 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const existingInviteEntitlement = await findExistingInviteEntitlement(inviteCode, {
-      privyUserId: auth.privyUserId,
-      email: auth.email,
-      walletAddress: auth.walletAddress,
-    })
-
-    if (existingInviteEntitlement) {
-      return NextResponse.json(
-        {
-          status: 'already_redeemed',
-          message: 'This invite has already been redeemed for your account.',
-        },
-        { status: 200 },
-      )
-    }
-
     // Master invite code: reusable admin-controlled code that always works.
     // Enabled only when IRON_VAULT_MASTER_INVITE_CODE is set in the environment.
     if (isMasterInviteCode(inviteCode)) {
+      const existingMasterEntitlement = await findExistingInviteEntitlement(inviteCode, {
+        privyUserId: auth.privyUserId,
+        email: auth.email,
+        walletAddress: auth.walletAddress,
+      })
+
+      if (existingMasterEntitlement) {
+        const { error: updateMasterEntitlementError } = await getSupabaseAdmin()
+          .from('iv_member_entitlements')
+          .update({
+            source: 'admin',
+            status: 'active',
+            granted_by: 'master_invite_code',
+            metadata: {
+              ...(existingMasterEntitlement.metadata ?? {}),
+              redeemed_via: 'member_portal',
+              master_invite: true,
+              package: MASTER_INVITE_ACCESS.package,
+              core_academy_access: MASTER_INVITE_ACCESS.coreAcademyAccess,
+              developer_lab_access: MASTER_INVITE_ACCESS.developerLabAccess,
+            },
+            package: MASTER_INVITE_ACCESS.package,
+            core_academy_access: MASTER_INVITE_ACCESS.coreAcademyAccess,
+            developer_lab_access: MASTER_INVITE_ACCESS.developerLabAccess,
+          })
+          .eq('id', existingMasterEntitlement.id)
+
+        if (updateMasterEntitlementError) throw updateMasterEntitlementError
+
+        return NextResponse.json(
+          {
+            status: 'redeemed',
+            message: 'Invite redeemed successfully. Redirecting to your dashboard.',
+          },
+          { status: 200 },
+        )
+      }
+
       const { error: masterEntitlementError } = await getSupabaseAdmin()
         .from('iv_member_entitlements')
         .insert({
@@ -206,13 +233,13 @@ export async function POST(req: NextRequest) {
           metadata: {
             redeemed_via: 'member_portal',
             master_invite: true,
-            package: 'ENTRY_LEVEL',
-            core_academy_access: 'FREE',
-            developer_lab_access: false,
+            package: MASTER_INVITE_ACCESS.package,
+            core_academy_access: MASTER_INVITE_ACCESS.coreAcademyAccess,
+            developer_lab_access: MASTER_INVITE_ACCESS.developerLabAccess,
           },
-          package: 'ENTRY_LEVEL',
-          core_academy_access: 'FREE',
-          developer_lab_access: false,
+          package: MASTER_INVITE_ACCESS.package,
+          core_academy_access: MASTER_INVITE_ACCESS.coreAcademyAccess,
+          developer_lab_access: MASTER_INVITE_ACCESS.developerLabAccess,
         })
         .select('id')
         .single<{ id: string }>()
@@ -225,6 +252,22 @@ export async function POST(req: NextRequest) {
           message: 'Invite redeemed successfully. Redirecting to your dashboard.',
         },
         { status: 201 },
+      )
+    }
+
+    const existingInviteEntitlement = await findExistingInviteEntitlement(inviteCode, {
+      privyUserId: auth.privyUserId,
+      email: auth.email,
+      walletAddress: auth.walletAddress,
+    })
+
+    if (existingInviteEntitlement) {
+      return NextResponse.json(
+        {
+          status: 'already_redeemed',
+          message: 'This invite has already been redeemed for your account.',
+        },
+        { status: 200 },
       )
     }
 
@@ -306,6 +349,7 @@ export async function POST(req: NextRequest) {
       { status: 201 },
     )
   } catch (error: unknown) {
+    console.error('[academy-access] redeem invite failed', error)
     const message = error instanceof Error ? error.message : 'Failed to redeem invite'
     const status = isUnauthorized(message) ? 401 : 500
     return NextResponse.json({ error: status === 401 ? message : 'Failed to redeem invite' }, { status })
