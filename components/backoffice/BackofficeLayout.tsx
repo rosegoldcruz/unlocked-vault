@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { useBackofficeAuth } from '@/hooks/useBackofficeAuth'
 import { cn } from '@/lib/utils'
+import { CoinBurst } from '@/components/ui/coin-burst'
 import { ThemeToggle } from '@/components/theme-toggle'
 
 type NavItem = {
@@ -51,28 +52,31 @@ function NavLinks({ pathname, onNavigate, isAdmin }: { pathname: string; onNavig
         const Icon = item.icon
         const isActive = pathname === item.href || (pathname.startsWith(item.href + '/') && item.href !== '/')
         return (
-          <Link
-            key={item.href}
-            href={item.href}
-            prefetch
-            onClick={onNavigate}
-            className={cn('iv-member-nav-link', isActive && 'is-active')}
-          >
-            <Icon className="h-4 w-4" />
-            <span>{item.label}</span>
-          </Link>
+          <CoinBurst key={item.href}>
+            <Link
+              href={item.href}
+              prefetch
+              onClick={onNavigate}
+              className={cn('iv-member-nav-link', isActive && 'is-active')}
+            >
+              <Icon className="h-4 w-4" />
+              <span>{item.label}</span>
+            </Link>
+          </CoinBurst>
         )
       })}
-      <SignOutButton>
-        <button
-          type="button"
-          onClick={() => onNavigate?.()}
-          className="iv-member-nav-link w-full hover:text-red-300"
-        >
-          <LogOut className="h-4 w-4" />
-          <span>Logout</span>
-        </button>
-      </SignOutButton>
+      <CoinBurst>
+        <SignOutButton>
+          <button
+            type="button"
+            onClick={() => onNavigate?.()}
+            className="iv-member-nav-link w-full hover:text-red-300"
+          >
+            <LogOut className="h-4 w-4" />
+            <span>Logout</span>
+          </button>
+        </SignOutButton>
+      </CoinBurst>
     </nav>
   )
 }

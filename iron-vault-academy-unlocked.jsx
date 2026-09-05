@@ -2336,6 +2336,21 @@ const CSS = `
   }
   .iv-panelish{border:1px solid var(--iv-hairline);border-radius:var(--a-radius);background:var(--a-card);box-shadow:0 18px 42px rgba(0,0,0,.08);}
 
+  /* Light-mode readability fix (Academy only): the shared portal tokens for
+     --iv-green / --iv-accent-deep are tuned for the dark theme and stay too
+     pale on a white background, and --iv-ink-3 is too light for metadata,
+     locked-state and secondary text. Scoped to .iv so dark mode and the
+     rest of the member portal are unaffected. */
+  html[data-iv-theme="light"] .iv{
+    --iv-accent-deep:#6557E8;
+    --iv-green:#4F7A12;
+    --iv-ink-3:#5F6672;
+  }
+  html[data-iv-theme="light"] .iv-card.locked,
+  html[data-iv-theme="light"] .iv-lesson-row.l-locked,
+  html[data-iv-theme="light"] .iv-quiz-box.locked{opacity:0.9;}
+  html[data-iv-theme="light"] .iv-qbtn:disabled{opacity:0.7;}
+
   /* ── Secondary academy header (subtle, sits inside portal shell) ── */
   .iv-header{background:transparent;border:1px solid var(--iv-hairline);border-radius:var(--a-radius);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:56px;margin-bottom:24px;}
   .iv-logo{display:flex;align-items:center;gap:10px;font-family:var(--a-title);font-weight:700;font-size:15px;letter-spacing:.02em;color:var(--iv-ink);}
