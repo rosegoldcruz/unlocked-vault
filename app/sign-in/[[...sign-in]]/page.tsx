@@ -12,7 +12,7 @@ export default function SignInPage() {
       <div className="absolute right-4 top-4 sm:right-6 sm:top-6">
         <ThemeToggle />
       </div>
-      <SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" fallbackRedirectUrl="/" />
+      <SignIn withSignUp routing="path" path="/sign-in" signUpUrl="/sign-up" fallbackRedirectUrl="/" />
     </main>
   )
 }
