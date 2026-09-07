@@ -410,7 +410,7 @@ export async function POST(req: NextRequest) {
         status: 'redeemed',
         message: 'Invite redeemed successfully. Redirecting to your dashboard.',
       },
-      { status: 201 },
+      { status: 200 },
     )
   } catch (error: unknown) {
     console.error('[academy-access] redeem invite failed', error)
