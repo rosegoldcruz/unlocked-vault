@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 type NewsSource = {
   name: string
   url: string
@@ -85,6 +88,10 @@ const POSITIVE_KEYWORDS = [
   'improves',
 ]
 
+const MAX_ARTICLE_AGE_HOURS = 36
+const FUTURE_DATE_TOLERANCE_HOURS = 2
+const HOUR_IN_MS = 3_600_000
+
 function decodeEntities(value: string): string {
   return value
     .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
@@ -143,10 +150,18 @@ function scoreItem(title: string, summary: string, publishedAt: string | null): 
   const defiScore = countMatches(text, DEFI_KEYWORDS) * 4
   const positiveScore = countMatches(text, POSITIVE_KEYWORDS) * 2
   const publishedTime = publishedAt ? Date.parse(publishedAt) : Number.NaN
-  const ageHours = Number.isFinite(publishedTime) ? (Date.now() - publishedTime) / 3_600_000 : 72
+  const ageHours = Number.isFinite(publishedTime) ? (Date.now() - publishedTime) / HOUR_IN_MS : 72
   const recencyScore = ageHours <= 24 ? 8 : ageHours <= 72 ? 4 : 0
 
   return defiScore + positiveScore + recencyScore
+}
+
+function isFreshItem(item: FeedItem, now: number): boolean {
+  const publishedTime = Date.parse(item.publishedAt ?? '')
+  if (!Number.isFinite(publishedTime)) return false
+
+  const ageHours = (now - publishedTime) / HOUR_IN_MS
+  return ageHours >= -FUTURE_DATE_TOLERANCE_HOURS && ageHours <= MAX_ARTICLE_AGE_HOURS
 }
 
 function parseFeed(xml: string, source: NewsSource): FeedItem[] {
@@ -207,9 +222,11 @@ async function fetchSource(source: NewsSource): Promise<FeedItem[]> {
 export async function GET() {
   const feedResults = await Promise.all(NEWS_SOURCES.map(fetchSource))
   const seenUrls = new Set<string>()
+  const now = Date.now()
   const items = feedResults
     .flat()
     .filter((item) => {
+      if (!isFreshItem(item, now)) return false
       if (seenUrls.has(item.url)) return false
       seenUrls.add(item.url)
       return item.score >= 4
@@ -220,9 +237,17 @@ export async function GET() {
     })
     .slice(0, 5)
 
-  return NextResponse.json({
-    asOf: new Date().toISOString(),
-    items,
-    sources: NEWS_SOURCES.map(({ name, url, focus }) => ({ name, url, focus })),
-  })
+  return NextResponse.json(
+    {
+      asOf: new Date(now).toISOString(),
+      freshnessWindowHours: MAX_ARTICLE_AGE_HOURS,
+      items,
+      sources: NEWS_SOURCES.map(({ name, url, focus }) => ({ name, url, focus })),
+    },
+    {
+      headers: {
+        'Cache-Control': 'private, no-store, max-age=0',
+      },
+    },
+  )
 }
